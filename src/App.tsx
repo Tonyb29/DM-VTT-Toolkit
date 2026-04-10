@@ -36,6 +36,25 @@ export default function App() {
     setBannerOpen(false)
   }
 
+  // Ko-fi nudge — show once per session after first tab switch
+  const [kofiVisible, setKofiVisible] = useState(false)
+  const [hasNavigated, setHasNavigated] = useState(false)
+  const [kofiDismissed, setKofiDismissed] = useState(
+    () => sessionStorage.getItem('kofi_dismissed') === '1'
+  )
+  const switchTab = (t: Tab) => {
+    setTab(t)
+    if (!hasNavigated && !kofiDismissed) {
+      setHasNavigated(true)
+      setTimeout(() => setKofiVisible(true), 500)
+    }
+  }
+  const dismissKofi = () => {
+    sessionStorage.setItem('kofi_dismissed', '1')
+    setKofiVisible(false)
+    setKofiDismissed(true)
+  }
+
   // Encounter state — lifted here so parser + batch can push into it
   const [encounters, setEncounters] = useState<Encounter[]>([])
   const [sentToast, setSentToast]   = useState('')
@@ -108,7 +127,7 @@ export default function App() {
     const { color } = TAB_META[t]
     const active = tab === t
     return (
-      <button onClick={() => setTab(t)} style={{
+      <button onClick={() => switchTab(t)} style={{
         padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer',
         background: active ? color : '#1e293b',
         color: active ? '#fff' : '#94a3b8',
@@ -242,6 +261,19 @@ export default function App() {
               >
                 ☕ Buy me a coffee
               </a>
+              <a
+                href="https://github.com/Tonyb29/DM-VTT-Toolkit/issues/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'none', border: '1px solid #334155', borderRadius: 6,
+                  padding: '5px 10px', color: '#64748b', fontSize: 11,
+                  textDecoration: 'none', whiteSpace: 'nowrap' as const,
+                }}
+              >
+                🐛 Report a bug
+              </a>
               <button onClick={dismissBanner} title="Don't show again" style={{
                 background: 'none', border: '1px solid #334155', borderRadius: 6,
                 padding: '5px 8px', cursor: 'pointer', color: '#475569',
@@ -251,6 +283,49 @@ export default function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Ko-fi nudge bar */}
+      {kofiVisible && (
+        <div style={{
+          background: '#1e1b4b', borderBottom: '1px solid #7c3aed44',
+          padding: '8px 24px', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', gap: 12,
+        }}>
+          <span style={{ fontSize: 13, color: '#c4b5fd' }}>
+            ☕ If this saved you 30 minutes of prep time, consider buying me a coffee!
+          </span>
+          <a
+            href="https://ko-fi.com/tonyb29"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#7c3aed', color: '#fff', borderRadius: 6,
+              padding: '4px 12px', fontSize: 12, fontWeight: 700,
+              textDecoration: 'none', whiteSpace: 'nowrap' as const,
+            }}
+          >
+            Ko-fi ☕
+          </a>
+          <a
+            href="https://github.com/Tonyb29/DM-VTT-Toolkit/issues/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#64748b', fontSize: 11, textDecoration: 'none',
+              whiteSpace: 'nowrap' as const, borderLeft: '1px solid #334155',
+              paddingLeft: 12,
+            }}
+          >
+            🐛 Bug / Suggestion
+          </a>
+          <button onClick={dismissKofi} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#475569', padding: '2px 4px', marginLeft: 4,
+          }}>
+            <X size={14} />
+          </button>
         </div>
       )}
 
