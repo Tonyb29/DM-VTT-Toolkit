@@ -939,10 +939,38 @@ export default function CelestialCalculator() {
             <div style={{ color: '#67e8f9', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
               Export to Foundry VTT
             </div>
-            <div style={{ color: '#64748b', fontSize: 12, marginBottom: 12, lineHeight: 1.6 }}>
+            <div style={{ color: '#64748b', fontSize: 12, marginBottom: 10, lineHeight: 1.6 }}>
               Generate an installable Foundry module for <strong style={{ color: '#94a3b8' }}>{calendar.name}</strong>.
               Opens a Night Sky panel in Foundry showing live moon phases and tonight's events.
               Optionally syncs with <strong style={{ color: '#94a3b8' }}>Simple Calendar</strong> for automatic date tracking.
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' as const }}>
+              <a
+                href="https://foundryvtt.com/packages/celestial-calendar"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  background: 'none', border: '1px solid #0e7490aa', borderRadius: 6,
+                  padding: '4px 10px', color: '#67e8f9', fontSize: 11,
+                  textDecoration: 'none', fontWeight: 600,
+                }}
+              >
+                ✦ Foundry Package Page
+              </a>
+              <a
+                href="https://github.com/Tonyb29/Celestial-Calendar"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  background: 'none', border: '1px solid #334155', borderRadius: 6,
+                  padding: '4px 10px', color: '#94a3b8', fontSize: 11,
+                  textDecoration: 'none', fontWeight: 600,
+                }}
+              >
+                ⌥ GitHub Source
+              </a>
             </div>
             <button
               onClick={handleGenerateModule}
