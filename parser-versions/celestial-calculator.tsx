@@ -655,11 +655,38 @@ export default function CelestialCalculator() {
       </div>
 
       {/* View tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center', flexWrap: 'wrap' as const }}>
         <button style={viewBtn('sky')}      onClick={() => setView('sky')}>🌙 Night Sky</button>
         <button style={viewBtn('calendar')} onClick={() => setView('calendar')}>📅 Year Calendar</button>
         <button style={viewBtn('settings')} onClick={() => setView('settings')}>⚙ Settings</button>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
+          System agnostic — works with any VTT or no VTT at all
+        </span>
       </div>
+
+      {/* Module callout — points users to the Foundry module + links in Settings */}
+      {view === 'sky' && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const,
+          background: '#0e749015', border: '1px solid #0e749044', borderRadius: 8,
+          padding: '7px 12px', marginBottom: 14, fontSize: 12,
+        }}>
+          <span style={{ color: '#67e8f9' }}>✦</span>
+          <span style={{ color: '#64748b' }}>
+            Whatever you build here exports directly to Foundry VTT as an installable module.
+          </span>
+          <button
+            onClick={() => setView('settings')}
+            style={{
+              background: 'none', border: '1px solid #0e7490aa', borderRadius: 5,
+              padding: '2px 10px', color: '#67e8f9', fontSize: 11, fontWeight: 600,
+              cursor: 'pointer', whiteSpace: 'nowrap' as const,
+            }}
+          >
+            ⚙ Get the module →
+          </button>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* NIGHT SKY VIEW                                                        */}
