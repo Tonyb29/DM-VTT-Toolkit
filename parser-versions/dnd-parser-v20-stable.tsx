@@ -1438,6 +1438,13 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                       ))}
                     </div>
 
+                    {/* Proxy disclosure */}
+                    <div className="bg-slate-700/30 border border-slate-600/40 rounded p-3">
+                      <p className="text-slate-400 text-xs leading-relaxed">
+                        <span className="font-semibold text-slate-300">🔒 Privacy note:</span> URLs are fetched via <span className="font-mono text-slate-300">allorigins.win</span>, a public proxy service, to work around browser security restrictions. The URL you enter passes through this third-party service. Do not use this feature with URLs containing sensitive information. See our <a href="/privacy.html" target="_blank" className="text-purple-400 underline">Privacy Policy</a>.
+                      </p>
+                    </div>
+
                     {/* Disclaimer */}
                     <div className="bg-blue-900/20 border border-blue-500/30 rounded p-3">
                       <p className="text-blue-300 text-xs leading-relaxed">

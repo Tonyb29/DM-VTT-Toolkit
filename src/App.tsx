@@ -367,6 +367,21 @@ export default function App() {
       {showSettings && (
         <SettingsModal onClose={() => { setShowSettings(false); setApiKeySet(hasApiKey()) }} />
       )}
+
+      {/* Footer */}
+      <div style={{
+        borderTop: '1px solid #1e293b', padding: '10px 24px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+        fontSize: 11, color: '#334155', marginTop: 32,
+      }}>
+        <span>© 2026 Tony B — MIT License</span>
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
+          style={{ color: '#475569', textDecoration: 'none' }}>Privacy Policy</a>
+        <a href="https://github.com/Tonyb29/DM-VTT-Toolkit" target="_blank" rel="noopener noreferrer"
+          style={{ color: '#475569', textDecoration: 'none' }}>GitHub</a>
+        <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener noreferrer"
+          style={{ color: '#475569', textDecoration: 'none' }}>☕ Ko-fi</a>
+      </div>
     </>
   )
 }
