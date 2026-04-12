@@ -99,10 +99,16 @@ function buildFeatureItem(feature: SubclassFeature, subclassName: string, classN
     ? ` (Recharge ${feature.recharge === 'sr' ? 'Short Rest' : feature.recharge === 'lr' ? 'Long Rest' : feature.recharge})`
     : ''
 
-  const uses = feature.recharge ? {
-    value: 1, max: '1', per: 'charges',
-    recovery: [{ period: 'recharge', type: 'recoverAll', formula: feature.recharge.replace('-', '') }],
-  } : { value: null, max: null, per: null, recovery: [] }
+  // sr/lr → period-based recovery, formula must be empty string (not 'sr'/'lr')
+  // recharge 5-6 → period:'recharge', formula is the minimum roll number only
+  const uses = (() => {
+    if (!feature.recharge) return { value: null, max: null, per: null, recovery: [] }
+    if (feature.recharge === 'sr') return { value: 1, max: '1', per: null, recovery: [{ period: 'sr', type: 'recoverAll', formula: '' }] }
+    if (feature.recharge === 'lr') return { value: 1, max: '1', per: null, recovery: [{ period: 'lr', type: 'recoverAll', formula: '' }] }
+    // recharge 5-6, 4-6, 6 — formula is the minimum number (e.g. "5" for 5-6)
+    const minRoll = feature.recharge.split('-')[0]
+    return { value: 1, max: '1', per: null, recovery: [{ period: 'recharge', type: 'recoverAll', formula: minRoll }] }
+  })()
 
   return {
     _id: id,
@@ -123,17 +129,23 @@ function buildFeatureItem(feature: SubclassFeature, subclassName: string, classN
 function buildMacro(spec: SubclassSpec, actorName: string): string {
   const className = STANDARD_CLASSES.find(c => c.value === spec.classIdentifier)?.label ?? spec.classIdentifier
   const featureItems = spec.features.map(f => buildFeatureItem(f, spec.name, className))
-  const featureLevels = spec.features.reduce((acc, f) => {
+
+  // Strip _ids — Foundry assigns real world IDs after creation
+  const featureDataForMacro = featureItems.map(({ _id, ...rest }: any) => rest)
+  const featureLevelsByName = spec.features.reduce((acc, f) => {
     acc[f.name] = f.level
     return acc
   }, {} as Record<string, number>)
 
   const subclassBase = buildSubclassItem(spec)
-  const featureItemsJson = JSON.stringify(featureItems, null, 2)
-  const subclassBaseJson = JSON.stringify(subclassBase, null, 2)
+  const subclassBaseForMacro = (({ _id, ...rest }: any) => rest)(subclassBase)
+
+  const featureItemsJson = JSON.stringify(featureDataForMacro, null, 2)
+  const subclassBaseJson = JSON.stringify(subclassBaseForMacro, null, 2)
+  const featureLevelsJson = JSON.stringify(featureLevelsByName)
 
   const domainSpellsBlock = spec.domainSpells.length > 0 ? `
-  // ── Step 2: Look up domain spells in compendium ──────────────────────────
+  // ── Step 3: Look up domain spells in compendium ──────────────────────────
   const spellPack = game.packs.get('dnd5e.spells');
   const spellIndex = await spellPack?.getIndex() ?? [];
   const domainTiers = ${JSON.stringify(spec.domainSpells.filter(t => t.spells.trim()).map(t => ({
@@ -161,39 +173,38 @@ function buildMacro(spec: SubclassSpec, actorName: string): string {
           spell: { ability: [], preparation: 'always', uses: { max: '', per: null } },
           optional: false,
         },
-        value: { added: {}, retained: [] },
+        value: {},
         level: tier.level,
         title: 'Domain Spells',
-        icon: null,
       });
     }
   }` : '\n  const domainAdvancement = [];'
 
   const actorLine = actorName.trim()
     ? `
-  // ── Step 4: Give subclass to actor ───────────────────────────────────────
+  // ── Step 5: Give subclass to actor ───────────────────────────────────────
   const actor = game.actors.getName(${JSON.stringify(actorName.trim())});
   if (!actor) { ui.notifications.error("Actor '${actorName.trim()}' not found."); return; }
-  const existingOnActor = actor.items.getName(subclassData.name);
+  const existingOnActor = actor.items.getName(subclassWithAdv.name);
   if (existingOnActor) {
-    await existingOnActor.update({ system: subclassData.system });
+    await existingOnActor.update({ system: subclassWithAdv.system });
+    ui.notifications.info('${spec.name} subclass updated on ' + actor.name);
   } else {
-    await actor.createEmbeddedDocuments('Item', [subclassData]);
-  }
-  ui.notifications.info('${spec.name} subclass added to ' + actor.name);`
+    await actor.createEmbeddedDocuments('Item', [subclassWithAdv]);
+    ui.notifications.info('${spec.name} subclass added to ' + actor.name);
+  }`
     : `
-  // ── Step 4: Create subclass in Items sidebar ──────────────────────────────
+  // ── Step 5: Create subclass in Items sidebar ──────────────────────────────
   const folder = game.folders.getName('Subclasses') ??
     await Folder.create({ name: 'Subclasses', type: 'Item', color: '#4338ca' });
-  const existingSub = game.items.getName(subclassData.name);
+  const existingSub = game.items.getName(subclassWithAdv.name);
   if (existingSub) {
-    await existingSub.update({ system: subclassData.system });
-    console.log('Updated subclass:', subclassData.name);
+    await existingSub.update({ system: subclassWithAdv.system });
+    ui.notifications.info('${spec.name} subclass updated in Items sidebar.');
   } else {
-    await Item.create({ ...subclassData, folder: folder.id });
-    console.log('Created subclass:', subclassData.name);
-  }
-  ui.notifications.info('${spec.name} subclass created in Items sidebar.');`
+    await Item.create({ ...subclassWithAdv, folder: folder.id });
+    ui.notifications.info('${spec.name} subclass created in Items sidebar.');
+  }`
 
   return `// ${spec.name} — Subclass Import Macro
 // Generated by DM VTT Toolkit — dm-vtt-toolkit.halfasliceofchez.workers.dev
@@ -201,44 +212,38 @@ function buildMacro(spec: SubclassSpec, actorName: string): string {
 // Features: ${spec.features.map(f => `${f.name} (lvl ${f.level})`).join(', ')}
 
 (async () => {
-  const featureLevels = ${JSON.stringify(featureLevels)};
-  const featureItemData = ${featureItemsJson};
-  const subclassBase = ${subclassBaseJson};
-
-  // ── Step 1: Create feature items, capture UUIDs ───────────────────────────
-  const featureUuids = {};
+  // ── Step 1: Create Features folder ───────────────────────────────────────
   const featFolder = game.folders.getName('${spec.name} Features') ??
     await Folder.create({ name: '${spec.name} Features', type: 'Item', color: '#1e3a5f' });
-  for (const feat of featureItemData) {
-    const existing = game.items.getName(feat.name);
-    let item;
-    if (existing) {
-      await existing.update({ system: feat.system });
-      item = existing;
-    } else {
-      item = await Item.create({ ...feat, folder: featFolder.id });
-    }
-    featureUuids[feat.name] = item.uuid;
-    console.log('Feature ready:', feat.name, item.uuid);
-  }
+  if (!featFolder) { ui.notifications.error('${spec.name}: folder creation failed.'); return; }
+
+  // ── Step 2: Batch-create all feature items (Foundry assigns real UUIDs) ──
+  const featureData = ${featureItemsJson};
+  const featureLevels = ${featureLevelsJson};
+  const createdFeatures = featureData.length
+    ? await Item.create(featureData.map(i => ({ ...i, folder: featFolder.id })))
+    : [];
+  const byName = Object.fromEntries((createdFeatures ?? []).map(i => [i.name, i.uuid]));
+  console.log('${spec.name}: created features', Object.keys(byName));
 ${domainSpellsBlock}
 
-  // ── Step 3: Build advancement array ──────────────────────────────────────
-  const featureAdvancement = Object.entries(featureUuids).map(([name, uuid]) => ({
+  // ── Step 4: Build advancement entries using real UUIDs ───────────────────
+  const featureAdvancement = Object.entries(byName).map(([name, uuid]) => ({
     _id: foundry.utils.randomID(),
     type: 'ItemGrant',
     configuration: {
       items: [{ uuid, optional: false }],
-      spell: { ability: [], preparation: null, uses: { max: '', per: null } },
+      spell: null,
       optional: false,
     },
-    value: { added: {}, retained: [] },
+    value: {},
     level: featureLevels[name] ?? 1,
     title: '',
-    icon: null,
   }));
 
-  const subclassData = {
+  // ── Wire advancement into subclass and create it ──────────────────────────
+  const subclassBase = ${subclassBaseJson};
+  const subclassWithAdv = {
     ...subclassBase,
     system: {
       ...subclassBase.system,
