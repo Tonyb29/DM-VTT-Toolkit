@@ -7,10 +7,11 @@ import EncounterBuilder, { Encounter, EncounterCreature } from '../parser-versio
 import CampaignBuilder from '../parser-versions/campaign-builder'
 import MagicItemCreator from '../parser-versions/magic-item-creator'
 import CelestialCalculator from '../parser-versions/celestial-calculator'
+import CharacterOptions from '../parser-versions/character-options'
 import SettingsModal from '../parser-versions/settings-modal'
 import { hasApiKey } from '../parser-versions/claude-api'
 
-type Tab = 'parser' | 'batch' | 'encounter' | 'class' | 'campaign' | 'items' | 'celestial'
+type Tab = 'parser' | 'batch' | 'encounter' | 'class' | 'campaign' | 'items' | 'celestial' | 'charoptions'
 
 const TAB_META: Record<Tab, { desc: string; color: string }> = {
   parser:    { color: '#7c3aed', desc: 'Paste any D&D 5e stat block — get a Foundry-ready actor in seconds' },
@@ -19,7 +20,8 @@ const TAB_META: Record<Tab, { desc: string; color: string }> = {
   class:     { color: '#4338ca', desc: 'Turn a class description into a complete Foundry class with all advancements' },
   campaign:  { color: '#065f46', desc: 'Import a full world — continents, NPCs, and creatures — in five steps' },
   items:     { color: '#be185d', desc: 'Create magic weapons, armor, wondrous items, and consumables with Foundry JSON' },
-  celestial: { color: '#0e7490', desc: 'Track moon phases, conjunctions, and celestial events for any fantasy world' },
+  celestial:    { color: '#0e7490', desc: 'Track moon phases, conjunctions, and celestial events for any fantasy world' },
+  charoptions:  { color: '#4338ca', desc: 'Create subclasses, species, and backgrounds with Foundry-ready import macros' },
 }
 
 function uid() { return Math.random().toString(36).slice(2, 10) }
@@ -164,6 +166,7 @@ export default function App() {
           {btn('campaign',  'Campaign Builder')}
           {btn('items',     '✦ Magic Items')}
           {btn('celestial', '✦ Celestial')}
+          {btn('charoptions', '✦ Character Options')}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
             <button
               onClick={() => setBannerOpen(v => !v)}
@@ -362,6 +365,9 @@ export default function App() {
       </div>
       <div style={show('celestial')}>
         <CelestialCalculator />
+      </div>
+      <div style={show('charoptions')}>
+        <CharacterOptions />
       </div>
 
       {showSettings && (
