@@ -477,6 +477,7 @@ export default function MagicItemCreator() {
   const [itemJson, setItemJson]   = useState('')
   const [macroText, setMacroText] = useState('')
   const [itemName, setItemName]   = useState('')
+  const [rawSpec, setRawSpec]     = useState('')
   const [itemRarity, setItemRarity] = useState<Rarity>('')
 
   // Shared macro option
@@ -541,6 +542,7 @@ export default function MagicItemCreator() {
     setError(''); setLoading(true)
     try {
       const raw = await generateMagicItemSpec(textInput.trim())
+      setRawSpec(raw)
       const spec: MagicItemSpec = JSON.parse(raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim())
       finishItem(spec)
     } catch (e: any) {
@@ -940,6 +942,14 @@ export default function MagicItemCreator() {
                 )}
               </div>
             </div>
+
+            {/* DEBUG — raw Claude spec */}
+            {rawSpec && (
+              <div style={{ ...S.card, background: '#0d1117', border: '1px solid #334155', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, marginBottom: 6 }}>🔍 DEBUG — Raw Claude spec (remove before release)</div>
+                <div style={{ ...S.code, fontSize: 11, maxHeight: 200, overflow: 'auto', whiteSpace: 'pre-wrap' }}>{rawSpec}</div>
+              </div>
+            )}
 
             {/* JSON */}
             <div style={S.card}>
