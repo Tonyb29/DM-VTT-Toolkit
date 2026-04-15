@@ -145,23 +145,77 @@ function buildMacro(spec: SubclassSpec, actorName: string): string {
   const featureLevelsJson = JSON.stringify(featureLevelsByName)
 
   const domainSpellsBlock = spec.domainSpells.length > 0 ? `
-  // ── Step 3: Look up domain spells in compendium ──────────────────────────
-  const spellPack = game.packs.get('dnd5e.spells');
-  const spellIndex = await spellPack?.getIndex() ?? [];
+  // ── Step 3: Look up domain spells across all installed compendium packs ───
+  // Searches dnd5e.spells first, then all other Item packs (Tasha's, Xanathar's, etc.)
+  // Falls back to creating a stub spell item if not found anywhere.
   const domainTiers = ${JSON.stringify(spec.domainSpells.filter(t => t.spells.trim()).map(t => ({
     level: t.level,
     spells: t.spells.split(',').map((s: string) => s.trim()).filter(Boolean),
   })))};
+
+  // Build combined spell index: SRD first, then all other item packs
+  const allSpellPacks = [
+    game.packs.get('dnd5e.spells'),
+    ...game.packs.filter(p => p.documentName === 'Item' && p.collection !== 'dnd5e.spells'),
+  ].filter(Boolean);
+  const packIndexes = [];
+  for (const pack of allSpellPacks) {
+    const idx = await pack.getIndex({ fields: ['name', 'type'] });
+    packIndexes.push({ pack, idx });
+  }
+
+  const findSpellUuid = (name) => {
+    const lower = name.toLowerCase();
+    for (const { pack, idx } of packIndexes) {
+      const entry = idx.find(i => i.type === 'spell' && i.name.toLowerCase() === lower);
+      if (entry) return \`Compendium.\${pack.collection}.Item.\${entry._id}\`;
+    }
+    return null;
+  };
+
+  // Stub folder for any spells not found in any compendium
+  let stubFolder = null;
   const domainAdvancement = [];
+
   for (const tier of domainTiers) {
+    const spellLevel = Math.ceil(tier.level / 2); // cleric lvl 1→sl1, 3→sl2, 5→sl3, 7→sl4, 9→sl5
     const spellItems = [];
     for (const spellName of tier.spells) {
-      const entry = spellIndex.find(i => i.name === spellName);
-      if (entry) {
-        spellItems.push({ uuid: \`Compendium.dnd5e.spells.Item.\${entry._id}\`, optional: false });
+      const uuid = findSpellUuid(spellName);
+      if (uuid) {
+        spellItems.push({ uuid, optional: false });
+        console.log(\`\${spellName}: found in compendium\`);
       } else {
-        console.warn(\`Domain spell not found in compendium: \${spellName}\`);
-        ui.notifications.warn(\`Spell not found: \${spellName} — add manually\`);
+        // Create stub spell item in world
+        if (!stubFolder) {
+          stubFolder = game.folders.getName('${spec.name} Stub Spells') ??
+            await Folder.create({ name: '${spec.name} Stub Spells', type: 'Item', color: '#7c2d12', folder: mainFolder.id });
+        }
+        const stubData = {
+          name: spellName,
+          type: 'spell',
+          system: {
+            description: { value: '<p><em>Stub — spell not found in any installed compendium. Fill in details from the sourcebook.</em></p>' },
+            level: spellLevel,
+            school: 'trs',
+            preparation: { mode: 'always', prepared: true },
+            components: { vocal: false, somatic: false, material: false, ritual: false, concentration: false },
+            materials: { value: '', consumed: false, cost: 0, supply: 0 },
+            activation: { type: 'action', cost: 1, condition: '' },
+            duration: { value: '', units: 'inst' },
+            target: { value: null, width: null, units: '', type: '' },
+            range: { value: null, long: null, units: '' },
+            uses: { value: null, max: null, per: null, recovery: [] },
+            damage: { parts: [], versatile: '' },
+            save: { ability: '', dc: null, scaling: 'spell' },
+            scaling: { mode: 'none', formula: '' },
+          },
+          flags: {}, effects: [],
+        };
+        const stubItem = await Item.create({ ...stubData, folder: stubFolder.id });
+        spellItems.push({ uuid: stubItem.uuid, optional: false });
+        console.warn(\`\${spellName}: not found in any compendium — stub created\`);
+        ui.notifications.warn(\`\${spellName} not found in compendiums — stub created. Fill in details manually.\`);
       }
     }
     if (spellItems.length) {
@@ -195,14 +249,12 @@ function buildMacro(spec: SubclassSpec, actorName: string): string {
   }`
     : `
   // ── Step 5: Create subclass in Items sidebar ──────────────────────────────
-  const folder = game.folders.getName('Subclasses') ??
-    await Folder.create({ name: 'Subclasses', type: 'Item', color: '#4338ca' });
   const existingSub = game.items.getName(subclassWithAdv.name);
   if (existingSub) {
     await existingSub.update({ system: subclassWithAdv.system });
     ui.notifications.info('${spec.name} subclass updated in Items sidebar.');
   } else {
-    await Item.create({ ...subclassWithAdv, folder: folder.id });
+    await Item.create({ ...subclassWithAdv, folder: mainFolder.id });
     ui.notifications.info('${spec.name} subclass created in Items sidebar.');
   }`
 
@@ -212,9 +264,15 @@ function buildMacro(spec: SubclassSpec, actorName: string): string {
 // Features: ${spec.features.map(f => `${f.name} (lvl ${f.level})`).join(', ')}
 
 (async () => {
-  // ── Step 1: Create Features folder ───────────────────────────────────────
-  const featFolder = game.folders.getName('${spec.name} Features') ??
-    await Folder.create({ name: '${spec.name} Features', type: 'Item', color: '#1e3a5f' });
+  // ── Step 1: Create folder structure ──────────────────────────────────────
+  // Structure: Subclasses/${spec.name}/ → subclass item
+  //            Subclasses/${spec.name}/Features/ → all feature items
+  const subclassesRoot = game.folders.getName('Subclasses') ??
+    await Folder.create({ name: 'Subclasses', type: 'Item', color: '#4338ca' });
+  const mainFolder = game.folders.find(f => f.name === '${spec.name}' && f.folder?.id === subclassesRoot.id) ??
+    await Folder.create({ name: '${spec.name}', type: 'Item', color: '#1e3a5f', folder: subclassesRoot.id });
+  const featFolder = game.folders.find(f => f.name === 'Features' && f.folder?.id === mainFolder.id) ??
+    await Folder.create({ name: 'Features', type: 'Item', color: '#0f2940', folder: mainFolder.id });
   if (!featFolder) { ui.notifications.error('${spec.name}: folder creation failed.'); return; }
 
   // ── Step 2: Batch-create all feature items (Foundry assigns real UUIDs) ──
