@@ -406,6 +406,7 @@ export default function CelestialCalculator() {
   const [editingIdx, setEditingIdx] = useState<number | 'new' | null>(null)
   const [copied, setCopied]       = useState(false)
   const [moduleGen, setModuleGen] = useState(false)
+  const [showInstall, setShowInstall] = useState(false)
 
   // Settings form mirrors
   const [calName, setCalName] = useState(calendar.name)
@@ -655,38 +656,11 @@ export default function CelestialCalculator() {
       </div>
 
       {/* View tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center', flexWrap: 'wrap' as const }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <button style={viewBtn('sky')}      onClick={() => setView('sky')}>🌙 Night Sky</button>
         <button style={viewBtn('calendar')} onClick={() => setView('calendar')}>📅 Year Calendar</button>
         <button style={viewBtn('settings')} onClick={() => setView('settings')}>⚙ Settings</button>
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
-          System agnostic — works with any VTT or no VTT at all
-        </span>
       </div>
-
-      {/* Module callout — points users to the Foundry module + links in Settings */}
-      {view === 'sky' && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const,
-          background: '#0e749015', border: '1px solid #0e749044', borderRadius: 8,
-          padding: '7px 12px', marginBottom: 14, fontSize: 12,
-        }}>
-          <span style={{ color: '#67e8f9' }}>✦</span>
-          <span style={{ color: '#64748b' }}>
-            Whatever you build here exports directly to Foundry VTT as an installable module.
-          </span>
-          <button
-            onClick={() => setView('settings')}
-            style={{
-              background: 'none', border: '1px solid #0e7490aa', borderRadius: 5,
-              padding: '2px 10px', color: '#67e8f9', fontSize: 11, fontWeight: 600,
-              cursor: 'pointer', whiteSpace: 'nowrap' as const,
-            }}
-          >
-            ⚙ Get the module →
-          </button>
-        </div>
-      )}
 
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* NIGHT SKY VIEW                                                        */}
@@ -966,107 +940,59 @@ export default function CelestialCalculator() {
             <div style={{ color: '#67e8f9', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
               Export to Foundry VTT
             </div>
-            <div style={{ color: '#64748b', fontSize: 12, marginBottom: 10, lineHeight: 1.6 }}>
+            <div style={{ color: '#64748b', fontSize: 12, marginBottom: 12, lineHeight: 1.6 }}>
               Generate an installable Foundry module for <strong style={{ color: '#94a3b8' }}>{calendar.name}</strong>.
               Opens a Night Sky panel in Foundry showing live moon phases and tonight's events.
               Optionally syncs with <strong style={{ color: '#94a3b8' }}>Simple Calendar</strong> for automatic date tracking.
             </div>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' as const }}>
-              <a
-                href="https://foundryvtt.com/packages/celestial-calendar"
-                target="_blank"
-                rel="noopener noreferrer"
+            {/* Download button + inline How to Install toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' as const }}>
+              <button
+                onClick={handleGenerateModule}
+                disabled={moduleGen}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'none', border: '1px solid #0e7490aa', borderRadius: 6,
-                  padding: '4px 10px', color: '#67e8f9', fontSize: 11,
-                  textDecoration: 'none', fontWeight: 600,
+                  background: moduleGen ? '#1e293b' : 'linear-gradient(135deg, #0e7490, #0891b2)',
+                  border: 'none', borderRadius: 7, color: 'white', padding: '9px 20px',
+                  cursor: moduleGen ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 14,
+                  display: 'flex', alignItems: 'center', gap: 8,
                 }}
               >
-                ✦ Foundry Package Page
-              </a>
-              <a
-                href="https://github.com/Tonyb29/Celestial-Calendar"
-                target="_blank"
-                rel="noopener noreferrer"
+                <Download size={15} />
+                {moduleGen ? 'Generating…' : 'Download Foundry Module (.zip)'}
+              </button>
+              <button
+                onClick={() => setShowInstall(s => !s)}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'none', border: '1px solid #334155', borderRadius: 6,
-                  padding: '4px 10px', color: '#94a3b8', fontSize: 11,
-                  textDecoration: 'none', fontWeight: 600,
+                  background: 'none', border: 'none', color: '#0e7490',
+                  fontSize: 12, cursor: 'pointer', padding: 0, textDecoration: 'underline',
                 }}
               >
-                ⌥ GitHub Source
-              </a>
-            </div>
-            <button
-              onClick={handleGenerateModule}
-              disabled={moduleGen}
-              style={{
-                background: moduleGen ? '#1e293b' : 'linear-gradient(135deg, #0e7490, #0891b2)',
-                border: 'none', borderRadius: 7, color: 'white', padding: '9px 20px',
-                cursor: moduleGen ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 14,
-                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
-              }}
-            >
-              <Download size={15} />
-              {moduleGen ? 'Generating…' : 'Download Foundry Module (.zip)'}
-            </button>
-            {/* Quick install */}
-            <div style={{ background: '#060912', border: '1px solid #1e293b', borderRadius: 8, padding: '10px 14px', marginBottom: 10 }}>
-              <div style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                Option A — Manual Install (local game)
-              </div>
-              {[
-                'Extract the .zip — you\'ll get a folder named ' + calendar.id + '-celestial',
-                'Copy that folder to your Foundry modules directory:',
-                '  Windows: %localappdata%\\FoundryVTT\\Data\\modules\\',
-                '  Mac / Linux: ~/foundryuserdata/Data/modules/',
-                'In Foundry → Add-on Modules, click Refresh and enable the module',
-                'Click the 🌙 button in the Journal sidebar to open the Night Sky panel',
-                '(Optional) Install Simple Calendar for automatic date sync',
-              ].map((step, i) => (
-                <div key={i} style={{ color: '#64748b', fontSize: 12, marginBottom: 5, display: 'flex', gap: 8 }}>
-                  <span style={{ color: '#0e7490', flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
-                  {step}
-                </div>
-              ))}
+                {showInstall ? 'Hide install steps' : 'How to install ↓'}
+              </button>
             </div>
 
-            {/* GitHub manifest distribution */}
-            <div style={{ background: '#060912', border: '1px solid #0e749055', borderRadius: 8, padding: '10px 14px' }}>
-              <div style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                Option B — GitHub Hosted (share / one-click install)
-              </div>
-              <div style={{ color: '#475569', fontSize: 12, marginBottom: 8, lineHeight: 1.6 }}>
-                Push the extracted folder to a GitHub repo, then anyone can install it via Foundry's{' '}
-                <strong style={{ color: '#64748b' }}>Install Module</strong> dialog — no file extraction needed.
-              </div>
-              {[
-                'Create a GitHub repo (e.g. ' + calendar.id + '-celestial)',
-                'Push the extracted module folder into the repo root',
-                'Create a Release tagged v1.0.0',
-                'Your manifest URL will be:',
-              ].map((step, i) => (
-                <div key={i} style={{ color: '#64748b', fontSize: 12, marginBottom: 5, display: 'flex', gap: 8 }}>
-                  <span style={{ color: '#0e7490', flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
-                  {step}
+            {showInstall && (
+              <div style={{ background: '#060912', border: '1px solid #1e293b', borderRadius: 8, padding: '10px 14px', marginBottom: 10 }}>
+                {/* Local install steps */}
+                {[
+                  <>Extract the <code style={{ color: '#67e8f9' }}>.zip</code> — you'll get a folder named <code style={{ color: '#67e8f9' }}>{calendar.id}-celestial</code></>,
+                  <>Copy that folder to your Foundry modules directory:<br />
+                    <span style={{ color: '#334155' }}>Windows: <code style={{ color: '#94a3b8' }}>%localappdata%\FoundryVTT\Data\modules\</code></span><br />
+                    <span style={{ color: '#334155' }}>Mac / Linux: <code style={{ color: '#94a3b8' }}>~/foundryuserdata/Data/modules/</code></span>
+                  </>,
+                  <>In Foundry → <strong>Add-on Modules</strong>, click <strong>Refresh</strong> and enable the module</>,
+                ].map((step, i) => (
+                  <div key={i} style={{ color: '#64748b', fontSize: 12, marginBottom: 8, display: 'flex', gap: 8, lineHeight: 1.6 }}>
+                    <span style={{ color: '#0e7490', flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
+                    <span>{step}</span>
+                  </div>
+                ))}
+                {/* Share note */}
+                <div style={{ color: '#334155', fontSize: 11, marginTop: 6, fontStyle: 'italic', borderTop: '1px solid #1e293b', paddingTop: 8 }}>
+                  Want to share with others? Host <code style={{ color: '#475569' }}>module.json</code> anywhere publicly accessible and paste that URL into Foundry's <strong>Install Module</strong> dialog — no file extraction needed.
                 </div>
-              ))}
-              <div style={{
-                background: '#0d1117', border: '1px solid #1e293b', borderRadius: 5,
-                padding: '6px 10px', fontFamily: 'monospace', fontSize: 11,
-                color: '#67e8f9', wordBreak: 'break-all' as const, marginBottom: 8, marginTop: 2,
-              }}>
-                {'https://raw.githubusercontent.com/YOUR_USERNAME/' + calendar.id + '-celestial/main/' + calendar.id + '-celestial/module.json'}
               </div>
-              <div style={{ color: '#475569', fontSize: 12 }}>
-                5. In Foundry → <strong style={{ color: '#64748b' }}>Install Module</strong>, paste the URL above and click Install.
-              </div>
-              <div style={{ color: '#334155', fontSize: 11, marginTop: 8, fontStyle: 'italic' }}>
-                The downloaded .zip includes a README.md with full GitHub setup instructions.
-              </div>
-            </div>
+            )}
           </div>
 
         </div>
