@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DM VTT Toolkit — Free Foundry VTT Tools for Dungeon Masters</title>
+  <meta name="description" content="Free browser tool for Dungeon Masters. Convert D&D 5e stat blocks to Foundry VTT JSON in seconds. No install, no account required." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid #7c3aed44;
+      background: linear-gradient(180deg, #1e1b4bcc 0%, #0f172a 100%);
+      box-shadow: 0 2px 20px #7c3aed22, inset 0 1px 0 #7c3aed33;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #c4b5fd;
+      letter-spacing: 1px;
+      text-shadow: 0 1px 0 #7c3aed88, 0 2px 6px rgba(0,0,0,0.7);
+    }
+    .header-links {
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+    }
+    .header-links a {
+      border: 1px solid #7c3aed44;
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-size: 12px;
+      color: #94a3b8;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .header-links a:hover { color: #c4b5fd; border-color: #7c3aed88; }
+    .btn-launch {
+      background: #7c3aed !important;
+      color: #fff !important;
+      border-color: transparent !important;
+      font-weight: 700;
+    }
+    .btn-launch:hover { background: #6d28d9 !important; }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 80px 32px 60px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: #1e1b4b;
+      border: 1px solid #7c3aed55;
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 12px;
+      color: #a78bfa;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      color: #c4b5fd;
+      letter-spacing: 1px;
+      text-shadow: 0 1px 0 #7c3aed88, 0 4px 16px rgba(0,0,0,0.8);
+      margin-bottom: 20px;
+      line-height: 1.15;
+    }
+    .hero p {
+      font-size: 18px;
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto 36px;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .cta-primary {
+      background: #7c3aed;
+      color: #fff;
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cta-primary:hover { background: #6d28d9; transform: translateY(-1px); }
+    .cta-secondary {
+      background: transparent;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cta-secondary:hover { color: #c4b5fd; border-color: #7c3aed88; }
+
+    /* ── Pills ── */
+    .pills {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+    .pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 0;
+    }
+
+    /* ── Features ── */
+    .features {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 64px 32px;
+    }
+    .section-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 48px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .feature-card:hover { border-color: #7c3aed66; transform: translateY(-2px); }
+    .feature-icon {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    .feature-name {
+      font-weight: 700;
+      font-size: 14px;
+      color: #e2e8f0;
+      margin-bottom: 6px;
+    }
+    .feature-desc {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    .feature-tag {
+      display: inline-block;
+      background: #1e1b4b;
+      border: 1px solid #7c3aed44;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 10px;
+      color: #a78bfa;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    /* ── How it works ── */
+    .how {
+      background: #080f1a;
+      padding: 64px 32px;
+      border-top: 1px solid #1e293b;
+      border-bottom: 1px solid #1e293b;
+    }
+    .how-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1e1b4b;
+      border: 1px solid #7c3aed66;
+      color: #a78bfa;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-body h3 { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+    .step-body p  { font-size: 13px; color: #64748b; }
+
+    /* ── API note ── */
+    .api-note {
+      max-width: 720px;
+      margin: 48px auto 0;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .api-note-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .api-note h3 { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+    .api-note p  { font-size: 13px; color: #64748b; line-height: 1.5; }
+    .api-note a  { color: #a78bfa; }
+    .api-note a:hover { text-decoration: underline; }
+
+    /* ── Bottom CTA ── */
+    .bottom-cta {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 72px 32px;
+      text-align: center;
+    }
+    .bottom-cta h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 28px;
+      color: #c4b5fd;
+      margin-bottom: 12px;
+      text-shadow: 0 1px 0 #7c3aed88, 0 2px 8px rgba(0,0,0,0.7);
+    }
+    .bottom-cta p { font-size: 15px; color: #64748b; margin-bottom: 32px; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid #1e293b;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    footer a { font-size: 12px; color: #475569; transition: color 0.15s; }
+    footer a:hover { color: #94a3b8; }
+    footer span { color: #1e293b; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">⚔ DM VTT Toolkit</div>
+    <nav class="header-links">
+      <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener">☕ Ko-fi</a>
+      <a href="https://github.com/Tonyb29/DM-VTT-Toolkit" target="_blank" rel="noopener">GitHub</a>
+      <a href="/" class="btn-launch">Launch App →</a>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-eyebrow">Free · No install · No account</div>
+    <h1>⚔ DM VTT Toolkit</h1>
+    <p>Convert D&amp;D 5e stat blocks to Foundry VTT JSON in seconds. Build encounters, craft magic items, and import full campaigns — all from your browser.</p>
+    <div class="hero-ctas">
+      <a href="/" class="cta-primary">Launch the App →</a>
+      <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener" class="cta-secondary">☕ Support on Ko-fi</a>
+    </div>
+    <div class="pills">
+      <span class="pill">Foundry VTT dnd5e v4+</span>
+      <span class="pill">D&amp;D 5e 2014 &amp; 2024</span>
+      <span class="pill">AI-powered (BYOK)</span>
+      <span class="pill">MIT Licensed</span>
+      <span class="pill">No account required</span>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- Features -->
+  <section class="features">
+    <p class="section-label">What's inside</p>
+    <h2 class="section-title">7 Tools in One Tab</h2>
+    <div class="feature-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon">⚔</div>
+        <div class="feature-name">Stat Block Parser</div>
+        <div class="feature-desc">Paste any D&amp;D 5e stat block — text, image, URL, or name — and get a complete Foundry actor JSON with spells, actions, and legendary mechanics.</div>
+        <span class="feature-tag">5 input modes</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-name">Batch Processor</div>
+        <div class="feature-desc">Parse an entire bestiary at once with <code>---</code> separators, or feed it a list of monster names and let AI generate all the stat blocks in one run.</div>
+        <span class="feature-tag">AI generate by name</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-name">Encounter Builder</div>
+        <div class="feature-desc">Build named encounters, adjust quantities, get live XP thresholds and difficulty ratings, then export a Foundry macro that sets up combat in seconds.</div>
+        <span class="feature-tag">DMG XP thresholds</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🗺</div>
+        <div class="feature-name">Campaign Builder</div>
+        <div class="feature-desc">Import a full world into Foundry in 5 steps — continents, NPC leaders, creature actors, and AI-generated stat blocks for anyone you haven't written yet.</div>
+        <span class="feature-tag">Full world import</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">✦</div>
+        <div class="feature-name">Magic Item Creator</div>
+        <div class="feature-desc">Create weapons, armor, wondrous items, and consumables. Named features become individual draggable feat items — drop them onto any character sheet from the Items sidebar.</div>
+        <span class="feature-tag">Draggable feature items</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🌙</div>
+        <div class="feature-name">Celestial Calculator</div>
+        <div class="feature-desc">Track moon phases, conjunctions, and calendar events for any fantasy world. Includes boons &amp; pitfalls, an AI sky description for read-aloud, and a custom moon editor.</div>
+        <span class="feature-tag">Custom moon editor</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🎲</div>
+        <div class="feature-name">Player Tools</div>
+        <div class="feature-desc">Build custom classes, subclasses, species, and 2024-format backgrounds with full Foundry import macros — nested folders, ItemGrant advancements, and spell lookups included.</div>
+        <span class="feature-tag">4 creators</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how">
+    <div class="how-inner">
+      <p class="section-label">How it works</p>
+      <h2 class="section-title">Paste. Convert. Import.</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Paste your stat block</h3>
+            <p>Text from any source — Monster Manual, homebrew PDFs, D&amp;D Beyond, or a name and CR for the AI to build from scratch.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Get a Foundry-ready JSON</h3>
+            <p>The parser extracts every field — abilities, AC, HP, saves, skills, senses, spellcasting, actions, legendary actions — and maps them to dnd5e v4+ schema.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Run the import macro</h3>
+            <p>Copy the generated macro, paste it into Foundry's macro editor, and run it. The actor appears in your world — folders, items, and all.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="api-note">
+        <div class="api-note-icon">🔑</div>
+        <div>
+          <h3>AI features require a Claude API key</h3>
+          <p>Name lookup, AI generation, image parsing, and magic item creation use the Claude API. Bring your own key — it's stored locally in your browser, never sent to our servers. <a href="https://console.anthropic.ic/settings/keys" target="_blank" rel="noopener">Get a key at Anthropic →</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="bottom-cta">
+    <h2>Ready to prep less?</h2>
+    <p>Free to use, no account needed. If it saves you 30 minutes of prep time, consider buying me a coffee.</p>
+    <div class="hero-ctas">
+      <a href="/" class="cta-primary">Launch DM VTT Toolkit →</a>
+      <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener" class="cta-secondary">☕ Ko-fi</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <a href="/privacy.html">Privacy Policy</a>
+    <span>·</span>
+    <a href="https://github.com/Tonyb29/DM-VTT-Toolkit" target="_blank" rel="noopener">GitHub</a>
+    <span>·</span>
+    <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener">Ko-fi</a>
+    <span>·</span>
+    <span style="color:#334155; font-size:12px;">MIT Licensed · Not affiliated with Wizards of the Coast or Foundry VTT</span>
+  </footer>
+
+</body>
+</html>
