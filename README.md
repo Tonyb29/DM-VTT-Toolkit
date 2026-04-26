@@ -1,155 +1,135 @@
-# D&D 5e Parser & Campaign Tools
+# DM Toolkit — dmtoolkit.org
 
-A browser-based toolkit that converts D&D 5e stat blocks into Foundry VTT / Fantasy Grounds actor JSON, builds homebrew classes, manages encounter collections, imports full campaign worlds, creates magic items, and tracks celestial events — all from a single-page app with no server required.
+A browser-based toolkit for Dungeon Masters. Convert D&D 5e stat blocks, build encounters, manage campaign worlds, create magic items, track celestial events, and build player options — all from a single-page app with no server required.
 
-**Current version:** v4.6-alpha (Phase 18b complete)
-**Primary target:** Foundry VTT + dnd5e system v4.0+ / v5.x
-**Secondary target:** Fantasy Grounds Unity (2024 schema)
-**Scope:** D&D 5e only — intentionally single-system
-**Status:** Active development — approaching production-ready
+**Live site:** [dmtoolkit.org](https://dmtoolkit.org)
+**Current version:** v1.0 (Phase 19 complete)
+**License:** [CC BY-NC 4.0](LICENSE) — free for personal use; commercial use requires written permission
+
+---
+
+## VTT Export Targets
+
+| Platform | Format | Status |
+|---|---|---|
+| **Foundry VTT** (dnd5e v4.0+) | Actor JSON + macro | ✅ Full support |
+| **Fantasy Grounds Unity** | 2024 XML | ✅ Full support |
+| **Roll20** (D&D 5e 2014 sheet) | NPC JSON + API script | ✅ Full support |
 
 ---
 
 ## Tabs
 
 ### Tab 1 — Stat Block Parser
-Paste any D&D 5e stat block and get a Foundry-ready Actor JSON + Fantasy Grounds XML.
+Paste any D&D 5e stat block and get a Foundry actor JSON, FGU XML, and Roll20 JSON — ready to import.
 
 **Input modes:**
 - **Text** — paste raw stat block text
 - **Image** — upload a screenshot; Claude extracts the text via vision
 - **URL** — paste a page URL; fetches and extracts stat block (static HTML only)
 - **Name** — enter a monster name; Claude generates the canonical stat block from training data
-- **✨ AI** — enter any name + target CR; Claude builds a fully custom stat block at exactly that CR (not canonical — great for beefy goblins, weakened dragons, reskins)
+- **✨ AI** — enter any name + target CR; Claude builds a fully custom stat block at exactly that CR
 
 **What gets parsed:**
 - Name, size, type, alignment, AC, HP (with formula), speed (all movement types)
-- Ability scores — all layout formats (standard column, modifier-column, comma-separated)
-- Saving throws, skills, senses, languages, initiative, CR + XP, proficiency bonus
-- Damage resistances/immunities/vulnerabilities (2014 and 2024 combined-line format)
-- Condition immunities, conditional resistances (nonmagical/silvered/adamantine → `custom`)
+- All ability score layout formats; saving throws, skills, senses, languages, CR + XP
+- Damage resistances / immunities / vulnerabilities (2014 and 2024 formats)
+- Condition immunities, conditional resistances
 - Melee/ranged attacks → weapon items with attack activities
-- Saving throw actions → feat items with save activities
-- Traits, reactions, bonus actions, legendary actions, lair actions
-- Recharge, N/Day, short rest, long rest recovery
-- Slot-based spellcasting (2014), innate spellcasting (At Will/N/Day), 2024 frequency format, dual casters
-- ~160 SRD spells auto-resolved for school + level via `SPELL_META`
-- Sidekick format (Tasha's) — NPC snapshot at detected level
+- Saving throw actions, traits, reactions, bonus actions, legendary actions, lair actions
+- Recharge, N/Day, short rest / long rest recovery
+- Slot-based spellcasting (2014), innate (At Will/N/Day), 2024 frequency format, dual casters
+- ~160 SRD spells auto-resolved for school + level
+- Sidekick format (Tasha's)
 
-**Export:** Download JSON / Copy JSON / Download FGU XML / Copy FGU XML
-**Add to Encounter:** Sends the parsed actor directly to the Encounter Builder
+**Export:** Foundry JSON · FGU XML · Roll20 JSON · Add to Encounter Builder
 
 ---
 
 ### Tab 2 — Batch Processor
-Paste multiple stat blocks separated by `---` lines, or enter a list of names for sequential AI generation.
+Parse multiple stat blocks at once, or generate a list of monsters by name with AI.
 
-- **Text mode:** parse an entire bestiary page in one pass
-- **Names mode:** sequential Claude generation with cancel; per-card reroll; structured context field (CR, race/type, role, theme, setting)
-- Result cards show accuracy score, stat summary (CR · HP · AC · Speed · Caster Lvl · size/type), and per-card error details
-- **Export:** Foundry macro (creates all actors), bulk JSON download, FGU XML, Send to Encounter (all parsed creatures at once)
-- **Clear All** resets results and both input fields
+- **Text mode** — separate blocks with `---`; parse an entire bestiary page in one pass
+- **Names mode** — sequential Claude generation with cancel, per-card reroll, structured context (CR, race, role, theme)
+- Result cards show accuracy score, stat summary, and per-card errors
+- **Export:** Foundry macro (all actors) · bulk JSON · FGU XML · Send all to Encounter Builder
 
 ---
 
 ### Tab 3 — Encounter Builder
-Collect parsed creatures into named encounter groups and export a Foundry combat macro.
+Collect parsed creatures into named encounter groups and balance them against your party.
 
-- Create multiple named encounters; rename/delete via sidebar
-- Add creatures from the Parser ("Add to Encounter Builder") or Batch Processor ("Send to Encounter")
-- Re-adding the same creature increments quantity rather than duplicating
-- Per-creature quantity controls (+/−), remove button
-- **Party difficulty panel:** set party size and average level; live XP budget bar showing Easy / Medium / Hard / Deadly thresholds with a colored difficulty badge
-- **Copy Foundry Macro:** creates actors in a named folder and loads all combatants into the active combat tracker
-- Tab badge shows total combatant count
+- Multiple named encounters; rename/delete via sidebar
+- Add from Parser or Batch Processor; re-adding increments quantity
+- Per-creature quantity controls; party size + level difficulty panel
+- Live XP budget bar — Easy / Medium / Hard / Deadly thresholds with colored badge
+- **Export:** Foundry macro (creates actors + loads combat tracker)
 
 ---
 
-### Tab 4 — Class Importer
-Paste a structured class template and get a self-contained Foundry macro that creates the full class with advancements.
-
-**Template sections:** header block (HitDie, Saves, Armor, Weapons, Skills, Spellcasting, SubclassLevel), Scale Values, Level 1–20 progression, Feature definitions, Subclass blocks
-
-**What gets built:** class item, all feature items with Uses tracking, subclass items, HitPoints/ItemGrant/ASI/Trait/ScaleValue/Subclass advancements, folder structure in Foundry Items panel, Scale References panel for `@scale` strings
-
-**✨ AI Class Assistant:** paste a freeform description; Claude generates a complete, ready-to-use template
-
----
-
-### Tab 5 — Campaign Builder
-Generate Foundry macros to import a full campaign world in 5 steps.
+### Tab 4 — Campaign Builder
+Import a full campaign world into Foundry in 5 macro steps.
 
 1. **Folders** — journal and actor folder structure
-2. **Journals** — world lore entries with HTML content
-3. **NPC Actors** — leader actors per continent (bio, race, class, CR, image)
-4. **Creature Actors** — with full embedded stat blocks parsed client-side; optional AI generation for all creatures
+2. **Journals** — world lore entries
+3. **NPC Actors** — leader actors per continent
+4. **Creature Actors** — full embedded stat blocks; optional AI generation
 5. **AI NPC Stat Blocks** — Claude generates and patches all NPC actors in-place
 
-All macros are **update-in-place safe** — re-running updates existing actors, never duplicates. Never rename actors or folders in Foundry — rename in Campaign Builder and re-run the macro.
+All macros are update-in-place safe. Includes the Eldoria: Echoes of the Aether preset (7 continents, 28 NPC leaders, 19 creatures) and a blank preset.
 
-**Preset Management:**
-- **✨ AI Generate** — describe your campaign in plain language; Claude generates a full preset
-- **Import JSON** — load a previously exported `.json` preset file
-- **Export JSON** — download current campaign as a `.json` backup
-- **Reset** — discard edits and reload the original preset
-
-**Campaign Editor:**
-- Add, edit, and delete NPCs per continent via sidebar hover icons
-- Add, edit, and delete creatures, continents, and journals via sidebar hover icons
-- All changes auto-save to localStorage — survive page refresh and browser close
-- Export JSON regularly as a manual backup
-
-**Architecture:** generic `CampaignPreset` interface; default preset is Eldoria: Echoes of the Aether (7 continents, 28 NPC leaders, 19 creatures).
+**AI Generate** — describe your campaign in plain language; Claude builds the full preset.
 
 ---
 
-### Tab 6 — Magic Item Creator
+### Tab 5 — ✦ Magic Items
 Create Foundry-ready magic item JSON in three modes.
 
-**Input modes:**
-- **Text** — paste any item description (sourcebook, homebrew, freeform); Claude extracts all fields
-- **✨ AI Generate** — describe your idea + pick base type/rarity/attunement; Claude designs the full item
-- **Builder** — structured form with direct field control; no API call needed
+- **Text** — paste any description; Claude extracts all fields
+- **✨ AI Generate** — describe your idea; Claude designs the full item
+- **Builder** — structured form; no API call needed
 
-**What gets built:**
-- Magic weapons — base weapon (23 types), attack bonus, extra damage types (fire/cold/etc.), all intrinsic properties (finesse/reach/thrown/etc.)
-- Magic armor — base armor (13 types), magical bonus (+1/+2/+3), stealth disadvantage auto-applied
-- Wondrous items — rings, cloaks, amulets, boots, miscellaneous (type: trinket)
-- Consumables — potions, scrolls, wands, rods, ammunition with optional healing activity
-- Charges + recharge (dawn/dusk/long rest/short rest/custom formula)
-- Attunement (none/optional/required), rarity, HTML description
-
-**Export:**
-- Copy JSON / Download JSON — Foundry dnd5e v4+ item JSON
-- Copy Macro / Download Macro — creates item in "Magic Items" folder, or gives directly to a named PC actor (update-in-place safe)
+Supports: magic weapons, armor, wondrous items, consumables (potions/scrolls/wands/rods/ammunition). Charges + recharge, attunement, rarity, HTML description. Per-feature feat items (draggable) in `Magic Items → [Name] → Features/` folder.
 
 ---
 
-### Tab 7 — Celestial Calculator
-Track moon phases, celestial events, boons & pitfalls, and generate Foundry modules for any fantasy world calendar.
+### Tab 6 — ✦ Celestial Calculator
+Track moon phases, celestial events, and generate installable Foundry modules.
 
-**Night Sky viewer:**
-- Live SVG night sky with accurate moon phase shading and deterministic star field
-- Moon phase cards — phase name, illumination %, orbit length per moon
-- Tonight's events — conjunctions, eclipses, oppositions, full moons, new moons auto-detected
-- Boons & Pitfalls — narrative gameplay effects for each event type
-- Year event count — total celestial events in the current campaign year
+- Live SVG night sky with accurate moon phase shading
+- Phase cards, boons & pitfalls, year event calendar
+- Moon + calendar editor — add/remove/edit moons, custom boons/pitfalls
+- **✨ AI Sky Description** — poetic read-aloud for DMs
+- **Export to Foundry** — generates a complete installable module ZIP with in-game Night Sky panel
 
-**Navigation:** jump ±1/±7 days, skip to next/previous event
+**Manifest URL:** `https://raw.githubusercontent.com/Tonyb29/Celestial-Calendar/main/module.json`
 
-**Moon & Calendar Editor:**
-- Add/remove/edit moons: name, orbit length, size, color, start phase
-- Edit world name, days per year
-- Write custom boons and pitfalls per event type (Full Moon, New Moon, Conjunction, Opposition, Eclipse)
-- Import/export calendar as JSON
+---
 
-**✨ AI Sky Description:** Claude generates a 2–3 sentence poetic read-aloud description of the current night sky
+### Tab 7 — ✦ Player Tools
+Build player-facing options for Foundry in four sub-tabs.
 
-**Export to Foundry VTT:**
-- Generates a complete, installable Foundry module ZIP (module.json + JS + CSS + templates)
-- Module adds a moon button to the Journal sidebar; opens a live Night Sky panel in-game
-- Built-in calendar editor inside Foundry — no external tool required after install
-- Optional Simple Calendar / Simple Calendar Reborn sync
+- **Class Creator** — full class with advancements, features, subclass levels
+- **Subclass Creator** — subclass items with feature progressions
+- **Species Creator** — species/race items with traits
+- **Background Creator** — background items with features and skill proficiencies
+
+Each sub-tab includes an **✨ AI Assistant** that generates a complete template from a plain-language description.
+
+---
+
+## Roll20 Import Setup
+
+The Roll20 export requires installing our free API script in your campaign (Pro account required).
+
+1. Download [DMToolkit-Roll20-Importer.js](DMToolkit-Roll20-Importer.js)
+2. In Roll20: **Game Settings → API Scripts → New Script** → paste contents → Save
+3. Use the **D&D 5e by Roll20 (2014)** character sheet
+
+**Each import:**
+1. Copy Roll20 JSON from the parser
+2. Create a Handout in Roll20, paste JSON into its GM Notes field
+3. In chat: `!dmtimport handout|YourHandoutName`
 
 ---
 
@@ -159,32 +139,16 @@ Track moon phases, celestial events, boons & pitfalls, and generate Foundry modu
 npm install
 ```
 
-**Starting / restarting the dev server:**
-
-Option A — run the restart script (kills any running Vite, clears cache, starts fresh):
+**Start dev server:**
 ```bash
-./dev.sh
+pkill -f vite 2>/dev/null; sleep 1; nohup npx vite --port 3000 --force > /tmp/vite-fresh.log 2>&1 &
 ```
-
-Option B — paste into the Claude Code prompt with `!` prefix:
-```
-! pkill -f vite 2>/dev/null; sleep 1; nohup npx vite --port 3000 --force > /tmp/vite-fresh.log 2>&1 &
-```
-
-After restarting, always do a hard refresh in the browser: `Ctrl+Shift+R`
 
 **Access from Windows (WSL2):**
-- `http://localhost:3000` (if WSL2 port mirroring active)
+- `http://localhost:3000` (WSL2 port mirroring)
 - `http://172.26.183.195:3000` (WSL2 VM IP — may change on reboot)
 
-**WSL2 port forwarding (PowerShell as Admin):**
-```powershell
-$wslIp = (wsl hostname -I).Trim().Split()[0]
-netsh interface portproxy reset
-netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=3000 connectaddress=$wslIp connectport=3000
-```
-
-> **WSL2 note:** Vite's file watcher uses Linux inotify which doesn't reliably detect changes on `/mnt/c/` (Windows filesystem). HMR is inconsistent — always use `./dev.sh` or the `!` one-liner to restart. The `--force` flag clears Vite's dependency cache which is the main source of stale builds.
+> **WSL2 note:** Vite's file watcher doesn't reliably HMR on `/mnt/c/`. Always kill and restart after changes. Use `--force` to clear the dependency cache.
 
 ---
 
@@ -193,26 +157,28 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=3000 conne
 ```
 /
 ├── src/
-│   └── App.tsx                          # Tab host — all 7 tabs, encounter state, callbacks
+│   └── App.tsx                          # Tab host — all 7 tabs, encounter state, theme
 ├── parser-versions/
 │   ├── dnd-parser-v20-stable.tsx        # Core parser + StatBlockParser component (Tab 1)
 │   ├── batch-processor.tsx              # Batch Processor + AI Name Mode (Tab 2)
 │   ├── encounter-builder.tsx            # Encounter Builder (Tab 3)
-│   ├── class-importer.tsx               # Class Importer + AI Class Assistant (Tab 4)
-│   ├── campaign-builder.tsx             # Campaign Builder UI (Tab 5)
+│   ├── campaign-builder.tsx             # Campaign Builder UI (Tab 4)
 │   ├── campaign-builder-data.ts         # CampaignPreset interface + macro builders
 │   ├── campaign-eldoria-preset.ts       # ELDORIA_PRESET + BLANK_PRESET
-│   ├── magic-item-creator.tsx           # Magic Item Creator (Tab 6)
-│   ├── celestial-calculator.tsx         # Celestial Calculator + Night Sky (Tab 7)
+│   ├── magic-item-creator.tsx           # Magic Item Creator (Tab 5)
+│   ├── celestial-calculator.tsx         # Celestial Calculator + Night Sky (Tab 6)
 │   ├── celestial-foundry-export.ts      # Foundry module ZIP generator
-│   ├── claude-api.ts                    # Anthropic SDK — all AI calls isolated here
+│   ├── character-options.tsx            # Player Tools — Class/Subclass/Species/Background (Tab 7)
+│   ├── class-importer.tsx               # Class import template parser (used by Player Tools)
 │   ├── fantasy-grounds-exporter.ts      # FGU 2024 XML formatter
+│   ├── roll20-exporter.ts               # Roll20 D&D 5e 2014 JSON formatter
+│   ├── claude-api.ts                    # Anthropic SDK — all AI calls isolated here
 │   └── settings-modal.tsx              # API key management
-├── campaign/
-│   └── Echoes of the Aether/           # Raw campaign source files
-├── docs/
-│   └── (archived — see archived/ folder for Phase 6-era docs)
-├── archived/                            # Outdated docs from earlier phases
+├── DMToolkit-Roll20-Importer.js         # Roll20 API script (install once per campaign)
+├── public/
+│   ├── about.html                       # Landing + feature overview page
+│   ├── privacy.html
+│   └── _headers                         # Cloudflare CSP headers
 ├── vite.config.ts
 └── README.md
 ```
@@ -222,32 +188,46 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=3000 conne
 ## Roadmap
 
 | Phase | Feature | Status |
-|-------|---------|--------|
+|---|---|---|
 | 9 | Custom Class Importer | ✅ Complete |
-| 10 | Fantasy Grounds Unity export | ✅ Complete |
+| 10 | Fantasy Grounds Unity export | ✅ Complete — user validated |
 | 11 | Batch Processor | ✅ Complete |
-| 12/13 | OCR + AI-enhanced parsing (image/URL/name) | ✅ Complete |
+| 12/13 | OCR + AI parsing (image/URL/name) | ✅ Complete |
 | 14 | Batch AI Name Mode + reroll | ✅ Complete |
 | 14b/c | Campaign Builder AI NPCs + creature stat blocks | ✅ Complete |
 | 15 | Generic CampaignPreset architecture | ✅ Complete |
-| 15b | Encounter Builder + AI Custom CR mode + difficulty | ✅ Complete |
+| 15b | Encounter Builder + AI Custom CR + difficulty | ✅ Complete |
 | 15c | AI Campaign Generator + Import/Export JSON | ✅ Complete |
 | 16 | AI Class Assistant | ✅ Complete |
-| 17 | Campaign editor — add/edit/delete NPCs, creatures, continents, journals | ✅ Complete |
-| 18 | Magic Item Creator (Tab 6) | ✅ Complete |
-| 18b | Celestial Calculator (Tab 7) — night sky, moon phases, year calendar, AI descriptions, Foundry module export | ✅ Complete |
-| 18c | Foundry module hosting + Simple Calendar Reborn compatibility | ✅ Complete |
-| — | Static hosting + Cloudflare Pages deployment | 🔜 Planned |
-| — | Desktop executable (Electron/Tauri) + distribution | 🔜 Planned |
-| — | UI/UX design pass + color scheme | 🔜 Planned |
-| — | Roll20 export | Deferred |
+| 17 | Campaign editor — add/edit/delete all entities | ✅ Complete |
+| 18 | Magic Item Creator (Tab 5) | ✅ Complete |
+| 18b | Celestial Calculator (Tab 6) — night sky, moons, calendar, Foundry module | ✅ Complete |
+| 19 | Player Tools (Tab 7) — Class, Subclass, Species, Background creators | ✅ Complete |
+| 20 | Roll20 NPC JSON export + API importer script | ✅ Complete |
+| — | Theme picker in Settings modal; all tabs theme-aware | 🔜 Next |
+| — | Game system selector — hub page for D&D / Draw Steel / future systems | 🔜 Planned |
+| — | Draw Steel (MCDM) system support | 🔜 Planned |
+| — | Desktop app (Electron/Tauri) | ⏸ Deferred |
+
+---
+
+## Game System Roadmap
+
+| System | Market | Status | Notes |
+|---|---|---|---|
+| **D&D 5e (2014/2024)** | ~45% | ✅ Live | Core product |
+| **Draw Steel (MCDM)** | Growing | 🔜 Priority v2 | No tooling gap yet — first-mover window |
+| **Pathfinder 2e** | ~10-15% | ⏸ Watch | Demiplane nexus deal — monitor |
+| **Daggerheart** | Growing | ⏸ Watch | Demiplane official Foundry system |
+| **Cyberpunk Red** | Niche | ⏸ Deferred | Demiplane publisher + Roll20 deal |
+| **Vampire: The Masquerade** | Medium | ⏸ Watch | Demiplane nexus deal |
 
 ---
 
 ## Known Limitations
 
 - Spell descriptions are empty — items created by name; link to compendium in Foundry manually
-- Spells not in `SPELL_META` have blank school and level 0 with a named warning
-- URL import works on static HTML only (D&D Beyond / GMBinder are JS-rendered — not supported)
-- FGU export targets 2024 schema only
-- API key stored in `localStorage` — will move to backend proxy for hosted version
+- Spells not in `SPELL_META` have blank school and default level 0
+- URL import works on static HTML only — D&D Beyond / GM Binder are JS-rendered
+- Roll20 export targets the D&D 5e 2014 sheet only (2024 sheet not yet supported)
+- API key stored in `localStorage` — BYOK model; no backend proxy currently
