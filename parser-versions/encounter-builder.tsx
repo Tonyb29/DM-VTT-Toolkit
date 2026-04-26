@@ -120,7 +120,7 @@ function buildFoundryMacro(encounter: Encounter): string {
 
 const S = {
   page:    { minHeight: '100vh', background: 'var(--t-bg)', color: '#e2e8f0', fontFamily: 'monospace', display: 'flex' } as const,
-  sidebar: { width: 240, minWidth: 240, background: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column' as const },
+  sidebar: { width: 240, minWidth: 240, background: 'var(--t-surface)', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column' as const },
   main:    { flex: 1, padding: 24, overflowY: 'auto' as const },
   muted:   { color: '#64748b', fontSize: 12 } as const,
   tag:     (color: string) => ({ display: 'inline-block', background: color + '22', color, border: `1px solid ${color}55`, borderRadius: 4, padding: '1px 6px', fontSize: 11 }),
@@ -148,7 +148,7 @@ function CreatureCard({ creature, onQuantity, onRemove }: {
   const spd = a?.system?.attributes?.movement?.walk ?? '?'
 
   return (
-    <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div style={{ background: 'var(--t-surface)', border: '1px solid #334155', borderRadius: 8, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
       {/* Name + stats */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 14, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -408,7 +408,7 @@ export default function EncounterBuilder({ encounters, onUpdate }: {
             </div>
 
             {/* Party + Difficulty */}
-            <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
+            <div style={{ background: 'var(--t-surface)', border: '1px solid #334155', borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
                 {/* Party inputs */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -465,7 +465,7 @@ export default function EncounterBuilder({ encounters, onUpdate }: {
 
             {/* Creature list */}
             {active.creatures.length === 0 ? (
-              <div style={{ background: '#1e293b', border: '1px dashed #334155', borderRadius: 8, padding: 40, textAlign: 'center' }}>
+              <div style={{ background: 'var(--t-surface)', border: '1px dashed #334155', borderRadius: 8, padding: 40, textAlign: 'center' }}>
                 <Swords size={28} style={{ color: '#334155', marginBottom: 10 }} />
                 <div style={{ color: '#475569', fontSize: 13, marginBottom: 4 }}>No creatures yet</div>
                 <div style={{ ...S.muted }}>
@@ -487,7 +487,7 @@ export default function EncounterBuilder({ encounters, onUpdate }: {
 
             {/* Export info */}
             {active.creatures.length > 0 && (
-              <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 16 }}>
+              <div style={{ background: 'var(--t-surface)', border: '1px solid #334155', borderRadius: 8, padding: 16 }}>
                 <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>About the Macro</div>
                 <ul style={{ ...S.muted, margin: 0, paddingLeft: 16, lineHeight: 1.8 }}>
                   <li>Creates a folder named <strong style={{ color: '#e2e8f0' }}>{active.name}</strong> in your Actors directory</li>

@@ -42,10 +42,10 @@ const LS_KEY = 'dnd_campaign_preset'
 
 const S = {
   page:    { minHeight: '100vh', background: 'var(--t-bg)', color: '#e2e8f0', fontFamily: 'monospace', display: 'flex', gap: 0 } as const,
-  sidebar: { width: 260, minWidth: 260, background: '#1e293b', borderRight: '1px solid #334155', overflowY: 'auto' as const, padding: '16px 0' },
+  sidebar: { width: 260, minWidth: 260, background: 'var(--t-surface)', borderRight: '1px solid #334155', overflowY: 'auto' as const, padding: '16px 0' },
   main:    { flex: 1, overflowY: 'auto' as const, padding: 24 },
-  card:    { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 20, marginBottom: 16 },
-  cardAccent: (color: string) => ({ ...{ background: '#1e293b', borderRadius: 8, padding: 20, marginBottom: 16 }, border: `1px solid ${color}` }),
+  card:    { background: 'var(--t-surface)', border: '1px solid #334155', borderRadius: 8, padding: 20, marginBottom: 16 },
+  cardAccent: (color: string) => ({ ...{ background: 'var(--t-surface)', borderRadius: 8, padding: 20, marginBottom: 16 }, border: `1px solid ${color}` }),
   h2:      { color: '#f1f5f9', fontWeight: 700, fontSize: 16, marginBottom: 4 },
   h3:      { color: '#cbd5e1', fontWeight: 600, fontSize: 14, marginBottom: 8 },
   muted:   { color: '#64748b', fontSize: 12 },
@@ -542,7 +542,7 @@ function EditModal({ target, preset, onSave, onClose }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#00000099', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 24, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto' as const }}>
+      <div style={{ background: 'var(--t-surface)', border: '1px solid #334155', borderRadius: 10, padding: 24, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto' as const }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 16 }}>{modalTitle}</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -1303,7 +1303,7 @@ export default function CampaignBuilder() {
                   <X size={12} /> Cancel
                 </button>
               </div>
-              <div style={{ background: '#1e293b', borderRadius: 4, height: 6 }}>
+              <div style={{ background: 'var(--t-surface)', borderRadius: 4, height: 6 }}>
                 <div style={{ background: '#ea580c', height: 6, borderRadius: 4, width: `${(genCreatureCurrent / preset.creatures.length) * 100}%`, transition: 'width 0.3s' }} />
               </div>
             </div>
@@ -1436,7 +1436,7 @@ export default function CampaignBuilder() {
                   <X size={12} /> Cancel
                 </button>
               </div>
-              <div style={{ background: '#1e293b', borderRadius: 4, height: 6 }}>
+              <div style={{ background: 'var(--t-surface)', borderRadius: 4, height: 6 }}>
                 <div style={{ background: '#7c3aed', height: 6, borderRadius: 4, width: `${(genCurrent / preset.npcs.length) * 100}%`, transition: 'width 0.3s' }} />
               </div>
             </div>

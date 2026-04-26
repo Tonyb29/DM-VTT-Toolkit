@@ -139,7 +139,7 @@ function MoonCard({ moon, day }: { moon: Moon; day: number }) {
   const dNew  = daysToPhase(moon, day, 0)
   return (
     <div style={{
-      background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10,
+      background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10,
       padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12,
       flex: '1 1 200px', minWidth: 0,
     }}>
@@ -346,7 +346,7 @@ function EventEffectsEditor({ calendar, onUpdate }: {
   }
 
   return (
-    <div style={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
+    <div style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
       <div style={{ color: '#94a3b8', fontWeight: 600, fontSize: 14, marginBottom: 12 }}>Event Effects</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {(Object.keys(EVENT_META) as EventType[]).map(type => {
@@ -617,7 +617,7 @@ export default function CelestialCalculator() {
 
       {/* Day Navigator */}
       <div style={{
-        background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10,
+        background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10,
         padding: '10px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10,
       }}>
         <button onClick={() => goToNextEvent(-1)} title="Jump to previous event" style={{
@@ -675,7 +675,7 @@ export default function CelestialCalculator() {
           disabled={moduleGen}
           title="Download a custom Foundry VTT module for your world"
           style={{
-            background: moduleGen ? '#1e293b' : 'linear-gradient(135deg, #0e7490, #0891b2)',
+            background: moduleGen ? 'var(--t-surface)' : 'linear-gradient(135deg, #0e7490, #0891b2)',
             border: 'none', borderRadius: 7, color: moduleGen ? '#64748b' : 'white',
             padding: '6px 14px', cursor: moduleGen ? 'not-allowed' : 'pointer',
             fontWeight: 600, fontSize: 12,
@@ -713,7 +713,7 @@ export default function CelestialCalculator() {
         >
           {copiedManifest ? '✓ Copied!' : 'Copy'}
         </button>
-        <span style={{ color: '#1e293b', fontSize: 11 }}>·</span>
+        <span style={{ color: 'var(--t-surface)', fontSize: 11 }}>·</span>
         <span style={{ color: '#334155', fontSize: 11, whiteSpace: 'nowrap' as const }}>
           Paste in Foundry → <em>Install Module</em> dialog
         </span>
@@ -738,7 +738,7 @@ export default function CelestialCalculator() {
 
           {/* Today's events + boons/pitfalls */}
           <div style={{
-            background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10,
+            background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10,
             padding: '12px 16px', marginBottom: 14,
           }}>
             <div style={{ color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
@@ -757,7 +757,7 @@ export default function CelestialCalculator() {
           </div>
 
           {/* AI Sky Description */}
-          <div style={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10, padding: '12px 16px' }}>
+          <div style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10, padding: '12px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: aiDesc || aiError ? 12 : 0 }}>
               <div style={{ color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', flex: 1 }}>
                 AI Sky Description
@@ -766,7 +766,7 @@ export default function CelestialCalculator() {
                 onClick={handleGenerateDesc}
                 disabled={aiLoading}
                 style={{
-                  background: aiLoading ? '#1e293b' : `linear-gradient(135deg, ${ACCENT}, #0891b2)`,
+                  background: aiLoading ? 'var(--t-surface)' : `linear-gradient(135deg, ${ACCENT}, #0891b2)`,
                   border: 'none', borderRadius: 7, color: 'white', padding: '7px 16px',
                   cursor: aiLoading ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: 13,
                   display: 'flex', alignItems: 'center', gap: 6,
@@ -837,7 +837,7 @@ export default function CelestialCalculator() {
           </div>
 
           {/* Event list */}
-          <div style={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10, overflow: 'hidden' }}>
             {filteredEvents.length === 0 ? (
               <div style={{ padding: '28px 16px', color: '#475569', fontSize: 13, fontStyle: 'italic', textAlign: 'center' }}>
                 No {calFilter !== 'all' ? EVENT_META[calFilter as EventType].label : ''} events in Year {displayYear}.
@@ -866,7 +866,7 @@ export default function CelestialCalculator() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Calendar basics */}
-          <div style={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ color: '#94a3b8', fontWeight: 600, fontSize: 14, marginBottom: 12 }}>Calendar</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
@@ -891,7 +891,7 @@ export default function CelestialCalculator() {
           </div>
 
           {/* Moon list */}
-          <div style={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ color: '#94a3b8', fontWeight: 600, fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               Moons
               <button onClick={() => setEditingIdx('new')} style={{
@@ -927,7 +927,7 @@ export default function CelestialCalculator() {
                       title="Delete"
                       style={{
                         background: 'none', border: '1px solid #334155', borderRadius: 5,
-                        color: calendar.moons.length <= 1 ? '#1e293b' : '#f87171',
+                        color: calendar.moons.length <= 1 ? 'var(--t-surface)' : '#f87171',
                         padding: '4px 8px', cursor: calendar.moons.length <= 1 ? 'not-allowed' : 'pointer',
                       }}
                     ><Trash2 size={12} /></button>
@@ -947,7 +947,7 @@ export default function CelestialCalculator() {
           <EventEffectsEditor calendar={calendar} onUpdate={updateCalendar} />
 
           {/* Presets & export */}
-          <div style={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ color: '#94a3b8', fontWeight: 600, fontSize: 14, marginBottom: 12 }}>Presets & Export</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={() => {
@@ -993,7 +993,7 @@ export default function CelestialCalculator() {
           </div>
 
           {/* Foundry module generator */}
-          <div style={{ background: '#0d1117', border: '1px solid #0e7490aa', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: 'var(--t-bg)', border: '1px solid #0e7490aa', borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ color: '#67e8f9', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
               📦 Foundry VTT Module
             </div>
@@ -1008,7 +1008,7 @@ export default function CelestialCalculator() {
                 onClick={handleGenerateModule}
                 disabled={moduleGen}
                 style={{
-                  background: moduleGen ? '#1e293b' : 'linear-gradient(135deg, #0e7490, #0891b2)',
+                  background: moduleGen ? 'var(--t-surface)' : 'linear-gradient(135deg, #0e7490, #0891b2)',
                   border: 'none', borderRadius: 7, color: 'white', padding: '9px 20px',
                   cursor: moduleGen ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 14,
                   display: 'flex', alignItems: 'center', gap: 8,

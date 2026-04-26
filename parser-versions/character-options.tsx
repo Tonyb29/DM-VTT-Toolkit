@@ -315,7 +315,7 @@ ${actorLine}
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const S = {
-  card:  { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 16, marginBottom: 12 } as const,
+  card:  { background: 'var(--t-surface)', border: '1px solid #334155', borderRadius: 8, padding: 16, marginBottom: 12 } as const,
   label: { display: 'block', fontSize: 12, color: '#94a3b8', fontWeight: 600, marginBottom: 4 } as const,
   input: { width: '100%', background: 'var(--t-bg)', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, boxSizing: 'border-box' as const } as const,
   textarea: { width: '100%', background: 'var(--t-bg)', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, fontFamily: 'monospace', boxSizing: 'border-box' as const, resize: 'vertical' as const } as const,
@@ -443,11 +443,11 @@ function SubclassCreator() {
       {/* AI Generate toggle */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <button onClick={() => setAiMode(false)} style={{
-          ...S.btn(aiMode ? '#1e293b' : '#4338ca'),
+          ...S.btn(aiMode ? 'var(--t-surface)' : '#4338ca'),
           border: aiMode ? '1px solid #334155' : 'none',
         }}>Manual</button>
         <button onClick={() => setAiMode(true)} style={{
-          ...S.btn(aiMode ? '#7c3aed' : '#1e293b'),
+          ...S.btn(aiMode ? '#7c3aed' : 'var(--t-surface)'),
           border: aiMode ? 'none' : '1px solid #334155',
         }}><Sparkles size={13} /> ✨ AI Generate</button>
       </div>
@@ -1410,7 +1410,7 @@ export default function CharacterOptions() {
   const modeBtn = (m: CharMode, label: string, color: string) => (
     <button onClick={() => setMode(m)} style={{
       padding: '6px 18px', borderRadius: 6, border: 'none', cursor: 'pointer',
-      background: mode === m ? color : '#1e293b',
+      background: mode === m ? color : 'var(--t-surface)',
       color: mode === m ? '#fff' : '#94a3b8',
       fontWeight: 600, fontSize: 13,
       boxShadow: mode === m ? `0 0 12px ${color}66, 0 2px 0 ${color}` : 'none',

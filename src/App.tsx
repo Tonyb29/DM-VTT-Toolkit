@@ -15,6 +15,7 @@ const THEMES = {
   A: {
     label: 'A — Purple',
     bg: '#0f172a',
+    surface: '#1a2236',
     accent: '#7c3aed',
     accentDim: '#1e1b4b',
     accentText: '#c4b5fd',
@@ -24,6 +25,7 @@ const THEMES = {
   B: {
     label: 'B — Teal',
     bg: '#080f1a',
+    surface: '#0d1e20',
     accent: '#0d9488',
     accentDim: '#042f2e',
     accentText: '#5eead4',
@@ -33,6 +35,7 @@ const THEMES = {
   C: {
     label: 'C — Green',
     bg: '#0a0f0a',
+    surface: '#0f1a0f',
     accent: '#16a34a',
     accentDim: '#052e16',
     accentText: '#86efac',
@@ -42,6 +45,7 @@ const THEMES = {
   D: {
     label: 'D — Crimson',
     bg: '#0c0a0a',
+    surface: '#1a0f0f',
     accent: '#dc2626',
     accentDim: '#2d0a0a',
     accentText: '#fca5a5',
@@ -186,7 +190,7 @@ export default function App() {
   const tabDesc  = TAB_META[tab].desc
 
   return (
-    <div data-theme={themeKey} style={{ background: theme.bg, minHeight: '100vh', ['--t-bg' as any]: theme.bg, ['--t-accent' as any]: theme.accent, ['--t-accent-dim' as any]: theme.accentDim, ['--t-accent-text' as any]: theme.accentText, ['--t-accent-mid' as any]: theme.accentMid }}>
+    <div data-theme={themeKey} style={{ background: theme.bg, minHeight: '100vh', ['--t-bg' as any]: theme.bg, ['--t-surface' as any]: theme.surface, ['--t-accent' as any]: theme.accent, ['--t-accent-dim' as any]: theme.accentDim, ['--t-accent-text' as any]: theme.accentText, ['--t-accent-mid' as any]: theme.accentMid }}>
 
       {/* ── Site header ─────────────────────────────────────────── */}
       <div style={{

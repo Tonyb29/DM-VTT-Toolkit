@@ -42,18 +42,18 @@ export default function SettingsModal({ onClose, themeKey, onThemeChange }: Prop
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.6)', zIndex: 9999 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl"
-        style={{ width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="rounded-xl shadow-2xl"
+        style={{ width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', background: 'var(--t-surface)', border: '1px solid #334155' }}>
         <div style={{ padding: '24px 24px 20px' }}>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2 text-white font-bold text-lg">
-              <Key size={18} className="text-purple-400" /> Settings
+              <Key size={18} style={{ color: 'var(--t-accent-mid)' }} /> Settings
             </div>
             <button onClick={onClose} className="text-slate-400 hover:text-white transition">
               <X size={20} />

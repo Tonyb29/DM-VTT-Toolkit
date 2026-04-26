@@ -465,7 +465,7 @@ function downloadText(text: string, filename: string) {
 // ── Styles ────────────────────────────────────────────────────────────────
 const S = {
   page: { background: 'var(--t-bg)', minHeight: '100vh', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif', padding: '24px' } as React.CSSProperties,
-  card: { background: '#1e293b', borderRadius: 8, border: '1px solid #334155', padding: 20, marginBottom: 16 } as React.CSSProperties,
+  card: { background: 'var(--t-surface)', borderRadius: 8, border: '1px solid #334155', padding: 20, marginBottom: 16 } as React.CSSProperties,
   label: { fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.05em', display: 'block', marginBottom: 4 },
   input: { width: '100%', background: 'var(--t-bg)', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 14, boxSizing: 'border-box' as const },
   select: { width: '100%', background: 'var(--t-bg)', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 14 },
@@ -477,7 +477,7 @@ const S = {
   } as React.CSSProperties),
   modeBtn: (active: boolean) => ({
     padding: '7px 18px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13,
-    background: active ? '#be185d' : '#1e293b', color: active ? '#fff' : '#94a3b8',
+    background: active ? '#be185d' : 'var(--t-surface)', color: active ? '#fff' : '#94a3b8',
     border: active ? 'none' : '1px solid #334155',
   } as React.CSSProperties),
   typeBtn: (active: boolean) => ({
