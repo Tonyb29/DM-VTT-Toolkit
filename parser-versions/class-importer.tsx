@@ -772,7 +772,7 @@ export default function ClassImporter() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}
@@ -800,7 +800,7 @@ export default function ClassImporter() {
           <div className="space-y-4">
 
             {/* AI Class Assistant — collapsible */}
-            <div className="bg-slate-800 rounded-lg border border-violet-500/40 overflow-hidden">
+            <div style={{ background: 'var(--t-surface)' }} className="rounded-lg border border-violet-500/40 overflow-hidden">
               {/* Header toggle */}
               <button
                 onClick={() => setAiOpen(o => !o)}
@@ -833,7 +833,7 @@ export default function ClassImporter() {
                   </p>
 
                   {/* What works well callout */}
-                  <div className="bg-slate-700/50 rounded p-3 text-xs text-slate-400 space-y-1">
+                  <div style={{ background: 'var(--t-bg, #0f172a)' }} className="rounded p-3 text-xs text-slate-400 space-y-1">
                     <div className="text-slate-300 font-semibold mb-1">What to include for best results:</div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                       <div><span className="text-violet-400">Class name & flavour</span> — theme, fantasy archetype</div>
@@ -854,7 +854,8 @@ export default function ClassImporter() {
                     value={aiDesc}
                     onChange={e => setAiDesc(e.target.value)}
                     placeholder={"Paste your class description here…\n\nExample: The Warden is a d10 martial class that bonds with a spirit animal. Wisdom saves. Medium armor and shields. Martial weapons. 3 from Athletics, Nature, Perception, Survival, Animal Handling. No spellcasting. Resource: Spirit Tokens (3 at 1, scaling to 8 at 20). Subclasses at level 3: Bear Totem (tankier, resistances), Wolf Totem (pack tactics, flanking bonuses), Eagle Totem (mobility, flying). Features include Spirit Strike, Primal Sense, Totem Shift..."}
-                    className="w-full h-40 bg-slate-700 text-white rounded p-3 text-xs font-mono border border-violet-400/20 focus:border-violet-400 focus:outline-none resize-none"
+                    style={{ background: 'var(--t-bg)' }}
+                    className="w-full h-40 text-white rounded p-3 text-xs font-mono border border-violet-400/20 focus:border-violet-400 focus:outline-none resize-none"
                   />
 
                   {!hasApiKey() && (
@@ -891,7 +892,7 @@ export default function ClassImporter() {
             </div>
 
             {/* Class Definition textarea */}
-            <div className="bg-slate-800 rounded-lg p-5 border border-indigo-500/30">
+            <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-5 border border-indigo-500/30">
               <label className="block text-white font-semibold mb-1">Class Definition</label>
               <p className="text-slate-400 text-xs mb-3">
                 Fill in the template below. Add <span className="text-purple-400 font-mono">Subclass: Name</span> blocks with their own <span className="text-green-400 font-mono">Level N:</span> lines for subclass features.
@@ -900,7 +901,8 @@ export default function ClassImporter() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 placeholder={TEMPLATE}
-                className="w-full h-96 bg-slate-700 text-white rounded p-3 text-xs font-mono border border-indigo-400/30 focus:border-indigo-400 focus:outline-none resize-none"
+                style={{ background: 'var(--t-bg)' }}
+                className="w-full h-96 text-white rounded p-3 text-xs font-mono border border-indigo-400/30 focus:border-indigo-400 focus:outline-none resize-none"
               />
               <div className="mt-3 flex gap-2">
                 <button
@@ -918,7 +920,7 @@ export default function ClassImporter() {
             </div>
 
             {/* Format reference */}
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-600/30 text-xs text-slate-400 space-y-1">
+            <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-4 border border-slate-600/30 text-xs text-slate-400 space-y-1">
               <div className="text-slate-300 font-semibold mb-2">Format Reference</div>
               <div><span className="text-indigo-400">Class:</span> Name</div>
               <div><span className="text-indigo-400">HitDie:</span> d6 / d8 / d10 / d12</div>
@@ -959,7 +961,7 @@ export default function ClassImporter() {
             {summary ? (
               <>
                 {/* Summary card */}
-                <div className="bg-slate-800 rounded-lg p-4 border border-indigo-500/30">
+                <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-4 border border-indigo-500/30">
                   <div className="flex items-center gap-2 text-indigo-400 mb-3">
                     <BookOpen size={18} /><span className="font-semibold">Class Summary</span>
                   </div>
@@ -1000,7 +1002,7 @@ export default function ClassImporter() {
                 </div>
 
                 {/* How to import */}
-                <div className="bg-slate-800 rounded-lg p-4 border border-green-500/20 text-sm text-slate-300 space-y-1">
+                <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-4 border border-green-500/20 text-sm text-slate-300 space-y-1">
                   <div className="text-green-400 font-semibold mb-2">Import Instructions</div>
                   <div><span className="text-white font-bold">1.</span> Copy the <span className="text-amber-400">macro</span> and run it in Foundry (Macros → New → Execute).</div>
                   <div><span className="text-white font-bold">2.</span> The macro creates a folder, all features, subclasses (with their own feature grants), and the class item.</div>
@@ -1009,7 +1011,7 @@ export default function ClassImporter() {
                 </div>
 
                 {/* Feature item list */}
-                <div className="bg-slate-800 rounded-lg p-4 border border-slate-600/30">
+                <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-4 border border-slate-600/30">
                   <div className="text-slate-300 font-semibold text-sm mb-2">
                     Features ({summary.itemNames.length}) · Subclasses ({summary.subclassNames.length})
                   </div>
@@ -1026,7 +1028,7 @@ export default function ClassImporter() {
                 </div>
 
                 {/* Macro — Step 1 */}
-                <div className="bg-slate-800 rounded-lg p-5 border border-amber-500/30">
+                <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-5 border border-amber-500/30">
                   <div className="flex items-center gap-2 mb-1"><Package size={20} className="text-amber-400" /><span className="text-white font-semibold">Step 1 — Complete Import Macro</span></div>
                   <p className="text-xs text-slate-400 mb-3">Creates folder + {summary.features + summary.subclassFeatures} feature(s) + {summary.subclasses} subclass(es) + class item, all wired together (Macros → New → Execute)</p>
                   <div className="flex gap-3">
@@ -1042,7 +1044,7 @@ export default function ClassImporter() {
                 </div>
 
                 {/* Bundle JSON — Step 2 */}
-                <div className="bg-slate-800 rounded-lg p-5 border border-indigo-500/30">
+                <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-5 border border-indigo-500/30">
                   <div className="flex items-center gap-2 mb-1"><FileJson size={20} className="text-indigo-400" /><span className="text-white font-semibold">Step 2 — Class Item JSON</span></div>
                   <p className="text-xs text-slate-400 mb-3">Single class item — paste directly into the Import Data dialog</p>
                   <div className="flex gap-3">
@@ -1058,7 +1060,7 @@ export default function ClassImporter() {
                 </div>
               </>
             ) : (
-              <div className="bg-slate-800 rounded-lg p-12 border border-indigo-500/30 flex flex-col items-center justify-center text-slate-400 h-96 gap-3">
+              <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-12 border border-indigo-500/30 flex flex-col items-center justify-center text-slate-400 h-96 gap-3">
                 <BookOpen size={40} className="text-indigo-600" />
                 <p>Paste your class definition and click Build Class</p>
                 <p className="text-xs text-slate-600">See the format reference panel on the left</p>
