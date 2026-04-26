@@ -1695,7 +1695,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                   </div>
                   {/* Chat command */}
                   <div className="mt-3 bg-slate-700/60 rounded p-3 flex items-center justify-between gap-3">
-                    <span className="text-slate-400 text-xs">Chat command:</span>
+                    <span className="text-slate-400 text-xs">Chat command <span className="text-slate-500">(replace with your handout name):</span></span>
                     <code className="text-red-300 text-xs font-mono flex-1 truncate">!dmtimport handout|{output.name}</code>
                     <button onClick={() => { try { navigator.clipboard?.writeText(`!dmtimport handout|${output.name}`); } catch {} }} className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 transition"><Copy size={12} /></button>
                   </div>
@@ -1711,8 +1711,8 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                         <p><span className="text-red-400 font-bold">2.</span> In your Roll20 campaign: <strong>Game Settings → API Scripts → New Script</strong> → paste the file contents → Save</p>
                         <p><span className="text-red-400 font-bold">3.</span> Make sure your campaign uses the <strong>D&amp;D 5e by Roll20 (2014)</strong> character sheet</p>
                         <p className="text-slate-400 font-semibold mt-2">Each import:</p>
-                        <p><span className="text-red-400 font-bold">4.</span> Copy the JSON above → create a <strong>Handout</strong> in Roll20 → paste JSON into the <strong>GM Notes</strong> field</p>
-                        <p><span className="text-red-400 font-bold">5.</span> In chat, run the command shown above — the character appears in your Journal</p>
+                        <p><span className="text-red-400 font-bold">4.</span> Copy the JSON above → in Roll20 create a <strong>Handout</strong> and give it any name (e.g. <em>import-npc</em>) → paste JSON into its <strong>GM Notes</strong> field</p>
+                        <p><span className="text-red-400 font-bold">5.</span> Update the command below to match your handout's name, then run it in chat — the character appears in your Journal named after the creature</p>
                       </div>
                     )}
                   </div>
