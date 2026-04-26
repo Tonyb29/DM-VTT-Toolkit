@@ -8,6 +8,7 @@
 import React, { useState, useRef } from 'react';
 import { Download, Copy, Info, FileJson, Zap, BarChart3, Edit2, Save, X, Sword, Image, Link, FileText, Loader, Sparkles } from 'lucide-react';
 import { toFantasyGroundsXML } from './fantasy-grounds-exporter';
+import { toRoll20JSON }        from './roll20-exporter';
 import { extractStatBlockFromImage, extractStatBlockFromUrl, generateStatBlockFromName, generateCustomStatBlock, hasApiKey } from './claude-api';
 
 // ─── Pure Helpers ──────────────────────────────────────────────────────────────
@@ -1215,6 +1216,8 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
   const [parseStats, setParseStats] = useState(null);
   const [copied, setCopied]         = useState(false);
   const [copiedFGU, setCopiedFGU]   = useState(false);
+  const [copiedR20, setCopiedR20]   = useState(false);
+  const [showR20Setup, setShowR20Setup] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [editField, setEditField]   = useState(null);
   const [editValue, setEditValue]   = useState('');
@@ -1428,7 +1431,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                         ['D&D Beyond', 'JavaScript app + bot blocking'],
                         ['GM Binder / Homebrewery', 'JavaScript rendered — use Image mode'],
                         ['5e.tools', 'Data loaded dynamically — use Name mode'],
-                        ['Roll20', 'Requires login — use Image mode'],
+                        ['Roll20', 'Requires login — use Image mode to parse, then export via Roll20 tab below'],
                       ].map(([site, reason]) => (
                         <div key={site} className="flex items-start gap-2">
                           <span className="text-yellow-400 text-xs mt-0.5">⚠</span>
@@ -1673,6 +1676,45 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                       className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download XML</button>
                     <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(toFantasyGroundsXML(output)); } else { const el = document.createElement('textarea'); el.value = toFantasyGroundsXML(output); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopiedFGU(true); setTimeout(() => setCopiedFGU(false), 2000); }}
                       className="flex-1 bg-amber-600/50 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copiedFGU ? 'Copied!' : 'Copy XML'}</button>
+                  </div>
+                </div>
+
+                {/* Roll20 JSON Export */}
+                <div className="bg-slate-800 rounded-lg p-5 border border-red-500/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileJson size={20} className="text-red-400" />
+                    <label className="text-white font-semibold">Roll20 NPC JSON</label>
+                    <span style={{ fontSize: 11, color: '#94a3b8', background: '#1e293b', border: '1px solid #334155', borderRadius: 20, padding: '2px 10px', lineHeight: 1.4 }}>2014 sheet</span>
+                  </div>
+                  <pre className="w-full h-64 bg-slate-700 text-red-300 rounded p-3 text-xs font-mono overflow-auto border border-red-400/30">{toRoll20JSON(output)}</pre>
+                  <div className="flex gap-3 mt-4">
+                    <button onClick={() => { const json = toRoll20JSON(output); const b = new Blob([json], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_roll20.json`; a.click(); URL.revokeObjectURL(u); }}
+                      className="flex-1 bg-red-700 hover:bg-red-800 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download JSON</button>
+                    <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(toRoll20JSON(output)); } else { const el = document.createElement('textarea'); el.value = toRoll20JSON(output); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopiedR20(true); setTimeout(() => setCopiedR20(false), 2000); }}
+                      className="flex-1 bg-red-700/50 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copiedR20 ? 'Copied!' : 'Copy JSON'}</button>
+                  </div>
+                  {/* Chat command */}
+                  <div className="mt-3 bg-slate-700/60 rounded p-3 flex items-center justify-between gap-3">
+                    <span className="text-slate-400 text-xs">Chat command:</span>
+                    <code className="text-red-300 text-xs font-mono flex-1 truncate">!dmtimport handout|{output.name}</code>
+                    <button onClick={() => { try { navigator.clipboard?.writeText(`!dmtimport handout|${output.name}`); } catch {} }} className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 transition"><Copy size={12} /></button>
+                  </div>
+                  {/* Setup instructions */}
+                  <div className="mt-3">
+                    <button onClick={() => setShowR20Setup(v => !v)} className="text-xs text-slate-400 hover:text-slate-200 transition flex items-center gap-1">
+                      {showR20Setup ? '▾' : '▸'} {showR20Setup ? 'Hide' : 'First time? Show setup steps'}
+                    </button>
+                    {showR20Setup && (
+                      <div className="mt-2 space-y-2 text-xs text-slate-300 bg-slate-700/40 rounded p-3 border border-slate-600/40">
+                        <p className="text-slate-400 font-semibold">One-time setup (Pro account required):</p>
+                        <p><span className="text-red-400 font-bold">1.</span> Download <a href="https://raw.githubusercontent.com/Tonyb29/DM-VTT-Toolkit/main/DMToolkit-Roll20-Importer.js" target="_blank" rel="noopener noreferrer" className="text-red-300 underline">DMToolkit-Roll20-Importer.js</a></p>
+                        <p><span className="text-red-400 font-bold">2.</span> In your Roll20 campaign: <strong>Game Settings → API Scripts → New Script</strong> → paste the file contents → Save</p>
+                        <p><span className="text-red-400 font-bold">3.</span> Make sure your campaign uses the <strong>D&amp;D 5e by Roll20 (2014)</strong> character sheet</p>
+                        <p className="text-slate-400 font-semibold mt-2">Each import:</p>
+                        <p><span className="text-red-400 font-bold">4.</span> Copy the JSON above → create a <strong>Handout</strong> in Roll20 → paste JSON into the <strong>GM Notes</strong> field</p>
+                        <p><span className="text-red-400 font-bold">5.</span> In chat, run the command shown above — the character appears in your Journal</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
