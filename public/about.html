@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DM VTT Toolkit — Free Foundry VTT Tools for Dungeon Masters</title>
-  <meta name="description" content="Free browser tool for Dungeon Masters. Convert D&D 5e stat blocks to Foundry VTT JSON in seconds. No install, no account required." />
+  <title>DM VTT Toolkit — TTRPG Tools for Dungeon Masters</title>
+  <meta name="description" content="Free browser toolkit for Dungeon Masters. D&D 5e stat block parser, encounter builder, campaign importer, magic items, and more — no install, no account required." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
@@ -294,6 +294,88 @@
     }
     .bottom-cta p { font-size: 15px; color: #64748b; margin-bottom: 32px; }
 
+    /* ── Game Systems Hub ── */
+    .systems {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 64px 32px 56px;
+    }
+    .system-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .system-card {
+      border-radius: 12px;
+      padding: 28px 24px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .system-card:hover { transform: translateY(-2px); }
+    .system-card.live   { border-color: #7c3aed55; }
+    .system-card.live:hover { border-color: #7c3aedaa; }
+    .system-card.wip    { border-color: #d9770655; }
+    .system-card.wip:hover  { border-color: #d97706aa; }
+    .system-card.soon   { border-color: #0e749055; }
+    .system-card.soon:hover { border-color: #0e7490aa; }
+    .system-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .system-name {
+      font-weight: 700;
+      font-size: 18px;
+      color: #e2e8f0;
+    }
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .badge-live  { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+    .badge-wip   { background: #1c1003; color: #fbbf24; border: 1px solid #92400e; }
+    .badge-soon  { background: #042f2e; color: #5eead4; border: 1px solid #134e4a; }
+    .system-sub  { font-size: 12px; color: #64748b; font-weight: 600; letter-spacing: 0.04em; }
+    .system-desc { font-size: 13px; color: #94a3b8; line-height: 1.6; flex: 1; }
+    .system-vtts {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .vtt-pill {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .system-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #7c3aed;
+      color: #fff;
+      border-radius: 7px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: background 0.15s;
+      align-self: flex-start;
+    }
+    .system-cta:hover { background: #6d28d9; }
+
     /* ── Footer ── */
     footer {
       border-top: 1px solid #1e293b;
@@ -325,18 +407,72 @@
   <section class="hero">
     <div class="hero-eyebrow">Free · No install · No account</div>
     <h1>⚔ DM VTT Toolkit</h1>
-    <p>Convert D&amp;D 5e stat blocks to Foundry VTT JSON in seconds. Build encounters, craft magic items, and import full campaigns — all from your browser.</p>
+    <p>Browser-based tools for Dungeon Masters. Parse stat blocks, build encounters, craft magic items, and import full campaign worlds — right into your VTT.</p>
     <div class="hero-ctas">
       <a href="/" class="cta-primary">Launch the App →</a>
       <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener" class="cta-secondary">☕ Support on Ko-fi</a>
     </div>
     <div class="pills">
-      <span class="pill">Foundry VTT dnd5e v4+</span>
-      <span class="pill">Fantasy Grounds XML</span>
+      <span class="pill">Foundry VTT · Fantasy Grounds · Roll20</span>
       <span class="pill">D&amp;D 5e 2014 &amp; 2024</span>
       <span class="pill">AI-powered (BYOK)</span>
-      <span class="pill">MIT Licensed</span>
+      <span class="pill">CC BY-NC 4.0</span>
       <span class="pill">No account required</span>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- Game System Hub -->
+  <section class="systems">
+    <p class="section-label">Game Systems</p>
+    <h2 class="section-title">Choose Your System</h2>
+    <div class="system-grid">
+
+      <!-- D&D 5e -->
+      <div class="system-card live">
+        <div class="system-header">
+          <span class="system-name">D&amp;D 5e</span>
+          <span class="status-badge badge-live">Live</span>
+        </div>
+        <div class="system-sub">2014 &amp; 2024 · Dungeons &amp; Dragons</div>
+        <div class="system-desc">Full suite: stat block parser, batch importer, encounter builder, campaign builder, magic item creator, celestial calculator, and player options creator.</div>
+        <div class="system-vtts">
+          <span class="vtt-pill">Foundry VTT</span>
+          <span class="vtt-pill">Fantasy Grounds</span>
+          <span class="vtt-pill">Roll20</span>
+        </div>
+        <a href="/" class="system-cta">Open D&amp;D Tools →</a>
+      </div>
+
+      <!-- Pathfinder 2e -->
+      <div class="system-card wip">
+        <div class="system-header">
+          <span class="system-name">Pathfinder 2e</span>
+          <span class="status-badge badge-wip">In Progress</span>
+        </div>
+        <div class="system-sub">Remaster Edition · Paizo</div>
+        <div class="system-desc">Stat block parser and Foundry importer targeting the pf2e system. PF2e's structured action economy and trait system are being mapped to the Foundry actor format.</div>
+        <div class="system-vtts">
+          <span class="vtt-pill">Foundry VTT</span>
+        </div>
+        <span style="font-size:12px; color:#475569; margin-top:4px;">Available when ready — no ETA</span>
+      </div>
+
+      <!-- Draw Steel -->
+      <div class="system-card soon">
+        <div class="system-header">
+          <span class="system-name">Draw Steel</span>
+          <span class="status-badge badge-soon">Coming Soon</span>
+        </div>
+        <div class="system-sub">MCDM Productions · Matt Colville</div>
+        <div class="system-desc">Stat block parser and Foundry importer for Draw Steel's unique action economy — Malice, Villain Power, Triggered Actions, and Maneuvers mapped to native Foundry items.</div>
+        <div class="system-vtts">
+          <span class="vtt-pill">Foundry VTT</span>
+        </div>
+        <span style="font-size:12px; color:#475569; margin-top:4px;">Planned for v2</span>
+      </div>
+
     </div>
   </section>
 
@@ -344,7 +480,7 @@
 
   <!-- Features -->
   <section class="features">
-    <p class="section-label">What's inside</p>
+    <p class="section-label">D&amp;D 5e — Live Today</p>
     <h2 class="section-title">7 Tools in One App</h2>
     <div class="feature-grid">
 
@@ -434,7 +570,7 @@
         <div class="api-note-icon">🔑</div>
         <div>
           <h3>AI features require a Claude API key</h3>
-          <p>Name lookup, AI generation, image parsing, and magic item creation use the Claude API. Bring your own key — it's stored locally in your browser, never sent to our servers. <a href="https://console.anthropic.ic/settings/keys" target="_blank" rel="noopener">Get a key at Anthropic →</a></p>
+          <p>Name lookup, AI generation, image parsing, and magic item creation use the Claude API. Bring your own key — it's stored locally in your browser, never sent to our servers. <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Get a key at Anthropic →</a></p>
         </div>
       </div>
     </div>
@@ -458,7 +594,7 @@
     <span>·</span>
     <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener">Ko-fi</a>
     <span>·</span>
-    <span style="color:#334155; font-size:12px;">MIT Licensed · Not affiliated with Wizards of the Coast or Foundry VTT</span>
+    <span style="color:#334155; font-size:12px;">CC BY-NC 4.0 · Not affiliated with Wizards of the Coast, Foundry VTT, Paizo, or MCDM</span>
   </footer>
 
 </body>
