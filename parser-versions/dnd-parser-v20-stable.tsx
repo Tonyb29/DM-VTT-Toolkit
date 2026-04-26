@@ -1362,7 +1362,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
               {inputMode === 'text' && (
                 <>
                   <textarea value={input} onChange={e => setInput(e.target.value)} placeholder="Paste D&D 5e stat block here..."
-                    className="w-full h-56 text-white rounded p-3 text-sm font-mono border border-purple-400/30 focus:border-purple-400 focus:outline-none resize-none" />
+                    style={{ background: 'var(--t-bg)' }} className="w-full h-56 text-white rounded p-3 text-sm font-mono border border-purple-400/30 focus:border-purple-400 focus:outline-none resize-none" />
                   <div className="mt-3 flex gap-2">
                     <button onClick={() => runParse(input)} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
                       <Zap size={16} /> Parse Stat Block
@@ -1401,7 +1401,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                     <input type="url" value={urlInput} onChange={e => setUrlInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleUrlExtract()}
                       placeholder="https://dnd5e.wikidot.com/monster:goblin"
-                      className="w-full text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none" />
+                      style={{ background: 'var(--t-bg)' }} className="w-full text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none" />
                     <button onClick={handleUrlExtract} disabled={aiLoading || !urlInput.trim()}
                       className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
                       {aiLoading ? <><Loader size={16} className="animate-spin" /> Fetching...</> : <><Link size={16} /> Extract from URL</>}
@@ -1465,12 +1465,12 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                       onChange={e => setNameInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleNameGenerate()}
                       placeholder="e.g. Vampire Familiar, Adult Red Dragon..."
-                      className="w-full text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none"
+                      style={{ background: 'var(--t-bg)' }} className="w-full text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none"
                     />
                     <select
                       value={nameSource}
                       onChange={e => setNameSource(e.target.value)}
-                      className="w-full text-white rounded p-2 text-sm border border-slate-600 focus:border-purple-400 focus:outline-none"
+                      style={{ background: 'var(--t-bg)' }} className="w-full text-white rounded p-2 text-sm border border-slate-600 focus:border-purple-400 focus:outline-none"
                     >
                       <option value="any">Any sourcebook</option>
                       <option value="the 2024 Monster Manual">2024 Monster Manual</option>
@@ -1506,9 +1506,9 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                         onChange={e => setCustomName(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleCustomGenerate()}
                         placeholder="Creature name — e.g. Goblin, Ancient Red Dragon..."
-                        className="flex-1 text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
+                        style={{ background: 'var(--t-bg)' }} className="flex-1 text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
                       />
-                      <div className="flex items-center gap-2 border border-violet-400/30 rounded px-3">
+                      <div style={{ background: 'var(--t-bg)' }} className="flex items-center gap-2 border border-violet-400/30 rounded px-3">
                         <span className="text-slate-400 text-xs whitespace-nowrap">CR</span>
                         <input
                           type="text"
@@ -1524,7 +1524,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                       value={customCtx}
                       onChange={e => setCustomCtx(e.target.value)}
                       placeholder="Optional: theme, traits, environment — e.g. undead, frost giant chieftain, fire breath"
-                      className="w-full text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
+                      style={{ background: 'var(--t-bg)' }} className="w-full text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
                     />
                     <button
                       onClick={handleCustomGenerate}
@@ -1549,7 +1549,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                 <div className="mt-3">
                   <div className="text-slate-400 text-xs mb-1">Extracted text — edit if needed then re-parse:</div>
                   <textarea value={input} onChange={e => setInput(e.target.value)}
-                    className="w-full h-32 text-white rounded p-2 text-xs font-mono border border-slate-600 focus:outline-none resize-none" />
+                    style={{ background: 'var(--t-bg)' }} className="w-full h-32 text-white rounded p-2 text-xs font-mono border border-slate-600 focus:outline-none resize-none" />
                   <button onClick={() => runParse(input)} className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
                     <Zap size={16} /> Re-parse
                   </button>
@@ -1599,7 +1599,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                           <span className="text-slate-400 w-24 font-semibold">{field.name}:</span>
                           {editField === field.name ? (
                             <>
-                              <input type="text" value={editValue} onChange={e => setEditValue(e.target.value)} className="flex-1 text-white rounded px-2 py-1 text-sm border border-amber-400 focus:outline-none" />
+                              <input type="text" value={editValue} onChange={e => setEditValue(e.target.value)} style={{ background: 'var(--t-bg)' }} className="flex-1 text-white rounded px-2 py-1 text-sm border border-amber-400 focus:outline-none" />
                               <button onClick={saveEdit} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded flex items-center gap-1"><Save size={14} /> Save</button>
                               <button onClick={() => setEditField(null)} className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"><X size={14} /></button>
                             </>
