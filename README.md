@@ -3,7 +3,7 @@
 A browser-based toolkit for Dungeon Masters. Convert D&D 5e stat blocks, build encounters, manage campaign worlds, create magic items, track celestial events, and build player options — all from a single-page app with no server required.
 
 **Live site:** [dmtoolkit.org](https://dmtoolkit.org)
-**Current version:** v1.0 (Phase 19 complete)
+**Current version:** v1.1 (Phase 21 complete)
 **License:** [CC BY-NC 4.0](LICENSE) — free for personal use; commercial use requires written permission
 
 ---
@@ -42,7 +42,7 @@ Paste any D&D 5e stat block and get a Foundry actor JSON, FGU XML, and Roll20 JS
 - ~160 SRD spells auto-resolved for school + level
 - Sidekick format (Tasha's)
 
-**Export:** Foundry JSON · FGU XML · Roll20 JSON · Add to Encounter Builder
+**Export:** Platform selector tab row — choose **Foundry VTT** · **Fantasy Grounds** · **Roll20** — one panel shown at a time. Foundry panel also includes Add to Encounter Builder.
 
 ---
 
@@ -204,9 +204,11 @@ pkill -f vite 2>/dev/null; sleep 1; nohup npx vite --port 3000 --force > /tmp/vi
 | 18b | Celestial Calculator (Tab 6) — night sky, moons, calendar, Foundry module | ✅ Complete |
 | 19 | Player Tools (Tab 7) — Class, Subclass, Species, Background creators | ✅ Complete |
 | 20 | Roll20 NPC JSON export + API importer script | ✅ Complete |
-| — | Theme picker in Settings modal; all tabs theme-aware | 🔜 Next |
-| — | Game system selector — hub page for D&D / Draw Steel / future systems | 🔜 Planned |
-| — | Draw Steel (MCDM) system support | 🔜 Planned |
+| 21 | Theme system — Settings modal picker; all 7 tabs theme-aware via CSS vars | ✅ Complete |
+| 21b | Platform selector — tabbed Foundry / FGU / Roll20 export in parser | ✅ Complete |
+| 21c | About page hub — game system cards (D&D live, PF2e in progress, Draw Steel coming) | ✅ Complete |
+| — | Draw Steel (MCDM) system support | 🔜 Planned v2 |
+| — | Pathfinder 2e system support | 🔄 In Progress |
 | — | Desktop app (Electron/Tauri) | ⏸ Deferred |
 
 ---
@@ -215,9 +217,9 @@ pkill -f vite 2>/dev/null; sleep 1; nohup npx vite --port 3000 --force > /tmp/vi
 
 | System | Market | Status | Notes |
 |---|---|---|---|
-| **D&D 5e (2014/2024)** | ~45% | ✅ Live | Core product |
-| **Draw Steel (MCDM)** | Growing | 🔜 Priority v2 | No tooling gap yet — first-mover window |
-| **Pathfinder 2e** | ~10-15% | ⏸ Watch | Demiplane nexus deal — monitor |
+| **D&D 5e (2014/2024)** | ~45% | ✅ Live | Core product — 7 tools, all 3 VTTs |
+| **Pathfinder 2e** | ~10-15% | 🔄 In Progress | Remaster edition; Foundry target |
+| **Draw Steel (MCDM)** | Growing | 🔜 Planned v2 | First-mover window; no Demiplane deal |
 | **Daggerheart** | Growing | ⏸ Watch | Demiplane official Foundry system |
 | **Cyberpunk Red** | Niche | ⏸ Deferred | Demiplane publisher + Roll20 deal |
 | **Vampire: The Masquerade** | Medium | ⏸ Watch | Demiplane nexus deal |
