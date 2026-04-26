@@ -303,15 +303,19 @@
         return;
       }
 
-      const handoutName = parts[1].replace(/^handout\|/, '').trim();
-      const handouts    = findObjs({ _type: 'handout', name: handoutName });
+      // Rebuild handout name — supports spaces: "!dmtimport handout|My Monster"
+      const handoutName = msg.content.trim().replace(/^!dmtimport\s+handout\|/, '').trim();
 
-      if (!handouts.length) {
+      const handout = filterObjs((obj) =>
+        obj.get('_type') === 'handout' && obj.get('name') === handoutName
+      )[0];
+
+      if (!handout) {
         errGm(who, `Handout "${handoutName}" not found. Check the name matches exactly (case-sensitive).`);
         return;
       }
 
-      handouts[0].get('gmnotes', (raw) => {
+      handout.get('gmnotes', (raw) => {
         if (!raw || raw === 'null') {
           errGm(who, `Handout "${handoutName}" has no GM Notes. Paste your DM Toolkit JSON there first.`);
           return;
