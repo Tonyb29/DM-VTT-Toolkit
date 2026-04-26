@@ -119,7 +119,7 @@ function buildFoundryMacro(encounter: Encounter): string {
 // ─── STYLES ──────────────────────────────────────────────────
 
 const S = {
-  page:    { minHeight: '100vh', background: '#0f172a', color: '#e2e8f0', fontFamily: 'monospace', display: 'flex' } as const,
+  page:    { minHeight: '100vh', background: 'var(--t-bg)', color: '#e2e8f0', fontFamily: 'monospace', display: 'flex' } as const,
   sidebar: { width: 240, minWidth: 240, background: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column' as const },
   main:    { flex: 1, padding: 24, overflowY: 'auto' as const },
   muted:   { color: '#64748b', fontSize: 12 } as const,
@@ -167,12 +167,12 @@ function CreatureCard({ creature, onQuantity, onRemove }: {
         <button
           onClick={() => onQuantity(creature.id, -1)}
           disabled={creature.quantity <= 1}
-          style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid #475569', background: '#0f172a', color: '#94a3b8', cursor: creature.quantity <= 1 ? 'not-allowed' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: creature.quantity <= 1 ? 0.4 : 1 }}
+          style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid #475569', background: 'var(--t-bg)', color: '#94a3b8', cursor: creature.quantity <= 1 ? 'not-allowed' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: creature.quantity <= 1 ? 0.4 : 1 }}
         >−</button>
         <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15, minWidth: 24, textAlign: 'center' }}>{creature.quantity}</span>
         <button
           onClick={() => onQuantity(creature.id, 1)}
-          style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid #475569', background: '#0f172a', color: '#94a3b8', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid #475569', background: 'var(--t-bg)', color: '#94a3b8', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >+</button>
       </div>
 
@@ -322,7 +322,7 @@ export default function EncounterBuilder({ encounters, onUpdate }: {
                   onBlur={() => renameEncounter(e.id, editName || e.name)}
                   onKeyDown={ev => { if (ev.key === 'Enter') renameEncounter(e.id, editName || e.name) }}
                   onClick={ev => ev.stopPropagation()}
-                  style={{ flex: 1, background: '#0f172a', border: '1px solid #7c3aed', borderRadius: 4, color: '#f1f5f9', fontSize: 12, padding: '2px 6px', fontFamily: 'monospace' }}
+                  style={{ flex: 1, background: 'var(--t-bg)', border: '1px solid #7c3aed', borderRadius: 4, color: '#f1f5f9', fontSize: 12, padding: '2px 6px', fontFamily: 'monospace' }}
                 />
               ) : (
                 <>
@@ -416,7 +416,7 @@ export default function EncounterBuilder({ encounters, onUpdate }: {
                   <input
                     type="number" min={1} max={10} value={partySize}
                     onChange={e => setPartySize(Math.max(1, Math.min(10, +e.target.value)))}
-                    style={{ width: 44, background: '#0f172a', border: '1px solid #475569', borderRadius: 4, color: '#f1f5f9', fontSize: 13, padding: '3px 6px', textAlign: 'center', fontFamily: 'monospace' }}
+                    style={{ width: 44, background: 'var(--t-bg)', border: '1px solid #475569', borderRadius: 4, color: '#f1f5f9', fontSize: 13, padding: '3px 6px', textAlign: 'center', fontFamily: 'monospace' }}
                   />
                   <span style={{ color: '#64748b', fontSize: 12 }}>players</span>
                 </div>
@@ -425,7 +425,7 @@ export default function EncounterBuilder({ encounters, onUpdate }: {
                   <input
                     type="number" min={1} max={20} value={partyLevel}
                     onChange={e => setPartyLevel(Math.max(1, Math.min(20, +e.target.value)))}
-                    style={{ width: 44, background: '#0f172a', border: '1px solid #475569', borderRadius: 4, color: '#f1f5f9', fontSize: 13, padding: '3px 6px', textAlign: 'center', fontFamily: 'monospace' }}
+                    style={{ width: 44, background: 'var(--t-bg)', border: '1px solid #475569', borderRadius: 4, color: '#f1f5f9', fontSize: 13, padding: '3px 6px', textAlign: 'center', fontFamily: 'monospace' }}
                   />
                 </div>
 
@@ -448,7 +448,7 @@ export default function EncounterBuilder({ encounters, onUpdate }: {
                 const pct = (v: number) => `${Math.min(100, (v / max) * 100).toFixed(1)}%`
                 return (
                   <div style={{ marginTop: 12 }}>
-                    <div style={{ position: 'relative', height: 8, background: '#0f172a', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', height: 8, background: 'var(--t-bg)', borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: pct(xp), background: difficulty?.color ?? '#7c3aed', borderRadius: 4, transition: 'width 0.3s' }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>

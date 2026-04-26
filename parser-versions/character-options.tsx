@@ -317,9 +317,9 @@ ${actorLine}
 const S = {
   card:  { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 16, marginBottom: 12 } as const,
   label: { display: 'block', fontSize: 12, color: '#94a3b8', fontWeight: 600, marginBottom: 4 } as const,
-  input: { width: '100%', background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, boxSizing: 'border-box' as const } as const,
-  textarea: { width: '100%', background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, fontFamily: 'monospace', boxSizing: 'border-box' as const, resize: 'vertical' as const } as const,
-  select: { background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13 } as const,
+  input: { width: '100%', background: 'var(--t-bg)', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, boxSizing: 'border-box' as const } as const,
+  textarea: { width: '100%', background: 'var(--t-bg)', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, fontFamily: 'monospace', boxSizing: 'border-box' as const, resize: 'vertical' as const } as const,
+  select: { background: 'var(--t-bg)', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13 } as const,
   btn: (bg: string) => ({ background: bg, border: 'none', borderRadius: 6, color: '#fff', padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 } as const),
   code: { background: '#0d1117', border: '1px solid #1e293b', borderRadius: 6, padding: 12, fontFamily: 'monospace', fontSize: 11, color: '#94a3b8', whiteSpace: 'pre' as const, overflowX: 'auto' as const, maxHeight: 360, overflowY: 'auto' as const } as const,
 }
@@ -535,7 +535,7 @@ function SubclassCreator() {
         </div>
 
         {features.map((f, i) => (
-          <div key={f.id} style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 6, padding: 12, marginBottom: 8 }}>
+          <div key={f.id} style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 6, padding: 12, marginBottom: 8 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 120px auto', gap: 8, marginBottom: 8, alignItems: 'end' }}>
               <div>
                 <label style={S.label}>Level</label>
@@ -954,7 +954,7 @@ function SpeciesCreator() {
           </button>
         </div>
         {traits.map((t, idx) => (
-          <div key={t.id} style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 6, padding: 12, marginBottom: 8 }}>
+          <div key={t.id} style={{ background: 'var(--t-bg)', border: '1px solid #1e293b', borderRadius: 6, padding: 12, marginBottom: 8 }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
               <input value={t.name} onChange={e => updateTrait(t.id, 'name', e.target.value)}
                 placeholder={`Trait ${idx + 1} name`} style={{ ...S.input, flex: 1 }} />
@@ -1419,7 +1419,7 @@ export default function CharacterOptions() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0f172a', color: '#e2e8f0' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--t-bg)', color: '#e2e8f0' }}>
       <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e293b', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
         {modeBtn('class',      'Class',      '#4338ca')}
         {modeBtn('subclass',   'Subclass',   '#3730a3')}

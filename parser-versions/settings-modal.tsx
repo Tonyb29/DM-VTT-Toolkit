@@ -2,9 +2,17 @@ import { useState, useEffect } from 'react'
 import { X, Key, CheckCircle, AlertTriangle, Trash2, ChevronDown, ChevronRight, Shield, ExternalLink } from 'lucide-react'
 import { getApiKey, setApiKey, clearApiKey } from './claude-api'
 
-type Props = { onClose: () => void }
+type ThemeKey = 'A' | 'B' | 'C' | 'D'
+const THEME_SWATCHES: { key: ThemeKey; label: string; accent: string; bg: string }[] = [
+  { key: 'A', label: 'Purple',  accent: '#7c3aed', bg: '#1e1b4b' },
+  { key: 'B', label: 'Teal',    accent: '#0d9488', bg: '#042f2e' },
+  { key: 'C', label: 'Green',   accent: '#16a34a', bg: '#052e16' },
+  { key: 'D', label: 'Crimson', accent: '#dc2626', bg: '#2d0a0a' },
+]
 
-export default function SettingsModal({ onClose }: Props) {
+type Props = { onClose: () => void; themeKey?: ThemeKey; onThemeChange?: (k: ThemeKey) => void }
+
+export default function SettingsModal({ onClose, themeKey, onThemeChange }: Props) {
   const [keyInput, setKeyInput]         = useState('')
   const [saved, setSaved]               = useState(false)
   const [hasKey, setHasKey]             = useState(false)
@@ -94,7 +102,7 @@ export default function SettingsModal({ onClose }: Props) {
               onKeyDown={e => e.key === 'Enter' && save()}
               placeholder="sk-ant-api03-..."
               style={{
-                background: '#0f172a', color: '#e2e8f0', fontSize: 13,
+                background: 'var(--t-bg)', color: '#e2e8f0', fontSize: 13,
                 borderRadius: 6, padding: '8px 12px',
                 border: '1px solid #334155', outline: 'none',
                 fontFamily: 'monospace', width: '100%', boxSizing: 'border-box' as const,
@@ -132,13 +140,45 @@ export default function SettingsModal({ onClose }: Props) {
             </div>
           </div>
 
+          {/* Theme picker */}
+          {onThemeChange && (
+            <div style={{ marginTop: 20 }}>
+              <label style={{ color: '#cbd5e1', fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 10 }}>
+                Theme
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {THEME_SWATCHES.map(({ key, label, accent, bg }) => {
+                  const active = themeKey === key
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => onThemeChange(key)}
+                      title={label}
+                      style={{
+                        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                        background: active ? bg : '#1e293b',
+                        border: `2px solid ${active ? accent : '#334155'}`,
+                        borderRadius: 8, padding: '8px 4px', cursor: 'pointer',
+                        boxShadow: active ? `0 0 10px ${accent}55` : 'none',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: accent, display: 'block' }} />
+                      <span style={{ fontSize: 11, color: active ? '#fff' : '#64748b', fontWeight: active ? 700 : 400 }}>{label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Walkthrough — collapsible */}
           <div style={{ marginTop: 16, border: '1px solid #1e293b', borderRadius: 8, overflow: 'hidden' }}>
             <button
               onClick={() => setShowWalkthrough(v => !v)}
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 14px', background: '#0f172a', border: 'none', cursor: 'pointer',
+                padding: '10px 14px', background: 'var(--t-bg)', border: 'none', cursor: 'pointer',
                 color: '#94a3b8', fontSize: 13, fontWeight: 600,
               }}
             >

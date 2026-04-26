@@ -186,7 +186,7 @@ export default function App() {
   const tabDesc  = TAB_META[tab].desc
 
   return (
-    <div data-theme={themeKey} style={{ background: theme.bg, minHeight: '100vh' }}>
+    <div data-theme={themeKey} style={{ background: theme.bg, minHeight: '100vh', ['--t-bg' as any]: theme.bg, ['--t-accent' as any]: theme.accent, ['--t-accent-dim' as any]: theme.accentDim, ['--t-accent-text' as any]: theme.accentText, ['--t-accent-mid' as any]: theme.accentMid }}>
 
       {/* ── Site header ─────────────────────────────────────────── */}
       <div style={{
@@ -390,7 +390,7 @@ export default function App() {
       </div>
 
       {showSettings && (
-        <SettingsModal onClose={() => { setShowSettings(false); setApiKeySet(hasApiKey()) }} />
+        <SettingsModal onClose={() => { setShowSettings(false); setApiKeySet(hasApiKey()) }} themeKey={themeKey} onThemeChange={selectTheme} />
       )}
 
       {/* Footer */}
@@ -399,33 +399,12 @@ export default function App() {
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
         fontSize: 11, color: '#334155', marginTop: 32,
       }}>
-        <span>© 2026 Tony B — MIT License</span>
+        <span>© 2026 Tony B — CC BY-NC 4.0</span>
         <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'none' }}>Privacy Policy</a>
         <a href="https://github.com/Tonyb29/DM-VTT-Toolkit" target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'none' }}>GitHub</a>
         <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'none' }}>☕ Ko-fi</a>
       </div>
 
-      {/* ── Theme picker widget ──────────────────────────────────── */}
-      <div style={{
-        position: 'fixed', bottom: 16, right: 16, zIndex: 900,
-        background: '#0f172a', border: '1px solid #334155', borderRadius: 10,
-        padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8,
-        boxShadow: '0 4px 24px #000a',
-      }}>
-        <span style={{ fontSize: 10, color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Theme
-        </span>
-        {(Object.keys(THEMES) as ThemeKey[]).map(k => (
-          <button key={k} onClick={() => selectTheme(k)} title={THEMES[k].label} style={{
-            background: themeKey === k ? THEMES[k].accent : '#1e293b',
-            border: themeKey === k ? `2px solid ${THEMES[k].accentText}` : '2px solid transparent',
-            borderRadius: 6, color: themeKey === k ? '#fff' : '#64748b',
-            padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 700,
-            transition: 'all 0.15s',
-          }}>{k}</button>
-        ))}
-        <span style={{ fontSize: 10, color: '#334155' }}>{THEMES[themeKey].label.split('—')[1]?.trim()}</span>
-      </div>
     </div>
   )
 }

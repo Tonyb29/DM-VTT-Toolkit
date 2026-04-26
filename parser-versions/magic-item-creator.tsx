@@ -464,12 +464,12 @@ function downloadText(text: string, filename: string) {
 
 // ── Styles ────────────────────────────────────────────────────────────────
 const S = {
-  page: { background: '#0f172a', minHeight: '100vh', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif', padding: '24px' } as React.CSSProperties,
+  page: { background: 'var(--t-bg)', minHeight: '100vh', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif', padding: '24px' } as React.CSSProperties,
   card: { background: '#1e293b', borderRadius: 8, border: '1px solid #334155', padding: 20, marginBottom: 16 } as React.CSSProperties,
   label: { fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.05em', display: 'block', marginBottom: 4 },
-  input: { width: '100%', background: '#0f172a', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 14, boxSizing: 'border-box' as const },
-  select: { width: '100%', background: '#0f172a', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 14 },
-  textarea: { width: '100%', background: '#0f172a', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 13, fontFamily: 'monospace', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  input: { width: '100%', background: 'var(--t-bg)', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 14, boxSizing: 'border-box' as const },
+  select: { width: '100%', background: 'var(--t-bg)', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 14 },
+  textarea: { width: '100%', background: 'var(--t-bg)', border: '1px solid #475569', borderRadius: 6, padding: '8px 10px', color: '#e2e8f0', fontSize: 13, fontFamily: 'monospace', resize: 'vertical' as const, boxSizing: 'border-box' as const },
   btn: (color: string) => ({
     background: color, color: '#fff', border: 'none', borderRadius: 6,
     padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: 13,
@@ -482,7 +482,7 @@ const S = {
   } as React.CSSProperties),
   typeBtn: (active: boolean) => ({
     flex: 1, padding: '8px 0', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13,
-    background: active ? '#7e22ce' : '#0f172a', color: active ? '#fff' : '#94a3b8',
+    background: active ? '#7e22ce' : 'var(--t-bg)', color: active ? '#fff' : '#94a3b8',
     border: active ? 'none' : '1px solid #334155',
   } as React.CSSProperties),
   row: { display: 'flex', gap: 12, alignItems: 'flex-end' } as React.CSSProperties,
@@ -1008,7 +1008,7 @@ export default function MagicItemCreator() {
         {itemJson && (
           <>
             {/* Item preview header */}
-            <div style={{ ...S.card, background: '#0f172a', border: '1px solid #7e22ce', marginBottom: 12 }}>
+            <div style={{ ...S.card, background: 'var(--t-bg)', border: '1px solid #7e22ce', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Wand2 size={18} color="#be185d" />
                 <span style={{ fontWeight: 700, fontSize: 16 }}>{itemName}</span>

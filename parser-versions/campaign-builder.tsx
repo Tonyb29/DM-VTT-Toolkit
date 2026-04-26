@@ -41,7 +41,7 @@ const LS_KEY = 'dnd_campaign_preset'
 // ─── STYLES ──────────────────────────────────────────────────
 
 const S = {
-  page:    { minHeight: '100vh', background: '#0f172a', color: '#e2e8f0', fontFamily: 'monospace', display: 'flex', gap: 0 } as const,
+  page:    { minHeight: '100vh', background: 'var(--t-bg)', color: '#e2e8f0', fontFamily: 'monospace', display: 'flex', gap: 0 } as const,
   sidebar: { width: 260, minWidth: 260, background: '#1e293b', borderRight: '1px solid #334155', overflowY: 'auto' as const, padding: '16px 0' },
   main:    { flex: 1, overflowY: 'auto' as const, padding: 24 },
   card:    { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 20, marginBottom: 16 },
@@ -483,7 +483,7 @@ function EditModal({ target, preset, onSave, onClose }: {
   const ALIGNMENTS   = ['lawful good','neutral good','chaotic good','lawful neutral','true neutral','chaotic neutral','lawful evil','neutral evil','chaotic evil','unaligned']
 
   const F = {
-    field:  { width: '100%', background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, fontFamily: 'monospace', boxSizing: 'border-box' as const },
+    field:  { width: '100%', background: 'var(--t-bg)', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '7px 10px', fontSize: 13, fontFamily: 'monospace', boxSizing: 'border-box' as const },
     label:  { color: '#94a3b8', fontSize: 12, display: 'block' as const, marginBottom: 4 },
     group:  { marginBottom: 12 },
     grid2:  { display: 'grid' as const, gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 },
@@ -633,7 +633,7 @@ function EditModal({ target, preset, onSave, onClose }: {
                 </button>
               </div>
               {jPages.map((page, i) => (
-                <div key={i} style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 6, padding: 10, marginBottom: 8 }}>
+                <div key={i} style={{ background: 'var(--t-bg)', border: '1px solid #334155', borderRadius: 6, padding: 10, marginBottom: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <input
                       style={{ ...F.field, flex: 1 }}
@@ -1104,7 +1104,7 @@ export default function CampaignBuilder() {
               )}
               <button
                 onClick={() => { if (confirm('Reset campaign to defaults? All unsaved edits will be lost.')) loadPreset(preset.id === 'eldoria' ? ELDORIA_PRESET : BLANK_PRESET) }}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0f172a', color: '#64748b', border: '1px solid #1e293b', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--t-bg)', color: '#64748b', border: '1px solid #1e293b', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
                 title="Discard all edits and reload the original preset"
               >
                 Reset
@@ -1118,14 +1118,14 @@ export default function CampaignBuilder() {
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0f172a', color: '#94a3b8', border: '1px solid #334155', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--t-bg)', color: '#94a3b8', border: '1px solid #334155', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
               >
                 <Upload size={12} />
                 Import JSON
               </button>
               <button
                 onClick={handleExport}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0f172a', color: '#94a3b8', border: '1px solid #334155', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--t-bg)', color: '#94a3b8', border: '1px solid #334155', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
               >
                 <Download size={12} />
                 Export JSON
@@ -1150,7 +1150,7 @@ export default function CampaignBuilder() {
                 onChange={e => setAiDesc(e.target.value)}
                 placeholder="e.g. A grimdark steampunk world with three warring city-states, clockwork constructs as enemies, and noble houses vying for magical fuel sources..."
                 rows={5}
-                style={{ width: '100%', background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '8px 12px', fontSize: 13, fontFamily: 'monospace', resize: 'vertical', boxSizing: 'border-box' as const }}
+                style={{ width: '100%', background: 'var(--t-bg)', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '8px 12px', fontSize: 13, fontFamily: 'monospace', resize: 'vertical', boxSizing: 'border-box' as const }}
               />
               {aiError && (
                 <div style={{ color: '#f87171', background: '#7f1d1d20', border: '1px solid #7f1d1d', borderRadius: 6, padding: '7px 12px', fontSize: 12, marginTop: 8 }}>
@@ -1224,7 +1224,7 @@ export default function CampaignBuilder() {
               const npcs = preset.npcs.filter(n => n.continent === c.name)
               const id = `step3-${c.name}`
               return (
-                <div key={c.name} style={{ background: '#0f172a', borderRadius: 6, padding: 14, border: '1px solid #334155' }}>
+                <div key={c.name} style={{ background: 'var(--t-bg)', borderRadius: 6, padding: 14, border: '1px solid #334155' }}>
                   <div style={{ ...S.h3, marginBottom: 4 }}>{c.name}</div>
                   <div style={{ ...S.muted, marginBottom: 10 }}>
                     {npcs.map(n => n.name.split(' ').slice(-1)[0]).join(' · ')} ({npcs.length} actors)
@@ -1361,7 +1361,7 @@ export default function CampaignBuilder() {
                   key={r.name}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
-                    background: '#0f172a', borderRadius: 4, padding: '6px 10px',
+                    background: 'var(--t-bg)', borderRadius: 4, padding: '6px 10px',
                     border: `1px solid ${r.status === 'done' ? '#166534' : r.status === 'error' ? '#7f1d1d' : '#334155'}`,
                   }}
                 >
@@ -1503,7 +1503,7 @@ export default function CampaignBuilder() {
                       key={r.name}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 8,
-                        background: '#0f172a', borderRadius: 4, padding: '6px 10px',
+                        background: 'var(--t-bg)', borderRadius: 4, padding: '6px 10px',
                         border: `1px solid ${r.status === 'done' ? '#166534' : r.status === 'error' ? '#7f1d1d' : '#334155'}`,
                       }}
                     >
@@ -1558,7 +1558,7 @@ export default function CampaignBuilder() {
         </div>
 
         {/* Footer note */}
-        <div style={{ ...S.card, background: '#0f172a' }}>
+        <div style={{ ...S.card, background: 'var(--t-bg)' }}>
           <div style={S.h3}>After Import</div>
           <ul style={{ color: '#64748b', fontSize: 12, margin: 0, paddingLeft: 16, lineHeight: 1.8 }}>
             <li>All macros are update-in-place safe — re-running creates only new entries, updates existing ones</li>
