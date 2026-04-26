@@ -1218,6 +1218,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
   const [copiedFGU, setCopiedFGU]   = useState(false);
   const [copiedR20, setCopiedR20]   = useState(false);
   const [showR20Setup, setShowR20Setup] = useState(false);
+  const [exportPlatform, setExportPlatform] = useState<'foundry' | 'fgu' | 'roll20'>('foundry');
   const [showEditor, setShowEditor] = useState(false);
   const [editField, setEditField]   = useState(null);
   const [editValue, setEditValue]   = useState('');
@@ -1338,7 +1339,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Panel */}
           <div className="space-y-4">
-            <div className="bg-slate-800 rounded-lg p-5 border border-purple-500/30">
+            <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-5 border border-purple-500/30">
               {/* Mode tabs */}
               <div className="flex gap-1 mb-4">
                 {([['text','Text', FileText], ['image','Image', Image], ['url','URL', Link], ['name','Name', Zap]] as const).map(([mode, label, Icon]) => (
@@ -1361,7 +1362,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
               {inputMode === 'text' && (
                 <>
                   <textarea value={input} onChange={e => setInput(e.target.value)} placeholder="Paste D&D 5e stat block here..."
-                    className="w-full h-56 bg-slate-700 text-white rounded p-3 text-sm font-mono border border-purple-400/30 focus:border-purple-400 focus:outline-none resize-none" />
+                    className="w-full h-56 text-white rounded p-3 text-sm font-mono border border-purple-400/30 focus:border-purple-400 focus:outline-none resize-none" />
                   <div className="mt-3 flex gap-2">
                     <button onClick={() => runParse(input)} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
                       <Zap size={16} /> Parse Stat Block
@@ -1400,7 +1401,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                     <input type="url" value={urlInput} onChange={e => setUrlInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleUrlExtract()}
                       placeholder="https://dnd5e.wikidot.com/monster:goblin"
-                      className="w-full bg-slate-700 text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none" />
+                      className="w-full text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none" />
                     <button onClick={handleUrlExtract} disabled={aiLoading || !urlInput.trim()}
                       className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
                       {aiLoading ? <><Loader size={16} className="animate-spin" /> Fetching...</> : <><Link size={16} /> Extract from URL</>}
@@ -1464,12 +1465,12 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                       onChange={e => setNameInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleNameGenerate()}
                       placeholder="e.g. Vampire Familiar, Adult Red Dragon..."
-                      className="w-full bg-slate-700 text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none"
+                      className="w-full text-white rounded p-3 text-sm border border-purple-400/30 focus:border-purple-400 focus:outline-none"
                     />
                     <select
                       value={nameSource}
                       onChange={e => setNameSource(e.target.value)}
-                      className="w-full bg-slate-700 text-white rounded p-2 text-sm border border-slate-600 focus:border-purple-400 focus:outline-none"
+                      className="w-full text-white rounded p-2 text-sm border border-slate-600 focus:border-purple-400 focus:outline-none"
                     >
                       <option value="any">Any sourcebook</option>
                       <option value="the 2024 Monster Manual">2024 Monster Manual</option>
@@ -1505,9 +1506,9 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                         onChange={e => setCustomName(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleCustomGenerate()}
                         placeholder="Creature name — e.g. Goblin, Ancient Red Dragon..."
-                        className="flex-1 bg-slate-700 text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
+                        className="flex-1 text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
                       />
-                      <div className="flex items-center gap-2 bg-slate-700 border border-violet-400/30 rounded px-3">
+                      <div className="flex items-center gap-2 border border-violet-400/30 rounded px-3">
                         <span className="text-slate-400 text-xs whitespace-nowrap">CR</span>
                         <input
                           type="text"
@@ -1523,7 +1524,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                       value={customCtx}
                       onChange={e => setCustomCtx(e.target.value)}
                       placeholder="Optional: theme, traits, environment — e.g. undead, frost giant chieftain, fire breath"
-                      className="w-full bg-slate-700 text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
+                      className="w-full text-white rounded p-3 text-sm border border-violet-400/30 focus:border-violet-400 focus:outline-none"
                     />
                     <button
                       onClick={handleCustomGenerate}
@@ -1548,7 +1549,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                 <div className="mt-3">
                   <div className="text-slate-400 text-xs mb-1">Extracted text — edit if needed then re-parse:</div>
                   <textarea value={input} onChange={e => setInput(e.target.value)}
-                    className="w-full h-32 bg-slate-700 text-white rounded p-2 text-xs font-mono border border-slate-600 focus:outline-none resize-none" />
+                    className="w-full h-32 text-white rounded p-2 text-xs font-mono border border-slate-600 focus:outline-none resize-none" />
                   <button onClick={() => runParse(input)} className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
                     <Zap size={16} /> Re-parse
                   </button>
@@ -1559,13 +1560,13 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
             {errors.length > 0 && <div className="space-y-2">{errors.map((e, i) => <Alert key={i} msg={e} color="bg-red-900/30 border border-red-600 text-red-200" />)}</div>}
 
             {parseStats && (
-              <div className="bg-slate-800 rounded-lg p-4 border border-blue-500/30">
+              <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-4 border border-blue-500/30">
                 <div className="flex items-center gap-2 text-blue-400 mb-3"><BarChart3 size={18} /><span className="font-semibold">Parse Analytics</span></div>
                 <div className="flex justify-between mb-1">
                   <span className="text-slate-400">Accuracy:</span>
                   <span className={`font-bold ${parseStats.accuracy >= 95 ? 'text-green-400' : parseStats.accuracy >= 80 ? 'text-yellow-400' : 'text-red-400'}`}>{parseStats.accuracy}%</span>
                 </div>
-                <div className="w-full bg-slate-700 rounded h-2 mb-2">
+                <div className="w-full rounded h-2 mb-2">
                   <div className={`h-2 rounded ${parseStats.accuracy >= 95 ? 'bg-green-500' : parseStats.accuracy >= 80 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${parseStats.accuracy}%` }} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -1590,7 +1591,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                 </button>
 
                 {showEditor && (
-                  <div className="bg-slate-800 rounded-lg p-4 border border-amber-500/30">
+                  <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-4 border border-amber-500/30">
                     <h3 className="text-white font-semibold mb-3">Edit Parsed Fields</h3>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {parseStats?.fields.map((field, idx) => (
@@ -1598,7 +1599,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                           <span className="text-slate-400 w-24 font-semibold">{field.name}:</span>
                           {editField === field.name ? (
                             <>
-                              <input type="text" value={editValue} onChange={e => setEditValue(e.target.value)} className="flex-1 bg-slate-700 text-white rounded px-2 py-1 text-sm border border-amber-400 focus:outline-none" />
+                              <input type="text" value={editValue} onChange={e => setEditValue(e.target.value)} className="flex-1 text-white rounded px-2 py-1 text-sm border border-amber-400 focus:outline-none" />
                               <button onClick={saveEdit} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded flex items-center gap-1"><Save size={14} /> Save</button>
                               <button onClick={() => setEditField(null)} className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"><X size={14} /></button>
                             </>
@@ -1616,13 +1617,13 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                 )}
 
                 {output.items?.length > 0 && (
-                  <div className="bg-slate-800 rounded-lg p-4 border border-orange-500/30">
+                  <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-4 border border-orange-500/30">
                     <div className="flex items-center gap-2 text-orange-400 mb-3"><Sword size={18} /><span className="font-semibold">Parsed Actions ({output.items.length})</span></div>
                     <div className="space-y-3">
                       {output.items.map((item, idx) => {
                         const act = Object.values(item.system.activities||{})[0];
                         return (
-                        <div key={idx} className="bg-slate-700 rounded p-3">
+                        <div key={idx} style={{ background: 'var(--t-bg)' }} className="rounded p-3">
                           <div className="font-semibold text-white mb-1">
                             {item.name}
                             {item.system.uses?.recovery?.[0]?.period === 'recharge' && <span className="ml-2 text-xs text-yellow-400">(Recharge {item.system.uses.value}–6)</span>}
@@ -1651,75 +1652,104 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                   </div>
                 )}
 
-                <div className="bg-slate-800 rounded-lg p-5 border border-green-500/30">
-                  <div className="flex items-center gap-2 mb-3"><FileJson size={20} className="text-green-400" /><label className="text-white font-semibold">Foundry VTT Actor JSON</label></div>
-                  <pre className="w-full h-80 bg-slate-700 text-green-400 rounded p-3 text-xs font-mono overflow-auto border border-green-400/30">{JSON.stringify(output, null, 2)}</pre>
-                  <div className="flex gap-3 mt-4">
-                    <button onClick={() => { const b = new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_foundry.json`; a.click(); URL.revokeObjectURL(u); }}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download JSON</button>
-                    <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(JSON.stringify(output, null, 2)); } else { const el = document.createElement('textarea'); el.value = JSON.stringify(output, null, 2); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                      className="flex-1 bg-green-600/50 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copied ? 'Copied!' : 'Copy JSON'}</button>
-                  </div>
-                  {onSendToEncounter && (
-                    <button onClick={() => onSendToEncounter(output)}
-                      className="w-full mt-2 bg-amber-700/60 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
-                      <Sword size={15} /> Add to Encounter Builder
-                    </button>
-                  )}
+                {/* ── Platform selector ──────────────────────────────────── */}
+                <div style={{ display: 'flex', background: 'var(--t-bg)', borderRadius: 10, border: '1px solid #334155', overflow: 'hidden' }}>
+                  {([
+                    ['foundry', 'Foundry VTT',     'Actor JSON', '#16a34a'],
+                    ['fgu',     'Fantasy Grounds',  'XML',        '#d97706'],
+                    ['roll20',  'Roll20',           'NPC JSON',   '#dc2626'],
+                  ] as [string, string, string, string][]).map(([key, label, fmt, color]) => {
+                    const active = exportPlatform === key;
+                    return (
+                      <button key={key} onClick={() => setExportPlatform(key as any)} style={{
+                        flex: 1, padding: '10px 8px', border: 'none', cursor: 'pointer',
+                        background: active ? color + '22' : 'transparent',
+                        borderBottom: `2px solid ${active ? color : 'transparent'}`,
+                        color: active ? color : '#64748b',
+                        fontWeight: active ? 700 : 400, fontSize: 13, transition: 'all 0.15s',
+                        display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 1,
+                      }}>
+                        <span>{label}</span>
+                        <span style={{ fontSize: 10, opacity: 0.65 }}>{fmt}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="bg-slate-800 rounded-lg p-5 border border-amber-500/30">
-                  <div className="flex items-center gap-2 mb-3"><FileJson size={20} className="text-amber-400" /><label className="text-white font-semibold">Fantasy Grounds Unity XML</label><span style={{ fontSize: 11, color: '#94a3b8', background: '#1e293b', border: '1px solid #334155', borderRadius: 20, padding: '2px 10px', lineHeight: 1.4 }}>2024 format</span></div>
-                  <pre className="w-full h-64 bg-slate-700 text-amber-300 rounded p-3 text-xs font-mono overflow-auto border border-amber-400/30">{toFantasyGroundsXML(output)}</pre>
-                  <div className="flex gap-3 mt-4">
-                    <button onClick={() => { const xml = toFantasyGroundsXML(output); const b = new Blob([xml], { type: 'application/xml' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_fg.xml`; a.click(); URL.revokeObjectURL(u); }}
-                      className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download XML</button>
-                    <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(toFantasyGroundsXML(output)); } else { const el = document.createElement('textarea'); el.value = toFantasyGroundsXML(output); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopiedFGU(true); setTimeout(() => setCopiedFGU(false), 2000); }}
-                      className="flex-1 bg-amber-600/50 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copiedFGU ? 'Copied!' : 'Copy XML'}</button>
-                  </div>
-                </div>
-
-                {/* Roll20 JSON Export */}
-                <div className="bg-slate-800 rounded-lg p-5 border border-red-500/30">
-                  <div className="flex items-center gap-2 mb-3">
-                    <FileJson size={20} className="text-red-400" />
-                    <label className="text-white font-semibold">Roll20 NPC JSON</label>
-                    <span style={{ fontSize: 11, color: '#94a3b8', background: '#1e293b', border: '1px solid #334155', borderRadius: 20, padding: '2px 10px', lineHeight: 1.4 }}>2014 sheet</span>
-                  </div>
-                  <pre className="w-full h-64 bg-slate-700 text-red-300 rounded p-3 text-xs font-mono overflow-auto border border-red-400/30">{toRoll20JSON(output)}</pre>
-                  <div className="flex gap-3 mt-4">
-                    <button onClick={() => { const json = toRoll20JSON(output); const b = new Blob([json], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_roll20.json`; a.click(); URL.revokeObjectURL(u); }}
-                      className="flex-1 bg-red-700 hover:bg-red-800 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download JSON</button>
-                    <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(toRoll20JSON(output)); } else { const el = document.createElement('textarea'); el.value = toRoll20JSON(output); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopiedR20(true); setTimeout(() => setCopiedR20(false), 2000); }}
-                      className="flex-1 bg-red-700/50 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copiedR20 ? 'Copied!' : 'Copy JSON'}</button>
-                  </div>
-                  {/* Chat command */}
-                  <div className="mt-3 bg-slate-700/60 rounded p-3 flex items-center justify-between gap-3">
-                    <span className="text-slate-400 text-xs">Chat command <span className="text-slate-500">(replace with your handout name):</span></span>
-                    <code className="text-red-300 text-xs font-mono flex-1 truncate">!dmtimport handout|{output.name}</code>
-                    <button onClick={() => { try { navigator.clipboard?.writeText(`!dmtimport handout|${output.name}`); } catch {} }} className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 transition"><Copy size={12} /></button>
-                  </div>
-                  {/* Setup instructions */}
-                  <div className="mt-3">
-                    <button onClick={() => setShowR20Setup(v => !v)} className="text-xs text-slate-400 hover:text-slate-200 transition flex items-center gap-1">
-                      {showR20Setup ? '▾' : '▸'} {showR20Setup ? 'Hide' : 'First time? Show setup steps'}
-                    </button>
-                    {showR20Setup && (
-                      <div className="mt-2 space-y-2 text-xs text-slate-300 bg-slate-700/40 rounded p-3 border border-slate-600/40">
-                        <p className="text-slate-400 font-semibold">One-time setup (Pro account required):</p>
-                        <p><span className="text-red-400 font-bold">1.</span> Download <a href="https://raw.githubusercontent.com/Tonyb29/DM-VTT-Toolkit/main/DMToolkit-Roll20-Importer.js" target="_blank" rel="noopener noreferrer" className="text-red-300 underline">DMToolkit-Roll20-Importer.js</a></p>
-                        <p><span className="text-red-400 font-bold">2.</span> In your Roll20 campaign: <strong>Game Settings → API Scripts → New Script</strong> → paste the file contents → Save</p>
-                        <p><span className="text-red-400 font-bold">3.</span> Make sure your campaign uses the <strong>D&amp;D 5e by Roll20 (2014)</strong> character sheet</p>
-                        <p className="text-slate-400 font-semibold mt-2">Each import:</p>
-                        <p><span className="text-red-400 font-bold">4.</span> Copy the JSON above → in Roll20 create a <strong>Handout</strong> and give it any name (e.g. <em>import-npc</em>) → paste JSON into its <strong>GM Notes</strong> field</p>
-                        <p><span className="text-red-400 font-bold">5.</span> Update the command below to match your handout's name, then run it in chat — the character appears in your Journal named after the creature</p>
-                      </div>
+                {/* ── Foundry VTT panel ──────────────────────────────────── */}
+                {exportPlatform === 'foundry' && (
+                  <div style={{ background: 'var(--t-surface)', borderRadius: 8, padding: 20, border: '1px solid #16a34a44' }}>
+                    <pre className="w-full h-80 rounded p-3 text-xs font-mono overflow-auto border border-green-400/30" style={{ background: 'var(--t-bg)', color: '#4ade80' }}>{JSON.stringify(output, null, 2)}</pre>
+                    <div className="flex gap-3 mt-4">
+                      <button onClick={() => { const b = new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_foundry.json`; a.click(); URL.revokeObjectURL(u); }}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download JSON</button>
+                      <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(JSON.stringify(output, null, 2)); } else { const el = document.createElement('textarea'); el.value = JSON.stringify(output, null, 2); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                        className="flex-1 bg-green-600/50 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copied ? 'Copied!' : 'Copy JSON'}</button>
+                    </div>
+                    {onSendToEncounter && (
+                      <button onClick={() => onSendToEncounter(output)}
+                        className="w-full mt-2 bg-amber-700/60 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2">
+                        <Sword size={15} /> Add to Encounter Builder
+                      </button>
                     )}
                   </div>
-                </div>
+                )}
+
+                {/* ── Fantasy Grounds panel ──────────────────────────────── */}
+                {exportPlatform === 'fgu' && (
+                  <div style={{ background: 'var(--t-surface)', borderRadius: 8, padding: 20, border: '1px solid #d9770644' }}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span style={{ fontSize: 11, color: '#94a3b8', background: 'var(--t-bg)', border: '1px solid #334155', borderRadius: 20, padding: '2px 10px' }}>2024 format</span>
+                    </div>
+                    <pre className="w-full h-80 rounded p-3 text-xs font-mono overflow-auto border border-amber-400/30" style={{ background: 'var(--t-bg)', color: '#fcd34d' }}>{toFantasyGroundsXML(output)}</pre>
+                    <div className="flex gap-3 mt-4">
+                      <button onClick={() => { const xml = toFantasyGroundsXML(output); const b = new Blob([xml], { type: 'application/xml' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_fg.xml`; a.click(); URL.revokeObjectURL(u); }}
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download XML</button>
+                      <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(toFantasyGroundsXML(output)); } else { const el = document.createElement('textarea'); el.value = toFantasyGroundsXML(output); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopiedFGU(true); setTimeout(() => setCopiedFGU(false), 2000); }}
+                        className="flex-1 bg-amber-600/50 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copiedFGU ? 'Copied!' : 'Copy XML'}</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Roll20 panel ───────────────────────────────────────── */}
+                {exportPlatform === 'roll20' && (
+                  <div style={{ background: 'var(--t-surface)', borderRadius: 8, padding: 20, border: '1px solid #dc262644' }}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span style={{ fontSize: 11, color: '#94a3b8', background: 'var(--t-bg)', border: '1px solid #334155', borderRadius: 20, padding: '2px 10px' }}>2014 sheet · Pro required</span>
+                    </div>
+                    <pre className="w-full h-72 rounded p-3 text-xs font-mono overflow-auto border border-red-400/30" style={{ background: 'var(--t-bg)', color: '#fca5a5' }}>{toRoll20JSON(output)}</pre>
+                    <div className="flex gap-3 mt-4">
+                      <button onClick={() => { const json = toRoll20JSON(output); const b = new Blob([json], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_roll20.json`; a.click(); URL.revokeObjectURL(u); }}
+                        className="flex-1 bg-red-700 hover:bg-red-800 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Download size={16} /> Download JSON</button>
+                      <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(toRoll20JSON(output)); } else { const el = document.createElement('textarea'); el.value = toRoll20JSON(output); el.style.cssText='position:fixed;opacity:0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } } catch {} setCopiedR20(true); setTimeout(() => setCopiedR20(false), 2000); }}
+                        className="flex-1 bg-red-700/50 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition flex items-center justify-center gap-2"><Copy size={16} /> {copiedR20 ? 'Copied!' : 'Copy JSON'}</button>
+                    </div>
+                    <div className="mt-3 rounded p-3 flex items-center justify-between gap-3" style={{ background: 'var(--t-bg)' }}>
+                      <span className="text-slate-400 text-xs">Chat command <span className="text-slate-500">(replace with your handout name):</span></span>
+                      <code className="text-red-300 text-xs font-mono flex-1 truncate">!dmtimport handout|{output.name}</code>
+                      <button onClick={() => { try { navigator.clipboard?.writeText(`!dmtimport handout|${output.name}`); } catch {} }} className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 transition"><Copy size={12} /></button>
+                    </div>
+                    <div className="mt-3">
+                      <button onClick={() => setShowR20Setup(v => !v)} className="text-xs text-slate-400 hover:text-slate-200 transition flex items-center gap-1">
+                        {showR20Setup ? '▾' : '▸'} {showR20Setup ? 'Hide' : 'First time? Show setup steps'}
+                      </button>
+                      {showR20Setup && (
+                        <div className="mt-2 space-y-2 text-xs text-slate-300 rounded p-3 border border-slate-600/40" style={{ background: 'var(--t-bg)' }}>
+                          <p className="text-slate-400 font-semibold">One-time setup (Pro account required):</p>
+                          <p><span className="text-red-400 font-bold">1.</span> Download <a href="https://raw.githubusercontent.com/Tonyb29/DM-VTT-Toolkit/main/DMToolkit-Roll20-Importer.js" target="_blank" rel="noopener noreferrer" className="text-red-300 underline">DMToolkit-Roll20-Importer.js</a></p>
+                          <p><span className="text-red-400 font-bold">2.</span> In your Roll20 campaign: <strong>Game Settings → API Scripts → New Script</strong> → paste the file contents → Save</p>
+                          <p><span className="text-red-400 font-bold">3.</span> Make sure your campaign uses the <strong>D&amp;D 5e by Roll20 (2014)</strong> character sheet</p>
+                          <p className="text-slate-400 font-semibold mt-2">Each import:</p>
+                          <p><span className="text-red-400 font-bold">4.</span> Copy the JSON above → in Roll20 create a <strong>Handout</strong> and give it any name (e.g. <em>import-npc</em>) → paste JSON into its <strong>GM Notes</strong> field</p>
+                          <p><span className="text-red-400 font-bold">5.</span> Update the command above to match your handout's name, then run it in chat — the character appears in your Journal named after the creature</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
-              <div className="bg-slate-800 rounded-lg p-12 border border-purple-500/30 flex items-center justify-center text-slate-400 h-96">
+              <div style={{ background: 'var(--t-surface)' }} className="rounded-lg p-12 border border-purple-500/30 flex items-center justify-center text-slate-400 h-96">
                 <p>Parse a stat block to see output</p>
               </div>
             )}
