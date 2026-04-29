@@ -3,7 +3,7 @@
 // Standalone tool at dmtoolkit.org/pathfinder
 
 import { useState, useRef, useCallback } from 'react'
-import { Copy, Download, FileJson, FileText, Loader, RotateCcw, ExternalLink } from 'lucide-react'
+import { Copy, Download, FileJson, FileText, Loader, RotateCcw, ExternalLink, Sparkles } from 'lucide-react'
 import { parsePF2eStatBlock } from '../parser-versions/pf2e-parser'
 import { hasApiKey, getApiKey } from '../parser-versions/claude-api'
 
@@ -359,14 +359,17 @@ function ApiKeyModal({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
-type Mode = 'text' | 'image'
+type Mode = 'text' | 'name' | 'image'
 
 export default function PF2eApp() {
   const [mode, setMode]           = useState<Mode>('text')
   const [input, setInput]         = useState('')
+  const [nameInput, setNameInput] = useState('')
+  const [nameContext, setNameContext] = useState('')
   const [actor, setActor]         = useState<any>(null)
   const [error, setError]         = useState('')
-  const [copied, setCopied]       = useState(false)
+  const [copied, setCopied]           = useState(false)
+  const [copiedMacro, setCopiedMacro] = useState(false)
   const [loading, setLoading]     = useState(false)
   const [showApiKey, setShowApiKey] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -395,6 +398,22 @@ export default function PF2eApp() {
     navigator.clipboard.writeText(jsonOutput)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const copyMacro = () => {
+    const creatureName = actor?.name ?? 'Creature'
+    const macro = `// PF2e Import Macro — ${creatureName}
+// Paste into Foundry VTT → Macros → New Script Macro → Run
+const existing = game.actors.getName("${creatureName}");
+if (existing) {
+  ui.notifications.warn("${creatureName} already exists in the Actors tab — import skipped.");
+} else {
+  await Actor.createDocuments([${jsonOutput}]);
+  ui.notifications.info("✅ ${creatureName} imported successfully!");
+}`
+    navigator.clipboard.writeText(macro)
+    setCopiedMacro(true)
+    setTimeout(() => setCopiedMacro(false), 2000)
   }
 
   const download = () => {
@@ -429,6 +448,25 @@ export default function PF2eApp() {
       }
     }
     reader.readAsDataURL(file)
+  }
+
+  const handleNameGenerate = async () => {
+    if (!nameInput.trim()) return
+    if (!hasApiKey()) { setShowApiKey(true); return }
+    setLoading(true)
+    setError('')
+    try {
+      const { generatePF2eStatBlock } = await import('../parser-versions/claude-api')
+      const text = await generatePF2eStatBlock(nameInput.trim(), nameContext.trim() || undefined)
+      setInput(text)
+      const result = parsePF2eStatBlock(text)
+      if (result?.name) setActor(result)
+      else setError('AI generated text but could not parse result. You can edit the text below and re-parse.')
+    } catch (err: any) {
+      setError(err?.message ?? 'Generation failed.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const modeBtn = (m: Mode, label: string, icon: React.ReactNode) => (
@@ -515,8 +553,9 @@ export default function PF2eApp() {
 
         {/* Mode buttons */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {modeBtn('text',  'Text',  <FileText size={14} />)}
-          {modeBtn('image', 'Image', <FileJson size={14} />)}
+          {modeBtn('text',  'Text',      <FileText size={14} />)}
+          {modeBtn('name',  '✨ AI Name', <Sparkles size={14} />)}
+          {modeBtn('image', 'Image',     <FileJson size={14} />)}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: actor ? '1fr 1fr' : '1fr', gap: 20 }}>
@@ -565,6 +604,89 @@ export default function PF2eApp() {
               </div>
             )}
 
+            {mode === 'name' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'block', color: T.textMuted, fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+                    CREATURE NAME
+                  </label>
+                  <input
+                    value={nameInput}
+                    onChange={e => setNameInput(e.target.value)}
+                    placeholder="e.g. Frost Wyvern, Goblin Shaman, Ancient Lich…"
+                    onKeyDown={e => { if (e.key === 'Enter') handleNameGenerate() }}
+                    style={{
+                      width: '100%', background: T.surface, border: `1px solid ${T.border}`,
+                      borderRadius: 6, color: T.text, padding: '9px 12px', fontSize: 13,
+                      outline: 'none', boxSizing: 'border-box',
+                    }}
+                    onFocus={e => (e.target.style.borderColor = T.accent)}
+                    onBlur={e  => (e.target.style.borderColor = T.border)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: T.textMuted, fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+                    CONTEXT <span style={{ color: T.textDim, fontWeight: 400 }}>(optional)</span>
+                  </label>
+                  <textarea
+                    value={nameContext}
+                    onChange={e => setNameContext(e.target.value)}
+                    placeholder="Level, role, abilities, setting… e.g. Level 8 elite guard, uses a halberd and a defensive shield reaction"
+                    style={{
+                      width: '100%', minHeight: 100, background: T.surface,
+                      border: `1px solid ${T.border}`, borderRadius: 6,
+                      color: T.text, padding: '9px 12px', fontSize: 13,
+                      fontFamily: 'system-ui, sans-serif', resize: 'vertical', outline: 'none',
+                      boxSizing: 'border-box', lineHeight: 1.5,
+                    }}
+                    onFocus={e => (e.target.style.borderColor = T.accent)}
+                    onBlur={e  => (e.target.style.borderColor = T.border)}
+                  />
+                </div>
+                <button
+                  onClick={handleNameGenerate}
+                  disabled={!nameInput.trim() || loading}
+                  style={{
+                    background: nameInput.trim() && !loading ? T.accent : T.surface2,
+                    border: 'none', borderRadius: 5, color: '#fff',
+                    padding: '9px 20px', cursor: nameInput.trim() && !loading ? 'pointer' : 'not-allowed',
+                    fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6,
+                    alignSelf: 'flex-start',
+                    boxShadow: nameInput.trim() && !loading ? `0 0 12px ${T.accent}44` : 'none',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {loading ? <><Loader size={14} className="animate-spin" /> Generating…</> : <><Sparkles size={14} /> Generate Creature</>}
+                </button>
+                {input && (
+                  <div>
+                    <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 4 }}>Generated text (editable):</div>
+                    <textarea
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      style={{
+                        width: '100%', minHeight: 220, background: T.surface,
+                        border: `1px solid ${T.border}`, borderRadius: 6,
+                        color: T.text, padding: '10px 12px', fontSize: 12,
+                        fontFamily: 'monospace', resize: 'vertical', outline: 'none',
+                        boxSizing: 'border-box', lineHeight: 1.5,
+                      }}
+                    />
+                    <button
+                      onClick={parse}
+                      style={{
+                        marginTop: 6, background: T.surface2, border: `1px solid ${T.border}`,
+                        borderRadius: 5, color: T.textMuted, padding: '6px 14px',
+                        cursor: 'pointer', fontSize: 13,
+                      }}
+                    >
+                      Re-parse
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Extracted text preview (after image) */}
             {mode === 'image' && input && (
               <textarea
@@ -590,23 +712,36 @@ export default function PF2eApp() {
               </div>
             )}
 
-            {/* Buttons */}
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button
-                onClick={parse}
-                disabled={!input.trim() || loading}
-                style={{
-                  background: input.trim() && !loading ? T.accent : T.surface2,
-                  border: 'none', borderRadius: 5, color: '#fff',
-                  padding: '8px 20px', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
-                  fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6,
-                  transition: 'all 0.15s',
-                  boxShadow: input.trim() && !loading ? `0 0 12px ${T.accent}44` : 'none',
-                }}
-              >
-                {loading ? <><Loader size={14} className="animate-spin" /> Parsing…</> : 'Parse → Foundry JSON'}
-              </button>
-              {(input || actor) && (
+            {/* Buttons (text + image modes only — name mode has its own generate button) */}
+            {mode !== 'name' && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button
+                  onClick={parse}
+                  disabled={!input.trim() || loading}
+                  style={{
+                    background: input.trim() && !loading ? T.accent : T.surface2,
+                    border: 'none', borderRadius: 5, color: '#fff',
+                    padding: '8px 20px', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+                    fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6,
+                    transition: 'all 0.15s',
+                    boxShadow: input.trim() && !loading ? `0 0 12px ${T.accent}44` : 'none',
+                  }}
+                >
+                  {loading ? <><Loader size={14} className="animate-spin" /> Parsing…</> : 'Parse → Foundry JSON'}
+                </button>
+                {(input || actor) && (
+                  <button onClick={reset} style={{
+                    background: 'none', border: `1px solid ${T.border}`,
+                    borderRadius: 5, color: T.textMuted, padding: '8px 14px',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
+                  }}>
+                    <RotateCcw size={13} /> Reset
+                  </button>
+                )}
+              </div>
+            )}
+            {mode === 'name' && (input || actor) && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button onClick={reset} style={{
                   background: 'none', border: `1px solid ${T.border}`,
                   borderRadius: 5, color: T.textMuted, padding: '8px 14px',
@@ -614,8 +749,8 @@ export default function PF2eApp() {
                 }}>
                   <RotateCcw size={13} /> Reset
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* ── Output panel ────────────────────────────────────────────── */}
@@ -634,6 +769,16 @@ export default function PF2eApp() {
                     FOUNDRY JSON — ready to import
                   </span>
                   <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                    <button onClick={copyMacro} style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      background: copiedMacro ? '#16a34a' : T.accentDim,
+                      border: `1px solid ${copiedMacro ? '#16a34a' : T.accent}66`,
+                      borderRadius: 4, color: copiedMacro ? '#fff' : T.accentText,
+                      padding: '5px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                      transition: 'all 0.15s',
+                    }}>
+                      <Copy size={12} /> {copiedMacro ? 'Copied!' : 'Copy Import Macro'}
+                    </button>
                     <button onClick={copy} style={{
                       display: 'flex', alignItems: 'center', gap: 5,
                       background: copied ? '#16a34a' : T.surface2,
@@ -675,9 +820,19 @@ export default function PF2eApp() {
                 borderRadius: 5, padding: '10px 14px', fontSize: 12, color: T.textMuted,
               }}>
                 <div style={{ fontWeight: 600, color: T.accentText, marginBottom: 4 }}>How to import into Foundry</div>
-                <div>1. Open Foundry → Actors tab → Create Actor → NPC</div>
-                <div>2. Open the actor sheet → drag the JSON file onto it, <em>or</em></div>
-                <div>3. Use a macro: <code style={{ color: T.gold, background: T.bg, padding: '0 4px', borderRadius: 2 }}>Actor.create(JSON.parse(`…`))</code></div>
+                <div>1. In Foundry → Actors tab → <strong>Create Actor → choose NPC</strong></div>
+                <div>2. Open the new NPC sheet → header menu → <strong>Import Data</strong> → select the JSON file</div>
+                <div style={{ color: T.textDim, paddingLeft: 12, fontSize: 11, marginTop: 2 }}>
+                  ⚠ Must be NPC type — PF2e won't import NPC data into a character or hazard actor
+                </div>
+                <div style={{ marginTop: 6, color: T.textMuted, fontSize: 11 }}>
+                  <strong>Macro (easiest):</strong>{' '}
+                  <code style={{ color: T.gold, background: T.bg, padding: '0 3px', borderRadius: 2 }}>Actor.createDocuments([JSON.parse(`…`)])</code>
+                  {' '}— creates the correct type automatically, no manual step needed
+                </div>
+                <div style={{ marginTop: 6, color: T.textDim, fontSize: 11 }}>
+                  ℹ️ PF2e requires a token on an active scene to roll skills &amp; attacks — drag the actor onto the scene first.
+                </div>
               </div>
             </div>
           )}

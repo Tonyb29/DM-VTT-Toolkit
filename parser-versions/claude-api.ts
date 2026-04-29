@@ -504,6 +504,44 @@ ${description.trim()}`,
 }
 
 // Extract a plain-text stat block from a URL (fetches page text, sends to Claude)
+// Generate a PF2e (Remaster) stat block from a creature name
+// Returns plain text in Archives of Nethys format, ready for pf2e-parser.ts
+export async function generatePF2eStatBlock(name: string, context?: string): Promise<string> {
+  const client = getClient();
+  const contextHint = context?.trim() ? ` Additional context: ${context.trim()}.` : '';
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2048,
+    messages: [{
+      role: 'user',
+      content: `Generate the complete Pathfinder 2e (Remaster edition) stat block for "${name}".${contextHint}
+
+Output ONLY the raw stat block in Archives of Nethys plain-text format. Follow this exact structure:
+
+[Name]  Creature [Level]
+[Alignment traits, Size, Type traits — comma separated, e.g.: Chaotic, Evil, Large, Humanoid]
+Perception +[N]; [senses, e.g.: darkvision]
+Languages [lang1], [lang2]
+Skills [Skill] +[N], [Skill] +[N]
+Str +[N], Dex +[N], Con +[N], Int +[N], Wis +[N], Cha +[N]
+
+AC [N]; Fort +[N], Ref +[N], Will +[N]
+HP [N][; Immunities type, type][; Weaknesses type N][; Resistances type N (except type)]
+
+Speed [N] feet[, fly N feet]
+Melee [one-action] [weapon] +[N] ([traits]), Damage [dice] [type]
+[Tradition] Innate/Prepared Spells DC [N], attack +[N]; [rank]th [spell], [spell]; Cantrips ([rank]) [spell]
+
+[Ability Name] [[one-action]/[two-actions]/[three-actions]/[reaction]] [(traits)] Description text.
+
+Rules: ability mods are the modifier only (e.g. Str +4, not 18). Attack bonus and save DCs are totals. Use [one-action], [two-actions], [three-actions], [reaction] for ability costs. Damage: "NdN+N type plus NdN persistent type". Do not use markdown, bullet points, or headers. Do not add commentary before or after.`,
+    }],
+  });
+
+  return (msg.content[0] as any).text?.trim() ?? '';
+}
+
 export async function extractStatBlockFromUrl(url: string): Promise<string> {
   const client = getClient();
 

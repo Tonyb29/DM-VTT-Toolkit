@@ -1666,7 +1666,7 @@ export default function StatBlockParser({ onSendToEncounter }: { onSendToEncount
                 </div>
 
                 <div className="bg-slate-800 rounded-lg p-5 border border-amber-500/30">
-                  <div className="flex items-center gap-2 mb-3"><FileJson size={20} className="text-amber-400" /><label className="text-white font-semibold">Fantasy Grounds Unity XML</label></div>
+                  <div className="flex items-center gap-2 mb-3"><FileJson size={20} className="text-amber-400" /><label className="text-white font-semibold">Fantasy Grounds Unity XML</label><span style={{ fontSize: 11, color: '#94a3b8', background: '#1e293b', border: '1px solid #334155', borderRadius: 20, padding: '2px 10px', lineHeight: 1.4 }}>2024 format</span></div>
                   <pre className="w-full h-64 bg-slate-700 text-amber-300 rounded p-3 text-xs font-mono overflow-auto border border-amber-400/30">{toFantasyGroundsXML(output)}</pre>
                   <div className="flex gap-3 mt-4">
                     <button onClick={() => { const xml = toFantasyGroundsXML(output); const b = new Blob([xml], { type: 'application/xml' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${output.name.replace(/\s+/g,'_')}_fg.xml`; a.click(); URL.revokeObjectURL(u); }}
