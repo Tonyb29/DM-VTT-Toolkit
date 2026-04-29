@@ -7,8 +7,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main:     resolve(__dirname, 'index.html'),
-        campaign: resolve(__dirname, 'campaign.html'),
+        main:       resolve(__dirname, 'index.html'),
+        campaign:   resolve(__dirname, 'campaign.html'),
+        pathfinder: resolve(__dirname, 'pathfinder.html'),
       }
     }
   },
