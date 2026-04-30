@@ -3,9 +3,9 @@
 // Standalone tool at dmtoolkit.org/pathfinder
 
 import { useState, useRef, useCallback } from 'react'
-import { Copy, Download, FileJson, FileText, Loader, RotateCcw, ExternalLink, Sparkles } from 'lucide-react'
+import { Copy, Download, FileJson, FileText, Loader, RotateCcw, Sparkles, Settings, Key, CheckCircle, AlertTriangle, Trash2, Shield, ExternalLink, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { parsePF2eStatBlock } from '../parser-versions/pf2e-parser'
-import { hasApiKey, getApiKey } from '../parser-versions/claude-api'
+import { hasApiKey, getApiKey, setApiKey, clearApiKey } from '../parser-versions/claude-api'
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const T = {
@@ -312,46 +312,178 @@ function StatBlockPreview({ actor }: { actor: any }) {
 }
 
 // ─── Settings Modal ───────────────────────────────────────────────────────────
-function ApiKeyModal({ onClose }: { onClose: () => void }) {
-  const [key, setKey] = useState(getApiKey() ?? '')
+function ApiKeyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [keyInput, setKeyInput]       = useState('')
+  const [saved, setSaved]             = useState(false)
+  const [hasKey, setHasKey]           = useState(hasApiKey())
+  const [showWalkthrough, setShowWalkthrough] = useState(!hasApiKey())
+
   const save = () => {
-    if (key.trim()) {
-      import('../parser-versions/claude-api').then(m => m.setApiKey(key.trim()))
-    }
-    onClose()
+    if (!keyInput.trim()) return
+    setApiKey(keyInput.trim())
+    setKeyInput('')
+    setHasKey(true)
+    setSaved(true)
+    onSaved()
+    setTimeout(() => setSaved(false), 2000)
   }
+
+  const remove = () => {
+    clearApiKey()
+    setHasKey(false)
+    setKeyInput('')
+    onSaved()
+  }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-    }} onClick={onClose}>
+    }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{
-        background: T.surface, border: `1px solid ${T.border}`,
-        borderRadius: 8, padding: 24, width: 360, maxWidth: '90vw',
+        background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12,
+        width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto',
+        boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
       }} onClick={e => e.stopPropagation()}>
-        <div style={{ fontWeight: 700, color: T.accentText, marginBottom: 12 }}>Claude API Key</div>
-        <div style={{ color: T.textMuted, fontSize: 12, marginBottom: 10 }}>
-          Required for AI stat block generation. Stored locally in your browser.
-        </div>
-        <input
-          value={key}
-          onChange={e => setKey(e.target.value)}
-          placeholder="sk-ant-..."
-          style={{
-            width: '100%', background: T.surface2, border: `1px solid ${T.border}`,
-            borderRadius: 4, color: T.text, padding: '7px 10px', fontSize: 13,
-            outline: 'none', boxSizing: 'border-box', marginBottom: 12,
-          }}
-        />
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{
-            background: 'none', border: `1px solid ${T.border}`, borderRadius: 4,
-            color: T.textMuted, padding: '6px 14px', cursor: 'pointer', fontSize: 13,
-          }}>Cancel</button>
-          <button onClick={save} style={{
-            background: T.accent, border: 'none', borderRadius: 4,
-            color: '#fff', padding: '6px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-          }}>Save</button>
+        <div style={{ padding: '24px 24px 20px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: T.accentText, fontWeight: 700, fontSize: 17 }}>
+              <Key size={18} style={{ color: T.accent }} /> Settings
+            </div>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.textMuted }}>
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Security badge */}
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            background: '#0a1f0f', border: '1px solid #166534',
+            borderRadius: 8, padding: '10px 14px', marginBottom: 16,
+          }}>
+            <Shield size={15} style={{ color: '#4ade80', flexShrink: 0, marginTop: 1 }} />
+            <div style={{ fontSize: 12, color: '#86efac', lineHeight: 1.6 }}>
+              <strong>Your key stays in your browser.</strong> It is stored only in this
+              device's local storage, sent directly to Anthropic's servers when you use
+              an AI feature, and <strong>never transmitted to or logged by this app.</strong>
+            </div>
+          </div>
+
+          {/* API Key section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label style={{ color: T.text, fontSize: 13, fontWeight: 600 }}>Claude API Key</label>
+
+            {/* Status */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
+              padding: '8px 12px', borderRadius: 6,
+              background: hasKey ? '#052e16' : T.surface2,
+              border: `1px solid ${hasKey ? '#166534' : T.border}`,
+              color: hasKey ? '#4ade80' : T.textMuted,
+            }}>
+              {hasKey
+                ? <><CheckCircle size={14} /> API key is saved — AI features are enabled</>
+                : <><AlertTriangle size={14} /> No API key — AI features are disabled</>}
+            </div>
+
+            {/* Input */}
+            <input
+              type="password"
+              value={keyInput}
+              onChange={e => setKeyInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && save()}
+              placeholder="sk-ant-api03-..."
+              style={{
+                background: T.bg, color: T.text, fontSize: 13,
+                borderRadius: 6, padding: '8px 12px',
+                border: `1px solid ${T.border}`, outline: 'none',
+                fontFamily: 'monospace', width: '100%', boxSizing: 'border-box',
+              }}
+            />
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={save}
+                disabled={!keyInput.trim()}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  background: saved ? '#065f46' : T.accent,
+                  border: 'none', borderRadius: 6, color: '#fff',
+                  fontSize: 13, fontWeight: 600, padding: '8px 0', cursor: 'pointer',
+                  opacity: !keyInput.trim() ? 0.4 : 1, transition: 'background 0.15s',
+                }}
+              >
+                {saved ? <><CheckCircle size={14} /> Saved!</> : <><Key size={14} /> Save Key</>}
+              </button>
+              {hasKey && (
+                <button onClick={remove} title="Remove saved key" style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'rgba(127,29,29,0.4)', border: '1px solid #7f1d1d',
+                  borderRadius: 6, color: '#fca5a5', fontSize: 13,
+                  fontWeight: 600, padding: '8px 12px', cursor: 'pointer',
+                }}>
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Walkthrough — collapsible */}
+          <div style={{ marginTop: 16, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
+            <button
+              onClick={() => setShowWalkthrough(v => !v)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 14px', background: T.bg, border: 'none', cursor: 'pointer',
+                color: T.textMuted, fontSize: 13, fontWeight: 600,
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {showWalkthrough ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                How to get a free API key
+              </span>
+              <span style={{ fontSize: 11, color: T.textDim, fontWeight: 400 }}>~2 minutes</span>
+            </button>
+
+            {showWalkthrough && (
+              <div style={{ padding: '4px 14px 14px', background: T.surface2 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                  {([
+                    ['1', '#7c3aed', 'Go to console.anthropic.com', 'Click "Sign up" — it\'s free to create an account.'],
+                    ['2', '#0369a1', 'Open the API Keys page', 'In the left sidebar, click "API Keys".'],
+                    ['3', '#065f46', 'Create a new key', 'Click "Create Key", give it any name (e.g. "PF2e Toolkit"), then click "Create".'],
+                    ['4', '#b45309', 'Copy the key', 'It starts with sk-ant-api03-… Copy it now — it\'s only shown once.'],
+                    ['5', '#be185d', 'Add a small credit', 'Go to "Billing" and add $5. This covers hundreds of stat block generations.'],
+                    ['6', '#166534', 'Paste it above', 'Paste the key into the field above and click Save Key.'],
+                  ] as [string, string, string, string][]).map(([num, color, title, desc]) => (
+                    <div key={num} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{
+                        width: 20, height: 20, borderRadius: '50%', background: color,
+                        color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>{num}</span>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: T.text, marginBottom: 2 }}>{title}</div>
+                        <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.5 }}>{desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                  <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    background: T.surface, border: `1px solid ${T.border}`, borderRadius: 6,
+                    color: T.textMuted, fontSize: 12, fontWeight: 600, padding: '7px 0',
+                    textDecoration: 'none', marginTop: 4,
+                  }}>
+                    <ExternalLink size={12} /> Open console.anthropic.com
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>
@@ -372,6 +504,7 @@ export default function PF2eApp() {
   const [copiedMacro, setCopiedMacro] = useState(false)
   const [loading, setLoading]     = useState(false)
   const [showApiKey, setShowApiKey] = useState(false)
+  const [apiKeySet, setApiKeySet]   = useState(hasApiKey())
   const fileRef = useRef<HTMLInputElement>(null)
 
   const jsonOutput = actor ? JSON.stringify(actor, null, 2) : ''
@@ -513,13 +646,6 @@ if (existing) {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={() => setShowApiKey(true)} style={{
-            background: 'none', border: `1px solid ${T.border}`,
-            borderRadius: 5, padding: '5px 10px', cursor: 'pointer',
-            color: hasApiKey() ? T.green : T.textMuted, fontSize: 12,
-          }}>
-            {hasApiKey() ? '✓ API Key' : '⚙ API Key'}
-          </button>
           <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener noreferrer" style={{
             background: '#ff5f5f', border: 'none', borderRadius: 5,
             color: '#fff', fontSize: 12, fontWeight: 600,
@@ -527,14 +653,23 @@ if (existing) {
           }}>
             ☕ Support
           </a>
-          <a href="/" style={{
+          <a href="/about.html" style={{
             display: 'flex', alignItems: 'center', gap: 4,
             background: 'none', border: `1px solid ${T.border}`,
             borderRadius: 5, padding: '5px 10px', cursor: 'pointer',
             color: T.textMuted, fontSize: 12, textDecoration: 'none',
           }}>
-            <ExternalLink size={12} /> D&D Tool
+            ← Hub
           </a>
+          <button onClick={() => setShowApiKey(true)} title="API key settings" style={{
+            background: 'none', border: `1px solid ${T.accent}44`,
+            borderRadius: 6, padding: '5px 8px', cursor: 'pointer',
+            color: apiKeySet ? T.green : T.textMuted,
+            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12,
+          }}>
+            <Settings size={15} />
+            {apiKeySet ? 'API ✓' : 'API'}
+          </button>
         </div>
       </div>
 
@@ -839,7 +974,7 @@ if (existing) {
         </div>
       </div>
 
-      {showApiKey && <ApiKeyModal onClose={() => setShowApiKey(false)} />}
+      {showApiKey && <ApiKeyModal onClose={() => setShowApiKey(false)} onSaved={() => setApiKeySet(hasApiKey())} />}
     </div>
   )
 }
