@@ -40,7 +40,28 @@ const RARITY_TAGS    = new Set(['uncommon','rare','unique']);
 const ALIGN_ABBREV   = new Set(['lg','ln','le','ng','nn','ne','cg','cn','ce']);
 
 // Keywords that are clearly not ability-line starters
-const NON_ABILITY_PREFIXES = /^(melee|ranged|arcane|divine|occult|primal|focus|speed|ac\s|hp\s|perception|languages|skills|str\s|items)/i;
+// Spellcasting lines (arcane/divine/etc.) are handled before the ability check, so
+// tradition words are intentionally excluded here — they can be valid ability name starts
+const NON_ABILITY_PREFIXES = /^(melee|ranged|speed\s|ac\s|hp\s|perception\s|languages\s|skills\s|str\s|items\s)/i;
+
+// Lines that start a new section — NOT description continuations
+const NEW_SECTION = /^(melee|ranged|speed\s|ac\s|hp\s|perception\s|languages\s|skills\s|str\s|items\s|arcane|divine|occult|primal|focus)/i;
+// Lines that are clearly inside an ability description
+const CONTINUATION_STARTS = /^(trigger|effect|requirements|critical success|success|failure|critical failure|frequency|duration|range|area|targets|saving throw|defense|activate|special|heightened)/i;
+
+function isContinuationLine(line: string): boolean {
+  if (!line.trim()) return false;
+  if (NEW_SECTION.test(line)) return false;
+  // New ability with action tag → new item, not continuation
+  if (/^[A-Z][A-Za-z0-9 ''\-+]+?\s+\[[^\]]+\]/.test(line)) return false;
+  // Known PF2e ability sub-fields
+  if (CONTINUATION_STARTS.test(line)) return true;
+  // Lowercase or dash start → continuation text
+  if (/^[a-z—–]/.test(line)) return true;
+  // Common sentence starters that appear in multi-line descriptions
+  if (/^(The |A |An |This |These |That |Those |It |Its |They |Their |If |When |While |On |In |At |For |As |Each |Any |All |Both |One |Two |Three )/i.test(line)) return true;
+  return false;
+}
 
 // ─── ID Generation ────────────────────────────────────────────────────────────
 
@@ -135,7 +156,7 @@ function parseDamage(raw: string): DmgRoll[] {
 function buildMeleeItem(line: string, actor: string, sort: number): object | null {
   // Melee/Ranged [action?] name +N (traits), Damage ...
   const m = line.match(
-    /^(Melee|Ranged)\s+(?:\[[^\]]+\]\s+)?(.+?)\s+([+-]\d+)\s*(?:\(([^)]*)\))?\s*[,;]\s*Damage\s+(.+)/i
+    /^(Melee|Ranged)\s+(?:\[[^\]]+\]\s+)?(.+?)\s+([+-]\d+)(?:\s+\[[^\]]+\])?\s*(?:\(([^)]*)\))?\s*[,;]\s*Damage\s+(.+)/i
   );
   if (!m) return null;
   const [, weaponType, rawName, bonusStr, traitStr, damageStr] = m;
@@ -187,7 +208,7 @@ function buildMeleeItem(line: string, actor: string, sort: number): object | nul
 
 // ─── Spellcasting Builder ─────────────────────────────────────────────────────
 
-interface SpellEntry { name: string; rank: number; atWill: boolean; perDay: number | null; heightenedTo: number | null; }
+interface SpellEntry { name: string; rank: number; atWill: boolean; perDay: number | null; heightenedTo: number | null; slotCount: number | null; }
 
 function emptySlots() {
   const s: Record<string, { prepared: Array<{id:string}>; value: number; max: number }> = {};
@@ -220,22 +241,23 @@ function buildSpellcasting(line: string, actor: string, startSort: number): { en
     if (cantripM) {
       const ht = parseInt(cantripM[1], 10);
       for (const n of cantripM[2].split(',').map(x => x.trim()).filter(Boolean)) {
-        spellEntries.push({ name: n, rank: 0, atWill: true, perDay: null, heightenedTo: ht });
+        spellEntries.push({ name: n, rank: 0, atWill: true, perDay: null, heightenedTo: ht, slotCount: null });
       }
       continue;
     }
-    // Nth spell(s)
-    const rankM = s.match(/^(\d+)(?:st|nd|rd|th)\s+(.+)/i);
+    // Nth spell(s) — optionally "(N slots)" for spontaneous e.g. "5th (3 slots) heal, sound burst"
+    const rankM = s.match(/^(\d+)(?:st|nd|rd|th)\s+(?:\((\d+)\s*(?:slots?)?\)\s+)?(.+)/i);
     if (rankM) {
-      const rank = parseInt(rankM[1], 10);
+      const rank      = parseInt(rankM[1], 10);
+      const slotCount = rankM[2] ? parseInt(rankM[2], 10) : null;
       if (rank > maxRank) maxRank = rank;
-      for (const part of rankM[2].split(',').map(p => p.trim()).filter(Boolean)) {
+      for (const part of rankM[3].split(',').map(p => p.trim()).filter(Boolean)) {
         const awM   = part.match(/^(.+?)\s*\(at\s+will\)/i);
         const dayM  = part.match(/^(.+?)\s*\((\d+)\/day\)/i);
         const clean = part.replace(/\([^)]*\)/g, '').trim();
-        if (awM)       spellEntries.push({ name: awM[1].trim(),   rank, atWill: true,  perDay: null, heightenedTo: null });
-        else if (dayM) spellEntries.push({ name: dayM[1].trim(),  rank, atWill: false, perDay: parseInt(dayM[2],10), heightenedTo: null });
-        else if (clean) spellEntries.push({ name: clean, rank, atWill: false, perDay: null, heightenedTo: null });
+        if (awM)       spellEntries.push({ name: awM[1].trim(),  rank, atWill: true,  perDay: null,               heightenedTo: null, slotCount });
+        else if (dayM) spellEntries.push({ name: dayM[1].trim(), rank, atWill: false, perDay: parseInt(dayM[2],10), heightenedTo: null, slotCount });
+        else if (clean) spellEntries.push({ name: clean,         rank, atWill: false, perDay: null,               heightenedTo: null, slotCount });
       }
     }
   }
@@ -260,6 +282,21 @@ function buildSpellcasting(line: string, actor: string, startSort: number): { en
         slots[sk].value += uses;
       }
     }
+  } else if (prepared === 'spontaneous') {
+    // Slot count comes from "(N slots)" in the stat block; fall back to 1 per spell entry
+    const rankSlotCounts: Record<number, number> = {};
+    for (const se of spellEntries) {
+      if (se.rank > 0 && !rankSlotCounts[se.rank]) {
+        rankSlotCounts[se.rank] = se.slotCount ?? 1;
+      }
+    }
+    for (const [rankStr, count] of Object.entries(rankSlotCounts)) {
+      const sk = `slot${rankStr}`;
+      slots[sk].max   = count;
+      slots[sk].value = count;
+    }
+    const cCount = spellEntries.filter(s => s.rank === 0).length;
+    if (cCount) { slots.slot0.max = cCount; slots.slot0.value = cCount; }
   }
 
   const entryName = `${tradRaw} ${prepRaw.charAt(0).toUpperCase() + prepRaw.slice(1)} Spells`;
@@ -421,14 +458,15 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
   const otherSpeeds: Array<{ type: string; value: number }> = [];
   const items: object[] = [];
   let sort = 100000;
-  let inOffense = false; // once we see Speed, we're in offense section
+  let inOffense = false; // set when Speed line is seen
+  let seenHP    = false; // set when HP line is seen — abilities are valid from here on
 
   // ── Line Loop ─────────────────────────────────────────────────────────────
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
 
     // ── Traits line (line 1 or within first few lines, comma-sep, no label) ──
-    if (!inOffense && i <= 3 && /^(chaotic|lawful|neutral|good|evil|common|uncommon|rare|unique|tiny|small|medium|large|huge|gargantuan)/i.test(line)) {
+    if (!inOffense && i <= 4 && /^(chaotic|lawful|neutral|good|evil|common|uncommon|rare|unique|tiny|small|medium|large|huge|gargantuan|lg|ln|le|ng|nn|ne|cg|cn|ce)\b/i.test(line)) {
       for (const p of line.split(',').map(s => s.trim().toLowerCase())) {
         if (RARITY_TAGS.has(p))   { rarity = p; continue; }
         if (SIZE_TAGS.has(p))     { size = SIZE_MAP[p] ?? 'med'; continue; }
@@ -494,6 +532,7 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
 
     // ── HP, Immunities, Weaknesses, Resistances ───────────────────────────
     if (/^hp\s+\d+/i.test(line)) {
+      seenHP = true;
       const sections = line.split(/;\s*/);
       const hpM = sections[0].match(/^HP\s+(\d+)(?:,\s*(.+))?/i);
       if (hpM) { hpMax = parseInt(hpM[1], 10); hpDetails = (hpM[2] ?? '').trim(); }
@@ -556,28 +595,110 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
       continue;
     }
 
+    // ── Devotion / Focus Spells (class-specific: "Champion Devotion Spells DC 20...") ──
+    if (/^.+?\s+(devotion|focus)\s+spells?\s+DC\s+\d+/i.test(line)) {
+      inOffense = true;
+      const hdr = line.match(/^(.+?)\s+(Devotion|Focus)\s+Spells?\s+DC\s+(\d+)(?:,\s*\d+\s*Focus\s+Points?)?(?:,?\s*attack\s+([+-]\d+))?/i);
+      if (hdr) {
+        const entryLabel = `${hdr[1].trim()} ${hdr[2]} Spells`;
+        const dc  = parseInt(hdr[3], 10);
+        const atk = hdr[4] ? parseInt(hdr[4], 10) : dc - 8;
+        // Synthesise a fake spellcasting line and reuse buildSpellcasting by building a
+        // minimal focus entry directly
+        const entryId = makeId('spellEntry', name, entryLabel);
+        const slots = emptySlots();
+        const afterHeader = line.slice(line.indexOf(';') + 1);
+        const focusSpells: object[] = [];
+        let spellSort = sort + 100000;
+        for (const section of afterHeader.split(/;\s*/)) {
+          const s = section.trim();
+          if (!s) continue;
+          const rankM = s.match(/^(\d+)(?:st|nd|rd|th)\s+(.+)/i);
+          if (rankM) {
+            const rank = parseInt(rankM[1], 10);
+            for (const spellName of rankM[2].split(',').map(p => p.trim()).filter(Boolean)) {
+              const spellId = makeId('spell', name, spellName);
+              const slug = spellName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              focusSpells.push({
+                ...itemSkeleton(spellId, spellName, 'spell', spellSort, `systems/pf2e/icons/spells/${slug}.webp`),
+                system: {
+                  description: { gm: '', value: '' }, rules: [], slug,
+                  _migration: { version: 0.955, lastMigration: null, previous: null },
+                  traits: { otherTags: [], value: ['focus'], rarity: 'common', traditions: [] },
+                  publication: { title: '', authors: '', license: 'ORC', remaster: true },
+                  level: { value: rank },
+                  requirements: '', target: { value: '' }, range: { value: '' },
+                  area: null, time: { value: '' },
+                  duration: { value: '', sustained: false },
+                  damage: {}, defense: null, cost: { value: '' },
+                  location: { value: entryId, heightenedLevel: rank },
+                  counteraction: false,
+                },
+              });
+              spellSort += 100000;
+            }
+          }
+        }
+        const entry = {
+          ...itemSkeleton(entryId, entryLabel, 'spellcastingEntry', sort, 'systems/pf2e/icons/default-icons/spellcastingEntry.svg'),
+          system: {
+            description: { gm: '', value: '' }, rules: [], slug: null,
+            _migration: { version: 0.955, lastMigration: null, previous: null },
+            traits: { otherTags: [] },
+            publication: { title: '', authors: '', license: 'ORC', remaster: true },
+            ability: { value: 'cha' },
+            spelldc: { value: atk, dc, mod: 0 },
+            tradition: { value: 'divine' },
+            prepared: { value: 'focus', flexible: false },
+            showSlotlessLevels: { value: false },
+            proficiency: { value: 0 },
+            slots,
+            autoHeightenLevel: { value: null },
+          },
+        };
+        items.push(entry, ...focusSpells);
+        sort += (focusSpells.length + 2) * 100000;
+      }
+      continue;
+    }
+
     // ── Named Actions / Abilities ─────────────────────────────────────────
-    // Only after we've entered the offense section (past Speed/attacks) or past HP
     // Pattern: "Name [action-tag] (optional traits) optional description"
     //       or "Name [action-tag]"  (no description)
-    if (inOffense || /^hp\s+/i.test(lines[Math.max(0, i - 2)])) {
+    // Multi-line: look ahead and collect continuation lines into description
+    if (inOffense || seenHP) {
       const m = line.match(/^([A-Z][A-Za-z0-9 ''\-+]+?)\s+(\[[^\]]+\])(?:\s+\(([^)]+)\))?\s*(.*)?$/);
       if (m && !NON_ABILITY_PREFIXES.test(m[1])) {
-        items.push(buildActionItem(m[1].trim(), m[2], m[3] ?? '', (m[4] ?? '').trim(), name, sort));
+        let desc = (m[4] ?? '').trim();
+        while (i + 1 < lines.length && isContinuationLine(lines[i + 1])) {
+          i++;
+          desc += (desc ? ' ' : '') + lines[i];
+        }
+        items.push(buildActionItem(m[1].trim(), m[2], m[3] ?? '', desc, name, sort));
         sort += 100000;
         continue;
       }
       // Passive ability: "Name   Description text" (two+ spaces between name and desc)
       const pm = line.match(/^([A-Z][A-Za-z0-9 ''\-+]+?)\s{2,}(.+)$/);
       if (pm && !NON_ABILITY_PREFIXES.test(pm[1]) && pm[2].length > 5) {
-        items.push(buildActionItem(pm[1].trim(), null, '', pm[2].trim(), name, sort));
+        let desc = pm[2].trim();
+        while (i + 1 < lines.length && isContinuationLine(lines[i + 1])) {
+          i++;
+          desc += ' ' + lines[i];
+        }
+        items.push(buildActionItem(pm[1].trim(), null, '', desc, name, sort));
         sort += 100000;
         continue;
       }
-      // Standalone passive name (no description on same line) — common for glossary abilities
+      // Standalone passive name — look ahead for description on next lines
       const snM = line.match(/^([A-Z][A-Za-z0-9 ''\-+]{3,})$/);
       if (snM && !NON_ABILITY_PREFIXES.test(snM[1]) && !snM[1].match(/^(Speed|Melee|Ranged|Arcane|Divine|Occult|Primal)/i)) {
-        items.push(buildActionItem(snM[1].trim(), null, '', '', name, sort));
+        let desc = '';
+        while (i + 1 < lines.length && isContinuationLine(lines[i + 1])) {
+          i++;
+          desc += (desc ? ' ' : '') + lines[i];
+        }
+        items.push(buildActionItem(snM[1].trim(), null, '', desc, name, sort));
         sort += 100000;
         continue;
       }
