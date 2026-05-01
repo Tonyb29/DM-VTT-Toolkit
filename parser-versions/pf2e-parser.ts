@@ -791,6 +791,17 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
     }
   }
 
+  // ── allSaves → passive action items ──────────────────────────────────────
+  // e.g. "+1 status to all saves vs. magic" needs to be a defensive passive
+  // item on the NPC sheet, not just a text field in attributes
+  if (allSaves) {
+    for (const entry of allSaves.split(';').map(s => s.trim()).filter(Boolean)) {
+      const itemName = entry.charAt(0).toUpperCase() + entry.slice(1);
+      items.push(buildActionItem(itemName, null, '', '', name, sort));
+      sort += 100000;
+    }
+  }
+
   // ── Token size from creature size ─────────────────────────────────────────
   const tokenSize = size === 'tiny' ? 0.5 : size === 'sm' ? 1 : size === 'med' ? 1
                   : size === 'lg' ? 2 : size === 'huge' ? 3 : 4; // grg = 4
