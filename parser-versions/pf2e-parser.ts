@@ -421,22 +421,29 @@ function buildActionItem(
 ): object {
   const { type, value, img } = tag ? actionTagToMeta(tag) : { type: 'passive', value: null, img: ACTION_IMG.passive };
 
+  const traitList = traitStr
+    ? traitStr.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+        .map(remasterTrait).filter((t): t is string => t !== null)
+    : [];
+  const hasAura = traitList.includes('aura');
+
   let category: string;
   if (type === 'passive') {
     const nl = name.toLowerCase();
-    if (/coven|swarm mind|telepathy|shared senses/.test(nl)) category = 'interaction';
-    else if (/saves|blindness|vision|resist|immune|regen|ward/.test(nl)) category = 'defensive';
-    else category = 'defensive';
+    // Interaction: senses, communication abilities, constant presence effects
+    if (/telepathy|lifesense|tremorsense|spiritsense|wavesense|echolocation|mindsense|bloodsense|darkvision|low.light vision|truesight|true seeing|constant spells|swarm mind|coven|shared senses/.test(nl))
+      category = 'interaction';
+    // Offensive: on-hit passives, drains, devours, death effects, breath, auras that deal damage
+    else if (/\bdrain\b|devour|corrupting touch|death (throes|burst)|breath weapon|poison(ed)? (body|skin)|infect/.test(nl))
+      category = 'offensive';
+    // Defensive: saves bonuses, displacement, concealment, resistances, regen, auras (default)
+    else
+      category = 'defensive';
   } else if (type === 'reaction') {
     category = 'defensive';
   } else {
     category = 'offensive';
   }
-
-  const traits = traitStr
-    ? traitStr.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
-        .map(remasterTrait).filter((t): t is string => t !== null)
-    : [];
 
   return {
     ...itemSkeleton(makeId('action', actor, name), name, 'action', sort, img),
@@ -447,7 +454,7 @@ function buildActionItem(
       description: { value: desc ? `<p>${desc}</p>` : '', gm: '' },
       publication: { license: 'OGL', remaster: false, title: '', authors: '' },
       rules: [], slug: null,
-      traits: { value: traits, otherTags: [] },
+      traits: { value: traitList, otherTags: [] },
       _migration: migration(),
     },
   };
