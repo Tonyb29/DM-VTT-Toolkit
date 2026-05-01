@@ -36,13 +36,59 @@ const SKILL_SLUG: Record<string, string> = {
 
 const SIZE_TAGS      = new Set(['tiny','small','medium','large','huge','gargantuan']);
 const RARITY_TAGS    = new Set(['uncommon','rare','unique']);
-// Abbreviated alignment codes only — full words (chaotic, evil, etc.) ARE valid pf2e traits in Foundry
 const ALIGN_ABBREV   = new Set(['lg','ln','le','ng','nn','ne','cg','cn','ce']);
+
+// PF2e Remaster (2023): alignment + most spell school tags removed; energy types remapped
+// "illusion" kept — valid as an action descriptor trait (distinct from spell school tag)
+const REMASTER_REMOVED_TRAITS = new Set([
+  'evil','good','lawful','chaotic',
+  'necromancy','evocation','transmutation','abjuration',
+  'conjuration','divination','enchantment',
+]);
+// These traits are renamed in Remaster, not removed
+const REMASTER_TRAIT_MAP: Record<string, string> = {
+  'negative': 'void', 'positive': 'vitality',
+};
+// Attack damage roll types — "spirit" is valid; "unholy"/"holy" are not valid damageType values
+const REMASTER_ROLL_TYPE_MAP: Record<string, string> = {
+  'evil': 'spirit', 'good': 'spirit',
+  'negative': 'void', 'positive': 'vitality',
+};
+// Immunity/weakness/resistance types — "holy" and "unholy" ARE valid here
+const REMASTER_ENERGY_TYPE_MAP: Record<string, string> = {
+  'evil': 'unholy', 'good': 'holy',
+  'negative': 'void', 'positive': 'vitality',
+};
+
+function remasterTrait(t: string): string | null {
+  if (REMASTER_REMOVED_TRAITS.has(t)) return null;
+  return REMASTER_TRAIT_MAP[t] ?? t;
+}
+function remasterDamageRollType(t: string): string {
+  return REMASTER_ROLL_TYPE_MAP[t.toLowerCase()] ?? t;
+}
+function remasterEnergyType(t: string): string {
+  return REMASTER_ENERGY_TYPE_MAP[t.toLowerCase()] ?? t;
+}
 
 // Keywords that are clearly not ability-line starters
 // Spellcasting lines (arcane/divine/etc.) are handled before the ability check, so
 // tradition words are intentionally excluded here — they can be valid ability name starts
 const NON_ABILITY_PREFIXES = /^(melee|ranged|speed\s|ac\s|hp\s|perception\s|languages\s|skills\s|str\s|items\s)/i;
+
+// Split by comma while respecting parentheses — prevents "(at will, good only)" from splitting
+function splitCommaRespectingParens(str: string): string[] {
+  const result: string[] = [];
+  let depth = 0, cur = '';
+  for (const ch of str) {
+    if (ch === '(') { depth++; cur += ch; }
+    else if (ch === ')') { depth--; cur += ch; }
+    else if (ch === ',' && depth === 0) { result.push(cur); cur = ''; }
+    else { cur += ch; }
+  }
+  if (cur) result.push(cur);
+  return result;
+}
 
 // Lines that start a new section — NOT description continuations
 const NEW_SECTION = /^(melee|ranged|speed\s|ac\s|hp\s|perception\s|languages\s|skills\s|str\s|items\s|arcane|divine|occult|primal|focus)/i;
@@ -86,6 +132,9 @@ function normalizeSymbols(text: string): string {
     .replace(/◆/g,   '[one-action]')
     .replace(/↺/g,   '[reaction]')
     .replace(/◇/g,   '[free-action]')
+    .replace(/\[>>>\]/g, '[three-actions]')
+    .replace(/\[>>\]/g,  '[two-actions]')
+    .replace(/\[>\]/g,   '[one-action]')
     .replace(/\[1\]/g, '[one-action]')
     .replace(/\[2\]/g, '[two-actions]')
     .replace(/\[3\]/g, '[three-actions]')
@@ -146,7 +195,7 @@ function parseDamage(raw: string): DmgRoll[] {
     const persistent = /\bpersistent\b/i.test(p);
     const clean = p.replace(/\bpersistent\b/gi, '').replace(/[()]/g, '').trim();
     const m = clean.match(/^(\d+d\d+(?:[+-]\d+)?|\d+)\s+([a-z]+(?:\s+[a-z]+)?)/i);
-    if (m) results.push({ damage: m[1], damageType: m[2].toLowerCase().trim(), category: persistent ? 'persistent' : null });
+    if (m) results.push({ damage: m[1], damageType: remasterDamageRollType(m[2].toLowerCase().trim()), category: persistent ? 'persistent' : null });
   }
   return results;
 }
@@ -177,7 +226,8 @@ function buildMeleeItem(line: string, actor: string, sort: number): object | nul
     } else if (/^(grab|improved grab|knockdown|push|pull)$/.test(lower)) {
       effects.push(lower.replace(/\s+/g, '-'));
     } else {
-      traits.push(normalizeAttackTrait(rt));
+      const normalized = normalizeAttackTrait(rt);
+      if (!REMASTER_REMOVED_TRAITS.has(normalized)) traits.push(normalized);
     }
   }
 
@@ -245,19 +295,33 @@ function buildSpellcasting(line: string, actor: string, startSort: number): { en
       }
       continue;
     }
+    // Constant (Nth) — always-active innate spells
+    const constantM = s.match(/^Constant\s+\((\d+)(?:st|nd|rd|th)\)\s+(.+)/i);
+    if (constantM) {
+      const ht = parseInt(constantM[1], 10);
+      for (const n of constantM[2].split(',').map(x => x.trim()).filter(Boolean)) {
+        spellEntries.push({ name: n, rank: ht, atWill: true, perDay: null, heightenedTo: ht, slotCount: null });
+      }
+      continue;
+    }
     // Nth spell(s) — optionally "(N slots)" for spontaneous e.g. "5th (3 slots) heal, sound burst"
     const rankM = s.match(/^(\d+)(?:st|nd|rd|th)\s+(?:\((\d+)\s*(?:slots?)?\)\s+)?(.+)/i);
     if (rankM) {
       const rank      = parseInt(rankM[1], 10);
       const slotCount = rankM[2] ? parseInt(rankM[2], 10) : null;
       if (rank > maxRank) maxRank = rank;
-      for (const part of rankM[3].split(',').map(p => p.trim()).filter(Boolean)) {
-        const awM   = part.match(/^(.+?)\s*\(at\s+will\)/i);
-        const dayM  = part.match(/^(.+?)\s*\((\d+)\/day\)/i);
+      for (const part of splitCommaRespectingParens(rankM[3]).map(p => p.trim()).filter(Boolean)) {
+        // "at will" — may have extra notes: "(at will, good only)"
+        const awM  = part.match(/^(.+?)\s*\(at\s+will[^)]*\)/i);
+        // "N/day" explicit
+        const dayM = part.match(/^(.+?)\s*\((\d+)\/day\)/i);
+        // ×N or xN — shorthand for N/day (e.g. "plane shift (×2)")
+        const mulM = part.match(/^(.+?)\s*\([×x](\d+)\)/i);
         const clean = part.replace(/\([^)]*\)/g, '').trim();
-        if (awM)       spellEntries.push({ name: awM[1].trim(),  rank, atWill: true,  perDay: null,               heightenedTo: null, slotCount });
+        if (awM)       spellEntries.push({ name: awM[1].trim(),  rank, atWill: true,  perDay: null,                heightenedTo: null, slotCount });
         else if (dayM) spellEntries.push({ name: dayM[1].trim(), rank, atWill: false, perDay: parseInt(dayM[2],10), heightenedTo: null, slotCount });
-        else if (clean) spellEntries.push({ name: clean,         rank, atWill: false, perDay: null,               heightenedTo: null, slotCount });
+        else if (mulM) spellEntries.push({ name: mulM[1].trim(), rank, atWill: false, perDay: parseInt(mulM[2],10), heightenedTo: null, slotCount });
+        else if (clean) spellEntries.push({ name: clean,         rank, atWill: false, perDay: null,                heightenedTo: null, slotCount });
       }
     }
   }
@@ -371,6 +435,7 @@ function buildActionItem(
 
   const traits = traitStr
     ? traitStr.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+        .map(remasterTrait).filter((t): t is string => t !== null)
     : [];
 
   return {
@@ -398,13 +463,13 @@ function parseSenses(senseStr: string): Array<{ type: string; acuity?: string; r
     if (/greater darkvision/.test(lower)) { result.push({ type: 'greaterDarkvision' }); continue; }
     if (/low-?light vision/.test(lower)) { result.push({ type: 'lowLightVision' }); continue; }
     // ranged sense: scent (imprecise, 30 feet), tremorsense (precise, 60 feet)
-    const m = lower.match(/^(scent|tremorsense|echolocation|lifesense|spiritsense|wavesense|mindsense|bloodsense|thermal sense)(?:\s*\(([^)]*)\))?$/);
+    const m = lower.match(/^(scent|tremorsense|echolocation|lifesense|spiritsense|wavesense|mindsense|bloodsense|thermal sense)(?:\s+(\d+)\s*feet?|\s*\(([^)]*)\))?$/);
     if (m) {
       const type   = m[1].replace(/\s+/g, '');
-      const detail = m[2] ?? '';
+      const detail = m[3] ?? '';
       const acuity = /\bprecise\b/.test(detail) ? 'precise' : 'imprecise';
-      const range  = detail.match(/(\d+)/)?.[1];
-      result.push({ type, acuity, ...(range ? { range: parseInt(range, 10) } : {}) });
+      const range  = m[2] ?? detail.match(/(\d+)/)?.[1];
+      result.push({ type, acuity, ...(range ? { range: parseInt(range as string, 10) } : {}) });
     }
   }
   return result;
@@ -454,6 +519,7 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
   const immunities:   Array<{ type: string }> = [];
   const weaknesses:   Array<{ type: string; value: number }> = [];
   const resistances:  Array<{ type: string; value: number; exceptions?: string[] }> = [];
+  let languageDetails = '';
   let speedVal = 25;
   const otherSpeeds: Array<{ type: string; value: number }> = [];
   const items: object[] = [];
@@ -467,7 +533,7 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
 
     // ── Traits line (line 1 or within first few lines, comma-sep, no label) ──
     if (!inOffense && i <= 4 && /^(chaotic|lawful|neutral|good|evil|common|uncommon|rare|unique|tiny|small|medium|large|huge|gargantuan|lg|ln|le|ng|nn|ne|cg|cn|ce)\b/i.test(line)) {
-      for (const p of line.split(',').map(s => s.trim().toLowerCase())) {
+      for (const p of line.split(/[\s,]+/).map(s => s.trim().toLowerCase()).filter(Boolean)) {
         if (RARITY_TAGS.has(p))   { rarity = p; continue; }
         if (SIZE_TAGS.has(p))     { size = SIZE_MAP[p] ?? 'med'; continue; }
         if (ALIGN_ABBREV.has(p))  continue;
@@ -489,8 +555,11 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
     // ── Languages ─────────────────────────────────────────────────────────
     if (/^languages\s+/i.test(line)) {
       const raw = line.replace(/^languages\s+/i, '');
-      for (const l of raw.split(',').map(x => x.trim().toLowerCase().replace(/\s+/g, '-')).filter(Boolean))
+      const [langPart, ...rest] = raw.split(';');
+      for (const l of langPart.split(',').map(x => x.trim().toLowerCase().replace(/\s+/g, '-')).filter(Boolean))
         languages.push(l);
+      // Text after semicolon (e.g. "telepathy 100 feet") goes to languages.details
+      if (rest.length) languageDetails = rest.join(';').trim();
       continue;
     }
 
@@ -509,10 +578,9 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
 
     // ── Ability Scores ────────────────────────────────────────────────────
     if (/^str\s+[+-]\d+/i.test(line)) {
-      for (const part of line.split(',').map(p => p.trim())) {
-        const m = part.match(/^(str|dex|con|int|wis|cha)\s+([+-]\d+)/i);
-        if (m) abilities[m[1].toLowerCase()] = { mod: parseInt(m[2], 10) };
-      }
+      // Handles both comma-separated "Str +5, Dex +6" and space-separated "Str +5 Dex +6"
+      for (const m of [...line.matchAll(/\b(str|dex|con|int|wis|cha)\s+([+-]\d+)/gi)])
+        abilities[m[1].toLowerCase()] = { mod: parseInt(m[2], 10) };
       continue;
     }
 
@@ -540,18 +608,18 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
         const sec = sections[s].trim();
         if (/^immunities?\s+/i.test(sec)) {
           for (const t of sec.replace(/^immunities?\s+/i, '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean))
-            immunities.push({ type: t.replace(/\s+/g, '-') });
+            immunities.push({ type: remasterEnergyType(t.replace(/\s+/g, '-')) });
         } else if (/^weaknesses?\s+/i.test(sec)) {
           for (const w of sec.replace(/^weaknesses?\s+/i, '').split(',').map(x => x.trim())) {
             const wm = w.match(/^(.+?)\s+(\d+)$/);
-            if (wm) weaknesses.push({ type: wm[1].toLowerCase().replace(/\s+/g, '-'), value: parseInt(wm[2], 10) });
+            if (wm) weaknesses.push({ type: remasterEnergyType(wm[1].toLowerCase().replace(/\s+/g, '-')), value: parseInt(wm[2], 10) });
           }
         } else if (/^resistances?\s+/i.test(sec)) {
           for (const r of sec.replace(/^resistances?\s+/i, '').split(',').map(x => x.trim())) {
             const rm = r.match(/^(.+?)\s+(\d+)(?:\s+\(except\s+([^)]+)\))?$/i);
             if (rm) {
               const res: { type: string; value: number; exceptions?: string[] } = {
-                type: rm[1].toLowerCase().replace(/\s+/g, '-'),
+                type: remasterEnergyType(rm[1].toLowerCase().replace(/\s+/g, '-')),
                 value: parseInt(rm[2], 10),
               };
               if (rm[3]) res.exceptions = rm[3].split(/,?\s+and\s+|,\s*/).map((e: string) => e.toLowerCase().trim());
@@ -678,6 +746,19 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
         sort += 100000;
         continue;
       }
+      // Passive with traits (no action bracket): "Name (traits) description"
+      // Name must not contain digits or +/- to avoid catching "Jaws +32 (traits) Damage..."
+      const ptm = line.match(/^([A-Z][A-Za-z ''\-]+?)\s+\(([^)]+)\)\s+(.+)$/);
+      if (ptm && !NON_ABILITY_PREFIXES.test(ptm[1]) && ptm[3].length > 3) {
+        let desc = ptm[3].trim();
+        while (i + 1 < lines.length && isContinuationLine(lines[i + 1])) {
+          i++;
+          desc += ' ' + lines[i];
+        }
+        items.push(buildActionItem(ptm[1].trim(), null, ptm[2], desc, name, sort));
+        sort += 100000;
+        continue;
+      }
       // Passive ability: "Name   Description text" (two+ spaces between name and desc)
       const pm = line.match(/^([A-Z][A-Za-z0-9 ''\-+]+?)\s{2,}(.+)$/);
       if (pm && !NON_ABILITY_PREFIXES.test(pm[1]) && pm[2].length > 5) {
@@ -732,7 +813,7 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
       details: {
         level:        { value: level },
         alliance:     'opposition',
-        languages:    { value: languages, details: '' },
+        languages:    { value: languages, details: languageDetails },
         publicNotes:  '',
         privateNotes: '',
         blurb:        '',
