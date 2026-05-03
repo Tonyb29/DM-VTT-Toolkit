@@ -38,12 +38,10 @@ const SIZE_TAGS      = new Set(['tiny','small','medium','large','huge','gargantu
 const RARITY_TAGS    = new Set(['uncommon','rare','unique']);
 const ALIGN_ABBREV   = new Set(['lg','ln','le','ng','nn','ne','cg','cn','ce']);
 
-// PF2e Remaster (2023): alignment + most spell school tags removed; energy types remapped
-// "illusion" kept — valid as an action descriptor trait (distinct from spell school tag)
+// PF2e Remaster (2023): alignment traits removed from creatures/actions; energy types remapped
+// Spell school tags (necromancy, evocation, etc.) remain valid action/ability descriptors
 const REMASTER_REMOVED_TRAITS = new Set([
   'evil','good','lawful','chaotic',
-  'necromancy','evocation','transmutation','abjuration',
-  'conjuration','divination','enchantment',
 ]);
 // These traits are renamed in Remaster, not removed
 const REMASTER_TRAIT_MAP: Record<string, string> = {
@@ -659,6 +657,38 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
       continue;
     }
 
+    // ── Rituals (e.g. "Divine Rituals DC 44; Abyssal pact") ──────────────
+    if (/^(arcane|divine|occult|primal)\s+rituals?\s+DC\s+\d+/i.test(line)) {
+      inOffense = true;
+      const ritM = line.match(/^(\w+)\s+Rituals?\s+DC\s+(\d+)(?:;\s*(.+))?/i);
+      if (ritM) {
+        const dc = parseInt(ritM[2], 10);
+        const ritualNames = (ritM[3] ?? '').split(',').map(s => s.trim()).filter(Boolean);
+        for (const rn of ritualNames) {
+          const slug = rn.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const ritId = makeId('spell', name, rn);
+          items.push({
+            ...itemSkeleton(ritId, rn, 'spell', sort, `systems/pf2e/icons/spells/${slug}.webp`),
+            system: {
+              description: { gm: '', value: '' }, rules: [], slug,
+              _migration: { version: 0.955, lastMigration: null, previous: null },
+              traits: { otherTags: [], value: ['ritual'], rarity: 'common', traditions: [] },
+              publication: { title: '', authors: '', license: 'ORC', remaster: true },
+              level: { value: 1 },
+              requirements: '', target: { value: '' }, range: { value: '' },
+              area: null, time: { value: '' },
+              duration: { value: '', sustained: false },
+              damage: {}, defense: null, cost: { value: '' },
+              location: { value: null, heightenedLevel: null },
+              counteraction: false,
+            },
+          });
+          sort += 100000;
+        }
+      }
+      continue;
+    }
+
     // ── Spellcasting ──────────────────────────────────────────────────────
     if (/^(arcane|divine|occult|primal|focus)\s+(prepared|innate|spontaneous)\s+spells?/i.test(line)) {
       inOffense = true;
@@ -787,6 +817,21 @@ export function parsePF2eStatBlock(rawText: string): PF2eActor | null {
           desc += (desc ? ' ' : '') + lines[i];
         }
         items.push(buildActionItem(snM[1].trim(), null, '', desc, name, sort));
+        sort += 100000;
+        continue;
+      }
+      // Same-line passive: "Name Description" single space, no brackets, no parens
+      // e.g. "Dimensional Dervish A balor can cast..." / "Whip Reposition When a balor grabs..."
+      // Name: 1–4 title-cased words (letters/apostrophes/hyphens only, no digits or +/-)
+      // Desc: starts with capital, ≥21 chars — avoids false matches on short stat lines
+      const ssM = line.match(/^([A-Z][A-Za-z''\-]+(?: [A-Z][A-Za-z''\-]+){0,3})\s+([A-Z].{20,})$/);
+      if (ssM && !NON_ABILITY_PREFIXES.test(ssM[1]) && !CONTINUATION_STARTS.test(line)) {
+        let desc = ssM[2].trim();
+        while (i + 1 < lines.length && isContinuationLine(lines[i + 1])) {
+          i++;
+          desc += ' ' + lines[i];
+        }
+        items.push(buildActionItem(ssM[1].trim(), null, '', desc, name, sort));
         sort += 100000;
         continue;
       }
