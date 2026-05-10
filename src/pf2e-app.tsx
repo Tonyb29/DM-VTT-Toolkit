@@ -3,9 +3,9 @@
 // Standalone tool at dmtoolkit.org/pathfinder
 
 import { useState, useRef, useCallback } from 'react'
-import { Copy, Download, FileJson, FileText, Loader, RotateCcw, Sparkles, Settings, Key, CheckCircle, AlertTriangle, Trash2, Shield, ExternalLink, ChevronDown, ChevronRight, X, Zap, RefreshCw, Layers } from 'lucide-react'
+import { Copy, Download, FileJson, FileText, Loader, RotateCcw, Sparkles, Settings, Key, CheckCircle, AlertTriangle, Trash2, Shield, ExternalLink, ChevronDown, ChevronRight, X, Zap, RefreshCw, Layers, Link } from 'lucide-react'
 import { parsePF2eStatBlock } from '../parser-versions/pf2e-parser'
-import { hasApiKey, getApiKey, setApiKey, clearApiKey, generatePF2eStatBlock } from '../parser-versions/claude-api'
+import { hasApiKey, getApiKey, setApiKey, clearApiKey, generatePF2eStatBlock, extractPF2eStatBlockFromUrl } from '../parser-versions/claude-api'
 
 // ─── Themes ───────────────────────────────────────────────────────────────────
 const PF2E_THEMES = {
@@ -1007,7 +1007,7 @@ function ApiKeyModal({ onClose, onSaved, themeKey, onThemeChange }: {
 }
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
-type Mode = 'text' | 'name' | 'image'
+type Mode = 'text' | 'name' | 'image' | 'url'
 
 export default function PF2eApp() {
   const [appTab, setAppTab]       = useState<'parser' | 'batch'>('parser')
@@ -1023,6 +1023,7 @@ export default function PF2eApp() {
   const [input, setInput]         = useState('')
   const [nameInput, setNameInput] = useState('')
   const [nameContext, setNameContext] = useState('')
+  const [urlInput, setUrlInput]   = useState('')
   const [actor, setActor]         = useState<any>(null)
   const [error, setError]         = useState('')
   const [copied, setCopied]           = useState(false)
@@ -1144,6 +1145,24 @@ if (existing) {
     }
   }
 
+  const handleUrlExtract = async () => {
+    if (!urlInput.trim()) return
+    if (!hasApiKey()) { setShowApiKey(true); return }
+    setLoading(true)
+    setError('')
+    try {
+      const text = await extractPF2eStatBlockFromUrl(urlInput.trim())
+      setInput(text)
+      const result = parsePF2eStatBlock(text)
+      if (result?.name) setActor(result)
+      else setError('Extracted text from URL but could not parse a stat block. You can edit the text below and re-parse.')
+    } catch (err: any) {
+      setError(err?.message ?? 'URL extraction failed.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const modeBtn = (m: Mode, label: string, icon: React.ReactNode) => (
     <button onClick={() => setMode(m)} style={{
       display: 'flex', alignItems: 'center', gap: 6,
@@ -1260,6 +1279,7 @@ if (existing) {
         {/* Mode buttons */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {modeBtn('text',  'Text',      <FileText size={14} />)}
+          {modeBtn('url',   'URL',       <Link size={14} />)}
           {modeBtn('name',  '✨ AI Name', <Sparkles size={14} />)}
           {modeBtn('image', 'Image',     <FileJson size={14} />)}
         </div>
@@ -1291,6 +1311,75 @@ if (existing) {
                   Ctrl+Enter to parse
                 </div>
               </>
+            )}
+
+            {mode === 'url' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'block', color: T.textMuted, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+                    PAGE URL
+                  </label>
+                  <input
+                    type="url"
+                    value={urlInput}
+                    onChange={e => setUrlInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleUrlExtract() }}
+                    placeholder="https://2e.aonprd.com/Monsters.aspx?ID=…"
+                    style={{
+                      width: '100%', background: T.surface, border: `1px solid ${T.border}`,
+                      borderRadius: 6, color: T.text, padding: '9px 12px', fontSize: 13,
+                      outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace',
+                    }}
+                    onFocus={e => (e.target.style.borderColor = T.accent)}
+                    onBlur={e  => (e.target.style.borderColor = T.border)}
+                  />
+                  <div style={{ color: T.textDim, fontSize: 11, marginTop: 5, lineHeight: 1.6 }}>
+                    Paste a URL from <strong style={{ color: T.textMuted }}>Archives of Nethys</strong> or any page with a PF2e stat block.
+                    Claude fetches the page and extracts the stat block — requires an API key.
+                  </div>
+                </div>
+                <button
+                  onClick={handleUrlExtract}
+                  disabled={!urlInput.trim() || loading}
+                  style={{
+                    background: urlInput.trim() && !loading ? T.accent : T.surface2,
+                    border: 'none', borderRadius: 5, color: '#fff',
+                    padding: '9px 20px', cursor: urlInput.trim() && !loading ? 'pointer' : 'not-allowed',
+                    fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6,
+                    alignSelf: 'flex-start',
+                    boxShadow: urlInput.trim() && !loading ? `0 0 12px ${T.accent}44` : 'none',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {loading ? <><Loader size={14} className="animate-spin" /> Fetching…</> : <><Link size={14} /> Extract from URL</>}
+                </button>
+                {input && (
+                  <div>
+                    <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 4 }}>Extracted text (editable):</div>
+                    <textarea
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      style={{
+                        width: '100%', minHeight: 220, background: T.surface,
+                        border: `1px solid ${T.border}`, borderRadius: 6,
+                        color: T.text, padding: '10px 12px', fontSize: 12,
+                        fontFamily: 'monospace', resize: 'vertical', outline: 'none',
+                        boxSizing: 'border-box', lineHeight: 1.5,
+                      }}
+                    />
+                    <button
+                      onClick={parse}
+                      style={{
+                        marginTop: 6, background: T.surface2, border: `1px solid ${T.border}`,
+                        borderRadius: 5, color: T.textMuted, padding: '6px 14px',
+                        cursor: 'pointer', fontSize: 13,
+                      }}
+                    >
+                      Re-parse
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
             {mode === 'image' && (
@@ -1418,8 +1507,8 @@ if (existing) {
               </div>
             )}
 
-            {/* Buttons (text + image modes only — name mode has its own generate button) */}
-            {mode !== 'name' && (
+            {/* Buttons (text + image modes only — name/url modes have their own buttons) */}
+            {mode !== 'name' && mode !== 'url' && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button
                   onClick={parse}
@@ -1446,7 +1535,7 @@ if (existing) {
                 )}
               </div>
             )}
-            {mode === 'name' && (input || actor) && (
+            {(mode === 'name' || mode === 'url') && (input || actor) && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button onClick={reset} style={{
                   background: 'none', border: `1px solid ${T.border}`,

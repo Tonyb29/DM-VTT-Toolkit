@@ -562,3 +562,39 @@ export async function extractStatBlockFromUrl(url: string): Promise<string> {
 
   return (msg.content[0] as any).text?.trim() ?? '';
 }
+
+// Extract a PF2e (Remaster) stat block from a URL (e.g. Archives of Nethys)
+export async function extractPF2eStatBlockFromUrl(url: string): Promise<string> {
+  const client = getClient();
+
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const pageRes  = await fetch(proxyUrl);
+  if (!pageRes.ok) throw new Error('Could not fetch the page — check the URL and try again.');
+  const { contents } = await pageRes.json();
+  const plainText = contents.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2048,
+    messages: [{
+      role: 'user',
+      content: `Extract the Pathfinder 2e stat block from the following page content (likely from Archives of Nethys or a similar PF2e source).
+
+Return ONLY the raw stat block text in Archives of Nethys format, preserving:
+- Creature name and level (e.g. "Balor  Creature 20")
+- Trait line (e.g. "Chaotic, Evil, Demon, Fiend")
+- Perception, Languages, Skills, ability scores
+- AC, saves, HP, immunities, weaknesses, resistances
+- Speed, melee/ranged attacks with damage
+- Spellcasting entries and spell lists
+- All actions, reactions, and passive abilities with their action costs and descriptions
+
+Do not add commentary, markdown, or formatting. Return plain text only.
+
+Page content:
+${plainText.slice(0, 12000)}`,
+    }],
+  });
+
+  return (msg.content[0] as any).text?.trim() ?? '';
+}
