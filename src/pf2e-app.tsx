@@ -3,9 +3,9 @@
 // Standalone tool at dmtoolkit.org/pathfinder
 
 import { useState, useRef, useCallback } from 'react'
-import { Copy, Download, FileJson, FileText, Loader, RotateCcw, Sparkles, Settings, Key, CheckCircle, AlertTriangle, Trash2, Shield, ExternalLink, ChevronDown, ChevronRight, X } from 'lucide-react'
+import { Copy, Download, FileJson, FileText, Loader, RotateCcw, Sparkles, Settings, Key, CheckCircle, AlertTriangle, Trash2, Shield, ExternalLink, ChevronDown, ChevronRight, X, Zap, RefreshCw, Layers } from 'lucide-react'
 import { parsePF2eStatBlock } from '../parser-versions/pf2e-parser'
-import { hasApiKey, getApiKey, setApiKey, clearApiKey } from '../parser-versions/claude-api'
+import { hasApiKey, getApiKey, setApiKey, clearApiKey, generatePF2eStatBlock } from '../parser-versions/claude-api'
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const T = {
@@ -311,6 +311,461 @@ function StatBlockPreview({ actor }: { actor: any }) {
   )
 }
 
+// ─── Batch Processor ─────────────────────────────────────────────────────────
+type BatchResult = {
+  index: number
+  name: string
+  level: number | null
+  errors: string[]
+  actor: any
+  sourceName?: string
+}
+type BatchProgress = { current: number; total: number; currentName: string }
+
+function BatchTab() {
+  const [mode, setMode]             = useState<'text' | 'names'>('text')
+  const [input, setInput]           = useState('')
+  const [namesInput, setNamesInput] = useState('')
+  const [context, setContext]       = useState('')
+  const [results, setResults]       = useState<BatchResult[]>([])
+  const [running, setRunning]       = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [genProgress, setGenProgress] = useState<BatchProgress | null>(null)
+  const [rerolling, setRerolling]   = useState<number | null>(null)
+  const [copiedIdx, setCopiedIdx]   = useState<number | null>(null)
+  const [copiedMacro, setCopiedMacro] = useState(false)
+  const cancelledRef = useRef(false)
+
+  const writeClipboard = (text: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(() => fbCopy(text))
+    } else { fbCopy(text) }
+  }
+  const fbCopy = (text: string) => {
+    const el = document.createElement('textarea')
+    el.value = text; el.style.cssText = 'position:fixed;left:-9999px;top:-9999px'
+    document.body.appendChild(el); el.focus(); el.select()
+    document.execCommand('copy'); document.body.removeChild(el)
+  }
+
+  const splitBlocks = (text: string) =>
+    text.split(/^---+\s*$/m).map(b => b.trim()).filter(Boolean)
+
+  const runAll = () => {
+    setRunning(true)
+    setTimeout(() => {
+      const out: BatchResult[] = splitBlocks(input).map((block, i) => {
+        const actor = parsePF2eStatBlock(block) as any
+        return {
+          index: i,
+          name: (actor?.name as string) ?? block.split('\n').find(l => l.trim()) ?? `Block ${i + 1}`,
+          level: (actor?.system?.details?.level?.value as number) ?? null,
+          errors: actor ? [] : ['Could not parse stat block'],
+          actor,
+        }
+      })
+      setResults(out)
+      setRunning(false)
+    }, 50)
+  }
+
+  const runNameBatch = async () => {
+    const names = namesInput.split('\n').map(n => n.trim()).filter(Boolean)
+    if (!names.length) return
+    cancelledRef.current = false
+    setGenerating(true); setResults([])
+    const out: BatchResult[] = []
+    for (let i = 0; i < names.length; i++) {
+      if (cancelledRef.current) break
+      setGenProgress({ current: i + 1, total: names.length, currentName: names[i] })
+      try {
+        const text  = await generatePF2eStatBlock(names[i], context.trim() || undefined)
+        const actor = parsePF2eStatBlock(text) as any
+        out.push({
+          index: i,
+          name: (actor?.name as string) ?? names[i],
+          level: (actor?.system?.details?.level?.value as number) ?? null,
+          errors: actor ? [] : ['Generation succeeded but parse failed'],
+          actor, sourceName: names[i],
+        })
+      } catch (err: any) {
+        out.push({ index: i, name: names[i], level: null, errors: [`Generation failed: ${err.message}`], actor: null, sourceName: names[i] })
+      }
+      setResults([...out])
+    }
+    setGenerating(false); setGenProgress(null)
+  }
+
+  const cancelGeneration = () => { cancelledRef.current = true }
+
+  const reroll = async (idx: number, sourceName: string) => {
+    setRerolling(idx)
+    try {
+      const text  = await generatePF2eStatBlock(sourceName, context.trim() || undefined)
+      const actor = parsePF2eStatBlock(text) as any
+      setResults(prev => prev.map(r => r.index !== idx ? r : {
+        ...r,
+        name: (actor?.name as string) ?? sourceName,
+        level: (actor?.system?.details?.level?.value as number) ?? null,
+        errors: actor ? [] : ['Parse failed after regeneration'],
+        actor,
+      }))
+    } catch (err: any) {
+      setResults(prev => prev.map(r => r.index !== idx ? r : { ...r, errors: [`Generation failed: ${err.message}`] }))
+    }
+    setRerolling(null)
+  }
+
+  const buildMacro = () => {
+    const actors = results.filter(r => r.actor).map(r => r.actor)
+    if (!actors.length) return null
+    return [
+      `// PF2e Batch Import Macro`,
+      `// Generated by DM VTT Toolkit — dmtoolkit.org | ${actors.length} actor${actors.length !== 1 ? 's' : ''}`,
+      `// Paste into a new Foundry macro and run it.`,
+      ``,
+      `const actors = ${JSON.stringify(actors, null, 2)};`,
+      ``,
+      `const created = await Actor.createDocuments(actors);`,
+      `ui.notifications.info(\`✅ Imported \${created.length} actor\${created.length !== 1 ? 's' : ''} successfully.\`);`,
+    ].join('\n')
+  }
+
+  const copyMacro = () => {
+    const script = buildMacro(); if (!script) return
+    writeClipboard(script); setCopiedMacro(true)
+    setTimeout(() => setCopiedMacro(false), 3000)
+  }
+
+  const downloadAll = () => {
+    const actors = results.filter(r => r.actor).map(r => r.actor); if (!actors.length) return
+    const blob = new Blob([JSON.stringify(actors, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = 'pf2e-batch-import.json'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const copyOne = (r: BatchResult, idx: number) => {
+    if (!r.actor) return
+    writeClipboard(JSON.stringify(r.actor, null, 2))
+    setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 1500)
+  }
+
+  const clearAll = () => { setResults([]); setInput(''); setNamesInput('') }
+
+  const parsedCount = results.filter(r => r.actor).length
+  const errorCount  = results.filter(r => r.errors.length > 0).length
+  const nameCount   = namesInput.split('\n').map(n => n.trim()).filter(Boolean).length
+
+  const modeBtn = (m: 'text' | 'names', label: string, icon: React.ReactNode) => (
+    <button onClick={() => { setMode(m); setResults([]) }} style={{
+      display: 'flex', alignItems: 'center', gap: 6,
+      padding: '6px 14px', borderRadius: 5, border: 'none', cursor: 'pointer',
+      background: mode === m ? T.accent : T.surface2,
+      color: mode === m ? '#fff' : T.textMuted,
+      fontWeight: 600, fontSize: 13, transition: 'all 0.15s',
+    }}>
+      {icon} {label}
+    </button>
+  )
+
+  return (
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 24px' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {modeBtn('text',  'Text',        <FileText size={14} />)}
+        {modeBtn('names', '✨ AI Names', <Sparkles size={14} />)}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+
+        {/* ── Input panel ──────────────────────────────────────────────── */}
+        <div>
+          {mode === 'text' ? (
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 6, padding: 16 }}>
+              <div style={{ color: T.text, fontWeight: 600, marginBottom: 4 }}>Paste Multiple Stat Blocks</div>
+              <div style={{ color: T.textDim, fontSize: 12, marginBottom: 8 }}>
+                Separate each stat block with a line containing only{' '}
+                <code style={{ background: T.surface2, padding: '0 4px', borderRadius: 2, color: T.accentText }}>---</code>
+              </div>
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                placeholder={"Goblin Warrior  Creature 1\nChaotic, Evil, Goblin, Humanoid\n...\n\n---\n\nOrc Brute  Creature 3\nChaotic, Evil, Humanoid, Orc\n..."}
+                style={{
+                  width: '100%', minHeight: 340, background: T.surface2,
+                  border: `1px solid ${T.border}`, borderRadius: 5,
+                  color: T.text, padding: '10px 12px', fontSize: 12,
+                  fontFamily: 'monospace', resize: 'vertical', outline: 'none',
+                  boxSizing: 'border-box', lineHeight: 1.5,
+                }}
+                onFocus={e => (e.target.style.borderColor = T.accent)}
+                onBlur={e  => (e.target.style.borderColor = T.border)}
+              />
+              <button
+                onClick={runAll}
+                disabled={running || !input.trim()}
+                style={{
+                  marginTop: 10, width: '100%',
+                  background: input.trim() && !running ? T.accent : T.surface2,
+                  border: 'none', borderRadius: 5, color: '#fff',
+                  padding: '9px 0', cursor: input.trim() && !running ? 'pointer' : 'not-allowed',
+                  fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  boxShadow: input.trim() && !running ? `0 0 12px ${T.accent}44` : 'none',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <Zap size={16} /> {running ? 'Parsing…' : 'Parse All Blocks'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 6, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', color: T.text, fontWeight: 600, marginBottom: 4 }}>Creature Names</label>
+                <div style={{ color: T.textDim, fontSize: 12, marginBottom: 6 }}>One name per line — Claude generates a full PF2e stat block for each.</div>
+                <textarea
+                  value={namesInput}
+                  onChange={e => setNamesInput(e.target.value)}
+                  placeholder={"Frost Linnorm\nVulture Lich\nCrystal Golem Guardian\nBlood Mage Cultist"}
+                  style={{
+                    width: '100%', minHeight: 160, background: T.surface2,
+                    border: `1px solid ${T.border}`, borderRadius: 5,
+                    color: T.text, padding: '9px 12px', fontSize: 13,
+                    fontFamily: 'monospace', resize: 'vertical', outline: 'none',
+                    boxSizing: 'border-box', lineHeight: 1.5,
+                  }}
+                  onFocus={e => (e.target.style.borderColor = T.accent)}
+                  onBlur={e  => (e.target.style.borderColor = T.border)}
+                />
+                {namesInput.trim() && (
+                  <div style={{ color: T.textDim, fontSize: 12, marginTop: 4 }}>
+                    {nameCount} name{nameCount !== 1 ? 's' : ''} queued
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label style={{ display: 'block', color: T.textMuted, fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+                  CONTEXT <span style={{ color: T.textDim, fontWeight: 400 }}>(optional)</span>
+                </label>
+                <textarea
+                  value={context}
+                  onChange={e => setContext(e.target.value)}
+                  placeholder="Level, role, abilities… e.g. Level 12 elite, uses cold magic and a breath weapon"
+                  style={{
+                    width: '100%', minHeight: 80, background: T.surface2,
+                    border: `1px solid ${T.border}`, borderRadius: 5,
+                    color: T.text, padding: '9px 12px', fontSize: 12,
+                    fontFamily: 'system-ui, sans-serif', resize: 'vertical', outline: 'none',
+                    boxSizing: 'border-box', lineHeight: 1.5,
+                  }}
+                  onFocus={e => (e.target.style.borderColor = T.accent)}
+                  onBlur={e  => (e.target.style.borderColor = T.border)}
+                />
+                <div style={{ color: T.textDim, fontSize: 11, marginTop: 6, lineHeight: 1.6 }}>
+                  Tips: <span style={{ color: T.textMuted }}>Level</span> (most important, e.g. <em>Level 8</em>),{' '}
+                  <span style={{ color: T.textMuted }}>creature type</span> (e.g. <em>undead, construct</em>),{' '}
+                  <span style={{ color: T.textMuted }}>role</span> (e.g. <em>elite guard, ambush predator</em>),{' '}
+                  <span style={{ color: T.textMuted }}>abilities</span> (e.g. <em>fire magic, grab, trample</em>)
+                </div>
+              </div>
+
+              {!hasApiKey() && (
+                <div style={{
+                  background: '#2a1800', border: `1px solid ${T.accent}44`,
+                  borderRadius: 4, padding: '8px 12px', color: T.accentText, fontSize: 12,
+                }}>
+                  ⚠ No API key set — open Settings (⚙) in the header to add your Claude key.
+                </div>
+              )}
+
+              {generating && genProgress && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ color: T.textMuted, fontSize: 12 }}>
+                      Generating {genProgress.current} of {genProgress.total} —{' '}
+                      <span style={{ color: T.accentText }}>{genProgress.currentName}</span>
+                    </span>
+                    <button onClick={cancelGeneration} style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: T.red, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
+                    }}>
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
+                  <div style={{ background: T.surface2, borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                    <div style={{
+                      background: T.accent, height: '100%', borderRadius: 4,
+                      width: `${(genProgress.current / genProgress.total) * 100}%`,
+                      transition: 'width 0.3s',
+                    }} />
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={runNameBatch}
+                disabled={generating || !namesInput.trim() || !hasApiKey()}
+                style={{
+                  background: !generating && namesInput.trim() && hasApiKey() ? T.accent : T.surface2,
+                  border: 'none', borderRadius: 5, color: '#fff',
+                  padding: '9px 0', cursor: !generating && namesInput.trim() && hasApiKey() ? 'pointer' : 'not-allowed',
+                  fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  boxShadow: !generating && namesInput.trim() && hasApiKey() ? `0 0 12px ${T.accent}44` : 'none',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <Sparkles size={16} />
+                {generating
+                  ? `Generating ${genProgress?.current ?? 0} of ${genProgress?.total ?? nameCount}…`
+                  : `Generate ${nameCount || ''} Stat Block${nameCount !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          )}
+
+          {/* Summary bar */}
+          {results.length > 0 && (
+            <div style={{
+              marginTop: 12, background: T.surface,
+              border: `1px solid ${T.blue}44`, borderRadius: 6, padding: 14,
+            }}>
+              <div style={{ color: T.blue, fontWeight: 600, fontSize: 13, marginBottom: 8 }}>
+                {results.length} {mode === 'names' ? 'generated' : 'block'}{results.length !== 1 ? 's' : ''}
+                {generating && <span style={{ color: T.accentText, marginLeft: 8, fontSize: 12 }}>(in progress…)</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 10, fontSize: 13 }}>
+                <span style={{ color: T.green }}>✓ {parsedCount} ok</span>
+                <span style={{ color: T.red }}>✗ {errorCount} failed</span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button onClick={copyMacro} disabled={!parsedCount} style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: copiedMacro ? '#16a34a' : T.accentDim,
+                  border: `1px solid ${copiedMacro ? '#16a34a' : T.accent}66`,
+                  borderRadius: 4, color: copiedMacro ? '#fff' : T.accentText,
+                  padding: '5px 12px', cursor: parsedCount ? 'pointer' : 'not-allowed',
+                  fontSize: 12, fontWeight: 600, opacity: parsedCount ? 1 : 0.4,
+                  transition: 'all 0.15s',
+                }}>
+                  <Copy size={12} /> {copiedMacro ? 'Copied!' : `Copy Macro (${parsedCount})`}
+                </button>
+                <button onClick={downloadAll} disabled={!parsedCount} style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: T.surface2, border: `1px solid ${T.border}`,
+                  borderRadius: 4, color: T.textMuted,
+                  padding: '5px 12px', cursor: parsedCount ? 'pointer' : 'not-allowed',
+                  fontSize: 12, fontWeight: 600, opacity: parsedCount ? 1 : 0.4,
+                }}>
+                  <Download size={12} /> Download JSON
+                </button>
+                <button onClick={clearAll} style={{
+                  display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto',
+                  background: 'none', border: `1px solid ${T.border}`,
+                  borderRadius: 4, color: T.textDim,
+                  padding: '5px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                }}>
+                  <X size={12} /> Clear All
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Results panel ────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {results.length === 0 && !generating && (
+            <div style={{
+              background: T.surface, border: `1px solid ${T.border}`,
+              borderRadius: 6, padding: 40, textAlign: 'center',
+              color: T.textDim, fontSize: 13,
+            }}>
+              {mode === 'names'
+                ? 'Enter names on the left and click Generate — results appear here as each stat block is created.'
+                : 'Results will appear here after parsing.'}
+            </div>
+          )}
+          {results.map(r => {
+            const hasErr     = r.errors.length > 0
+            const borderClr  = hasErr ? `${T.red}55` : `${T.green}44`
+            const statusClr  = hasErr ? T.red : T.green
+            return (
+              <div key={r.index} style={{
+                background: T.surface, border: `1px solid ${borderClr}`,
+                borderRadius: 6, padding: '10px 14px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: statusClr, fontWeight: 700 }}>{hasErr ? '✗' : '✓'}</span>
+                    <span style={{ color: T.text, fontWeight: 600, fontSize: 14 }}>{r.name}</span>
+                    {r.sourceName && r.sourceName !== r.name && (
+                      <span style={{ color: T.textDim, fontSize: 11 }}>({r.sourceName})</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {r.sourceName && (
+                      <button
+                        onClick={() => reroll(r.index, r.sourceName!)}
+                        disabled={rerolling === r.index || generating}
+                        title="Regenerate this stat block"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          background: T.accentDim, border: `1px solid ${T.accent}44`,
+                          borderRadius: 4, color: T.accentText, fontSize: 11,
+                          padding: '3px 8px', cursor: rerolling === r.index || generating ? 'not-allowed' : 'pointer',
+                          opacity: rerolling === r.index || generating ? 0.5 : 1,
+                        }}
+                      >
+                        <RefreshCw size={11} /> {rerolling === r.index ? 'Rolling…' : 'Reroll'}
+                      </button>
+                    )}
+                    {r.actor && (
+                      <button
+                        onClick={() => copyOne(r, r.index)}
+                        title="Copy Foundry JSON"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          background: copiedIdx === r.index ? '#16a34a' : T.surface2,
+                          border: `1px solid ${copiedIdx === r.index ? '#16a34a' : T.border}`,
+                          borderRadius: 4, color: copiedIdx === r.index ? '#fff' : T.textMuted,
+                          fontSize: 11, padding: '3px 8px', cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <Copy size={11} /> {copiedIdx === r.index ? 'Copied' : 'JSON'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {r.actor && !hasErr && (() => {
+                  const sys   = r.actor.system
+                  const parts: string[] = []
+                  const lvl = sys?.details?.level?.value
+                  if (lvl !== undefined && lvl !== null) parts.push(`Level ${lvl}`)
+                  const hp  = sys?.attributes?.hp?.max;     if (hp)  parts.push(`HP ${hp}`)
+                  const ac  = sys?.attributes?.ac?.value;   if (ac)  parts.push(`AC ${ac}`)
+                  const spd = sys?.attributes?.speed?.value; if (spd) parts.push(`Speed ${spd} ft`)
+                  return parts.length ? (
+                    <div style={{ color: T.textMuted, fontSize: 11, fontFamily: 'monospace', marginTop: 2 }}>
+                      {parts.join(' · ')}
+                    </div>
+                  ) : null
+                })()}
+
+                {r.errors.map((e, i) => (
+                  <div key={i} style={{
+                    marginTop: 6, background: '#2d0808', border: `1px solid #8b202066`,
+                    borderRadius: 3, padding: '4px 8px', color: '#f87171', fontSize: 11,
+                  }}>{e}</div>
+                ))}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Settings Modal ───────────────────────────────────────────────────────────
 function ApiKeyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [keyInput, setKeyInput]       = useState('')
@@ -494,6 +949,7 @@ function ApiKeyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
 type Mode = 'text' | 'name' | 'image'
 
 export default function PF2eApp() {
+  const [appTab, setAppTab]       = useState<'parser' | 'batch'>('parser')
   const [mode, setMode]           = useState<Mode>('text')
   const [input, setInput]         = useState('')
   const [nameInput, setNameInput] = useState('')
@@ -690,18 +1146,47 @@ if (existing) {
         </div>
       </div>
 
-      {/* ── Tab description ─────────────────────────────────────────────── */}
+      {/* ── Tab bar ─────────────────────────────────────────────────────── */}
       <div style={{
-        background: `${T.accentDim}66`, borderBottom: `1px solid ${T.border}`,
-        padding: '6px 24px',
+        background: T.surface, borderBottom: `1px solid ${T.border}`,
+        padding: '0 24px', display: 'flex', alignItems: 'center', gap: 0,
       }}>
-        <span style={{ color: T.goldDim, fontSize: 12 }}>
-          Paste a PF2e (Remaster) stat block and get a Foundry-ready NPC actor — attacks, actions, spells, and all.
-        </span>
+        {(['parser', 'batch'] as const).map(t => {
+          const active = appTab === t
+          const labels: Record<string, string> = { parser: 'Parser', batch: 'Batch' }
+          const icons:  Record<string, React.ReactNode> = {
+            parser: <FileText size={14} />,
+            batch:  <Layers size={14} />,
+          }
+          return (
+            <button key={t} onClick={() => setAppTab(t)} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '10px 18px', border: 'none', cursor: 'pointer',
+              background: 'none',
+              color: active ? T.accentText : T.textMuted,
+              fontWeight: active ? 700 : 400,
+              fontSize: 13,
+              borderBottom: active ? `2px solid ${T.accent}` : '2px solid transparent',
+              transition: 'all 0.15s',
+            }}>
+              {icons[t]} {labels[t]}
+            </button>
+          )
+        })}
+        <div style={{ marginLeft: 'auto', padding: '8px 0' }}>
+          <span style={{ color: T.textDim, fontSize: 11 }}>
+            {appTab === 'parser'
+              ? 'Paste a PF2e (Remaster) stat block → Foundry-ready NPC actor'
+              : 'Parse many stat blocks at once, or generate creatures by name with AI'}
+          </span>
+        </div>
       </div>
 
-      {/* ── Body ────────────────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 24px' }}>
+      {/* ── Batch tab ───────────────────────────────────────────────────── */}
+      {appTab === 'batch' && <BatchTab />}
+
+      {/* ── Parser body ─────────────────────────────────────────────────── */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 24px', display: appTab === 'parser' ? 'block' : 'none' }}>
 
         {/* Mode buttons */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
