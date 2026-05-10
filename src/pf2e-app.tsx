@@ -7,25 +7,50 @@ import { Copy, Download, FileJson, FileText, Loader, RotateCcw, Sparkles, Settin
 import { parsePF2eStatBlock } from '../parser-versions/pf2e-parser'
 import { hasApiKey, getApiKey, setApiKey, clearApiKey, generatePF2eStatBlock } from '../parser-versions/claude-api'
 
-// ─── Theme ────────────────────────────────────────────────────────────────────
-const T = {
-  bg:          '#0b0805',
-  surface:     '#180e06',
-  surface2:    '#221509',
-  border:      '#3d2008',
-  accent:      '#c45500',
-  accentBright:'#e06010',
-  accentDim:   '#2d1200',
-  accentText:  '#d4a855',
-  gold:        '#d4a855',
-  goldDim:     '#7a5c22',
-  text:        '#ede0c8',
-  textMuted:   '#8b7050',
-  textDim:     '#5a4030',
-  green:       '#5a9a5a',
-  red:         '#c05050',
-  blue:        '#5080b0',
-}
+// ─── Themes ───────────────────────────────────────────────────────────────────
+const PF2E_THEMES = {
+  ember: {
+    label: 'Ember',
+    swatch: '#c45500',
+    bg: '#0b0805', surface: '#180e06', surface2: '#221509',
+    border: '#3d2008', accent: '#c45500', accentBright: '#e06010',
+    accentDim: '#2d1200', accentText: '#d4a855', gold: '#d4a855',
+    goldDim: '#7a5c22', text: '#ede0c8', textMuted: '#8b7050',
+    textDim: '#5a4030', green: '#5a9a5a', red: '#c05050', blue: '#5080b0',
+  },
+  verdant: {
+    label: 'Verdant',
+    swatch: '#2d7a2d',
+    bg: '#060c06', surface: '#0a150a', surface2: '#0e1e0e',
+    border: '#1a3a1a', accent: '#2d7a2d', accentBright: '#3da03d',
+    accentDim: '#0a1f0a', accentText: '#7ec87e', gold: '#7ec87e',
+    goldDim: '#3a6a3a', text: '#d4ecd4', textMuted: '#6a946a',
+    textDim: '#3a5a3a', green: '#5a9a5a', red: '#c05050', blue: '#5080b0',
+  },
+  arcane: {
+    label: 'Arcane',
+    swatch: '#6633cc',
+    bg: '#080610', surface: '#100c1e', surface2: '#181230',
+    border: '#2d1f5a', accent: '#6633cc', accentBright: '#8855ee',
+    accentDim: '#1a0f3a', accentText: '#c4a0f0', gold: '#c4a0f0',
+    goldDim: '#6a4a9a', text: '#e8e0f8', textMuted: '#8070a8',
+    textDim: '#4a3a70', green: '#5a9a5a', red: '#c05050', blue: '#7090d0',
+  },
+  iron: {
+    label: 'Iron',
+    swatch: '#607080',
+    bg: '#08090a', surface: '#111418', surface2: '#181d22',
+    border: '#2a3040', accent: '#607080', accentBright: '#7a90a8',
+    accentDim: '#1a2030', accentText: '#a8bcd0', gold: '#a8bcd0',
+    goldDim: '#4a5a6a', text: '#d8e0e8', textMuted: '#708090',
+    textDim: '#405060', green: '#5a9a5a', red: '#c05050', blue: '#5080b0',
+  },
+} as const
+type PF2EThemeKey = keyof typeof PF2E_THEMES
+const THEME_STORAGE_KEY = 'pf2e_theme'
+
+// Module-level T — swapped on theme change; triggers re-render via state
+let T = PF2E_THEMES[(localStorage.getItem(THEME_STORAGE_KEY) as PF2EThemeKey) ?? 'ember'] ?? PF2E_THEMES.ember
 
 // ─── Action Cost Symbol ───────────────────────────────────────────────────────
 function actionSymbol(type: string, value: number | null): string {
@@ -767,7 +792,12 @@ function BatchTab() {
 }
 
 // ─── Settings Modal ───────────────────────────────────────────────────────────
-function ApiKeyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+function ApiKeyModal({ onClose, onSaved, themeKey, onThemeChange }: {
+  onClose: () => void
+  onSaved: () => void
+  themeKey: PF2EThemeKey
+  onThemeChange: (k: PF2EThemeKey) => void
+}) {
   const [keyInput, setKeyInput]       = useState('')
   const [saved, setSaved]             = useState(false)
   const [hasKey, setHasKey]           = useState(hasApiKey())
@@ -810,6 +840,37 @@ function ApiKeyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.textMuted }}>
               <X size={20} />
             </button>
+          </div>
+
+          {/* Theme picker */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ color: T.text, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Theme</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(Object.keys(PF2E_THEMES) as PF2EThemeKey[]).map(k => {
+                const th = PF2E_THEMES[k]
+                const active = themeKey === k
+                return (
+                  <button key={k} onClick={() => onThemeChange(k)} style={{
+                    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                    padding: '10px 6px', borderRadius: 8, cursor: 'pointer',
+                    background: active ? `${th.accent}22` : T.surface2,
+                    border: `2px solid ${active ? th.accent : T.border}`,
+                    transition: 'all 0.15s',
+                  }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: th.swatch,
+                      boxShadow: active ? `0 0 10px ${th.swatch}88` : 'none',
+                      border: `2px solid ${active ? '#fff4' : 'transparent'}`,
+                      transition: 'all 0.15s',
+                    }} />
+                    <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: active ? T.text : T.textDim }}>
+                      {th.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Security badge */}
@@ -950,6 +1011,14 @@ type Mode = 'text' | 'name' | 'image'
 
 export default function PF2eApp() {
   const [appTab, setAppTab]       = useState<'parser' | 'batch'>('parser')
+  const [themeKey, setThemeKey]   = useState<PF2EThemeKey>(
+    () => (localStorage.getItem(THEME_STORAGE_KEY) as PF2EThemeKey) ?? 'ember'
+  )
+  const selectTheme = (k: PF2EThemeKey) => {
+    localStorage.setItem(THEME_STORAGE_KEY, k)
+    T = PF2E_THEMES[k]
+    setThemeKey(k)
+  }
   const [mode, setMode]           = useState<Mode>('text')
   const [input, setInput]         = useState('')
   const [nameInput, setNameInput] = useState('')
@@ -1476,7 +1545,7 @@ if (existing) {
         </div>
       </div>
 
-      {showApiKey && <ApiKeyModal onClose={() => setShowApiKey(false)} onSaved={() => setApiKeySet(hasApiKey())} />}
+      {showApiKey && <ApiKeyModal onClose={() => setShowApiKey(false)} onSaved={() => setApiKeySet(hasApiKey())} themeKey={themeKey} onThemeChange={selectTheme} />}
     </div>
   )
 }
