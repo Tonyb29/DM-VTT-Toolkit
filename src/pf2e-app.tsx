@@ -527,8 +527,25 @@ export default function PF2eApp() {
     setError('')
   }
 
+  const writeClipboard = (text: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
+    } else {
+      fallbackCopy(text)
+    }
+  }
+  const fallbackCopy = (text: string) => {
+    const el = document.createElement('textarea')
+    el.value = text
+    el.style.cssText = 'position:fixed;left:-9999px;top:-9999px'
+    document.body.appendChild(el)
+    el.focus(); el.select()
+    document.execCommand('copy')
+    document.body.removeChild(el)
+  }
+
   const copy = () => {
-    navigator.clipboard.writeText(jsonOutput)
+    writeClipboard(jsonOutput)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -544,7 +561,7 @@ if (existing) {
   await Actor.createDocuments([${jsonOutput}]);
   ui.notifications.info("✅ ${creatureName} imported successfully!");
 }`
-    navigator.clipboard.writeText(macro)
+    writeClipboard(macro)
     setCopiedMacro(true)
     setTimeout(() => setCopiedMacro(false), 2000)
   }
