@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — DM VTT Toolkit</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #cbd5e1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      line-height: 1.7;
+    }
+    h1 { color: #e2e8f0; font-size: 1.6rem; margin-bottom: 4px; }
+    h2 { color: #a78bfa; font-size: 1.05rem; margin-top: 32px; margin-bottom: 8px; }
+    p, li { color: #94a3b8; font-size: 0.95rem; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    a { color: #818cf8; }
+    .updated { color: #475569; font-size: 0.85rem; margin-bottom: 32px; }
+    .highlight { background: #1e293b; border-left: 3px solid #7c3aed; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+    .back { display: inline-block; margin-bottom: 32px; color: #7c3aed; text-decoration: none; font-size: 0.9rem; }
+    .back:hover { color: #a78bfa; }
+  </style>
+</head>
+<body>
+  <a class="back" href="/">← Back to DM VTT Toolkit</a>
+
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: April 9, 2026</p>
+
+  <div class="highlight">
+    <strong style="color:#e2e8f0">Short version:</strong> We collect nothing. Your data lives in your browser. Your API key is never sent to us.
+  </div>
+
+  <h2>Who we are</h2>
+  <p>DM VTT Toolkit is a free, open-source browser tool built by Tony B (<a href="https://github.com/Tonyb29" target="_blank">Tonyb29</a>) to help tabletop RPG game masters prepare content for Foundry VTT and other virtual tabletop platforms.</p>
+
+  <h2>What data we collect</h2>
+  <p><strong style="color:#e2e8f0">None.</strong> There is no server, no database, no account system, and no analytics. We do not collect, store, or transmit any personal information.</p>
+
+  <h2>What is stored locally in your browser</h2>
+  <p>The following data is saved to <strong>your browser's localStorage</strong> only — it never leaves your device:</p>
+  <ul>
+    <li><strong>Claude API key</strong> — stored only if you choose to enter one. Used solely to make requests to Anthropic's API directly from your browser.</li>
+    <li><strong>Campaign presets</strong> — your campaign world data (NPCs, continents, journals).</li>
+    <li><strong>Celestial calendar</strong> — your moon and calendar configuration.</li>
+    <li><strong>UI preferences</strong> — welcome banner dismissed state, etc.</li>
+  </ul>
+  <p>You can clear all of this at any time by clearing your browser's site data for this domain, or by using your browser's developer tools.</p>
+
+  <h2>Your Claude API key</h2>
+  <p>If you enter a Claude API key, it is stored in your browser's localStorage and sent <strong>directly from your browser to Anthropic's API</strong> (<code>api.anthropic.com</code>) when you use AI features. It is never transmitted to our servers — we have no servers to send it to.</p>
+  <p>We recommend treating your API key like a password. Do not share it or use it on shared/public computers.</p>
+
+  <h2>Third-party services</h2>
+  <ul>
+    <li>
+      <strong>Anthropic (Claude API)</strong> — AI features send your prompt and the Claude API key to <code>api.anthropic.com</code>. Subject to <a href="https://www.anthropic.com/privacy" target="_blank">Anthropic's Privacy Policy</a>.
+    </li>
+    <li>
+      <strong>allorigins.win</strong> — The "Extract from URL" feature in the Stat Block Parser uses <code>api.allorigins.win</code>, a public proxy service, to fetch the content of web pages you provide. The URL you enter is sent through this third-party service. Do not use this feature with URLs that contain sensitive information.
+    </li>
+    <li>
+      <strong>Ko-fi</strong> — The donation link opens <a href="https://ko-fi.com/tonyb29" target="_blank">ko-fi.com</a> in a new tab. Ko-fi is an independent platform subject to their own privacy policy. No data is shared with Ko-fi unless you choose to donate.
+    </li>
+    <li>
+      <strong>Cloudflare</strong> — This site is hosted on Cloudflare Workers. Cloudflare may log basic request metadata (IP address, timestamp, URL) as part of standard infrastructure operation. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank">Cloudflare's Privacy Policy</a>.
+    </li>
+    <li>
+      <strong>GitHub</strong> — Source code is hosted publicly at <a href="https://github.com/Tonyb29/DM-VTT-Toolkit" target="_blank">github.com/Tonyb29/DM-VTT-Toolkit</a>. Bug reports submitted via GitHub Issues are subject to <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank">GitHub's Privacy Policy</a>.
+    </li>
+  </ul>
+
+  <h2>Cookies</h2>
+  <p>We do not use cookies.</p>
+
+  <h2>Children's privacy</h2>
+  <p>This tool is not directed at children under 13. We do not knowingly collect any information from children.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy changes materially, the "Last updated" date above will reflect that. As there is no user account system, we cannot notify you directly.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or concerns? Open an issue at <a href="https://github.com/Tonyb29/DM-VTT-Toolkit/issues" target="_blank">github.com/Tonyb29/DM-VTT-Toolkit/issues</a>.</p>
+
+  <h2>Open source</h2>
+  <p>This tool is open source under the <a href="https://github.com/Tonyb29/DM-VTT-Toolkit/blob/main/LICENSE" target="_blank">MIT License</a>. You can inspect exactly what it does with your data by reading the source code.</p>
+</body>
+</html>
