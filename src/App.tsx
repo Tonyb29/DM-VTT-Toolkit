@@ -390,7 +390,11 @@ export default function App() {
       </div>
 
       {showSettings && (
-        <SettingsModal onClose={() => { setShowSettings(false); setApiKeySet(hasApiKey()) }} />
+        <SettingsModal
+          onClose={() => { setShowSettings(false); setApiKeySet(hasApiKey()) }}
+          themeKey={themeKey}
+          onThemeChange={selectTheme}
+        />
       )}
 
       {/* Footer */}
@@ -405,27 +409,6 @@ export default function App() {
         <a href="https://ko-fi.com/tonyb29" target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'none' }}>☕ Ko-fi</a>
       </div>
 
-      {/* ── Theme picker widget ──────────────────────────────────── */}
-      <div style={{
-        position: 'fixed', bottom: 16, right: 16, zIndex: 900,
-        background: '#0f172a', border: '1px solid #334155', borderRadius: 10,
-        padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8,
-        boxShadow: '0 4px 24px #000a',
-      }}>
-        <span style={{ fontSize: 10, color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Theme
-        </span>
-        {(Object.keys(THEMES) as ThemeKey[]).map(k => (
-          <button key={k} onClick={() => selectTheme(k)} title={THEMES[k].label} style={{
-            background: themeKey === k ? THEMES[k].accent : '#1e293b',
-            border: themeKey === k ? `2px solid ${THEMES[k].accentText}` : '2px solid transparent',
-            borderRadius: 6, color: themeKey === k ? '#fff' : '#64748b',
-            padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 700,
-            transition: 'all 0.15s',
-          }}>{k}</button>
-        ))}
-        <span style={{ fontSize: 10, color: '#334155' }}>{THEMES[themeKey].label.split('—')[1]?.trim()}</span>
-      </div>
     </div>
   )
 }

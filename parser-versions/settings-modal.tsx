@@ -2,9 +2,21 @@ import { useState, useEffect } from 'react'
 import { X, Key, CheckCircle, AlertTriangle, Trash2, ChevronDown, ChevronRight, Shield, ExternalLink } from 'lucide-react'
 import { getApiKey, setApiKey, clearApiKey } from './claude-api'
 
-type Props = { onClose: () => void }
+const THEMES = {
+  A: { label: 'Purple', accent: '#7c3aed', accentText: '#c4b5fd' },
+  B: { label: 'Teal',   accent: '#0d9488', accentText: '#5eead4' },
+  C: { label: 'Green',  accent: '#16a34a', accentText: '#86efac' },
+  D: { label: 'Crimson',accent: '#dc2626', accentText: '#fca5a5' },
+} as const
+type ThemeKey = keyof typeof THEMES
 
-export default function SettingsModal({ onClose }: Props) {
+type Props = {
+  onClose: () => void
+  themeKey?: ThemeKey
+  onThemeChange?: (k: ThemeKey) => void
+}
+
+export default function SettingsModal({ onClose, themeKey, onThemeChange }: Props) {
   const [keyInput, setKeyInput]         = useState('')
   const [saved, setSaved]               = useState(false)
   const [hasKey, setHasKey]             = useState(false)
@@ -131,6 +143,37 @@ export default function SettingsModal({ onClose }: Props) {
               )}
             </div>
           </div>
+
+          {/* Theme picker */}
+          {onThemeChange && (
+            <div style={{ marginTop: 20 }}>
+              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+                Theme
+              </label>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {(Object.keys(THEMES) as ThemeKey[]).map(k => (
+                  <button
+                    key={k}
+                    title={THEMES[k].label}
+                    onClick={() => onThemeChange(k)}
+                    style={{
+                      width: 34, height: 34, borderRadius: '50%', cursor: 'pointer',
+                      background: THEMES[k].accent,
+                      border: `3px solid ${k === themeKey ? '#fff' : 'transparent'}`,
+                      boxShadow: k === themeKey ? `0 0 0 1px ${THEMES[k].accent}` : 'none',
+                      transition: 'border-color 0.15s',
+                      flexShrink: 0,
+                    }}
+                  />
+                ))}
+                {themeKey && (
+                  <span style={{ fontSize: 12, color: '#64748b', alignSelf: 'center', marginLeft: 4 }}>
+                    {THEMES[themeKey].label}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Walkthrough — collapsible */}
           <div style={{ marginTop: 16, border: '1px solid #1e293b', borderRadius: 8, overflow: 'hidden' }}>
