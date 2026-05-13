@@ -10,6 +10,7 @@ export default defineConfig({
         main:       resolve(__dirname, 'index.html'),
         campaign:   resolve(__dirname, 'campaign.html'),
         pathfinder: resolve(__dirname, 'pathfinder.html'),
+        drawsteel:  resolve(__dirname, 'drawsteel.html'),
       }
     }
   },

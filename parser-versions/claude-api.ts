@@ -598,3 +598,126 @@ ${plainText.slice(0, 12000)}`,
 
   return (msg.content[0] as any).text?.trim() ?? '';
 }
+
+// Generate a Draw Steel (MCDM) stat block from a creature name
+// Returns SteelCompendium markdown format (YAML frontmatter + blockquote abilities)
+export async function generateDrawSteelStatBlock(name: string, context?: string): Promise<string> {
+  const client = getClient();
+  const contextHint = context?.trim() ? ` Additional context: ${context.trim()}.` : '';
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2048,
+    messages: [{
+      role: 'user',
+      content: `Generate a complete Draw Steel (MCDM) stat block for "${name}".${contextHint}
+
+Output ONLY the stat block in this exact markdown format:
+
+---
+name: [Name]
+level: [1-10]
+ev: [encounter value, typically level × 6-8]
+stamina: [HP, typically level × 15-25 for standard creatures]
+speed: [usually 5-7]
+size: [1M / 1S / 2 / 3 etc.]
+stability: [0-5]
+might: [modifier, e.g. 2]
+agility: [modifier]
+reason: [modifier]
+intuition: [modifier]
+presence: [modifier]
+free_strike: [damage value, usually 2-8]
+ancestry:
+  - [Ancestry type, e.g. Goblin / Beast / Demon / Undead]
+roles:
+  - [Role: Ambusher / Artillery / Brute / Controller / Defender / Harrier / Hexer / Leader / Solo / Support]
+---
+
+Then 2-4 abilities in this blockquote format, each separated by exactly <!-- -->:
+
+> #### [emoji] [Ability Name]
+> *[Keywords: Attack, Melee, Weapon — use relevant ones]*
+>
+> **[N] Action** | [Distance: Melee 1 / Ranged 10 / etc.] | [Target: One creature / All enemies / etc.]
+>
+> **Power Roll** + [Characteristic]:
+> - ≤11: [tier 1 outcome]
+> - 12-16: [tier 2 outcome]
+> - 17+: [tier 3 outcome]
+>
+> **Effect:** [Optional persistent effect, if any]
+
+Emoji guide: 🗡 melee attack | 🏹 ranged attack | 🔳 area attack | ❗️ triggered action | ❇️ free action | ⭐️ signature ability | ☠️ villain action
+Signature: add (Signature Ability) after name. Malice: add (N Malice) after name. Villain actions: add (Villain Action N) after name.
+
+Draw Steel characteristics: Might (physical power), Agility (speed/precision), Reason (intellect), Intuition (awareness), Presence (force of personality).
+Damage tiers: tier 3 should be roughly double tier 1. Include conditions like: slowed, dazed, frightened, weakened, prone, grabbed, restrained.
+
+Do not add commentary before or after. Use <!-- --> as the exact separator between ability blocks.`,
+    }],
+  });
+
+  return (msg.content[0] as any).text?.trim() ?? '';
+}
+
+// Extract a Draw Steel stat block from an image
+export async function extractDrawSteelStatBlockFromImage(dataUrl: string): Promise<string> {
+  const client = getClient();
+  const [header, data] = dataUrl.split(',');
+  const mediaType = (header.match(/data:([^;]+)/) ?? [])[1] as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2048,
+    messages: [{
+      role: 'user',
+      content: [
+        {
+          type: 'image',
+          source: { type: 'base64', media_type: mediaType ?? 'image/png', data },
+        },
+        {
+          type: 'text',
+          text: `Extract the Draw Steel (MCDM) stat block from this image and format it as SteelCompendium markdown:
+
+---
+name: [Name]
+level: [N]
+ev: [N]
+stamina: [N]
+speed: [N]
+size: [e.g. 1M]
+stability: [N]
+might: [N]
+agility: [N]
+reason: [N]
+intuition: [N]
+presence: [N]
+free_strike: [N]
+ancestry:
+  - [type]
+roles:
+  - [role]
+---
+
+Then each ability as a blockquote separated by <!-- -->:
+
+> #### [emoji] [Name]
+> *[Keywords]*
+>
+> **[N] Action** | [Distance] | [Target]
+>
+> **Power Roll** + [Characteristic]:
+> - ≤11: [result]
+> - 12-16: [result]
+> - 17+: [result]
+
+Output ONLY the formatted stat block, no commentary.`,
+        },
+      ],
+    }],
+  });
+
+  return (msg.content[0] as any).text?.trim() ?? '';
+}
