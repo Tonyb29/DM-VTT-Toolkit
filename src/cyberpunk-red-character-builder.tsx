@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Check, Copy, Dices, RotateCcw, Shuffle, Star } from 'lucide-react'
+import { Check, Copy, Dices, FileDown, RotateCcw, Shuffle, Star } from 'lucide-react'
 
 const T = {
   bg: '#08050a', surface: '#120c16', surface2: '#1a1220',
@@ -345,7 +345,7 @@ export default function CharacterBuilder() {
 
   return (
     <div style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 20px 40px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+      <div className="cpr-print-hide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
         <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.5, maxWidth: 560 }}>
           A background &amp; roleplay generator — nine lifepath questions, each with a pick-a-description or roll-a-die option.
           Built for new players who don&apos;t know the setting yet.
@@ -361,13 +361,13 @@ export default function CharacterBuilder() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '200px minmax(0,1fr) 280px', gap: 18, alignItems: 'start' }} className="cpr-cb-layout">
-        <nav style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, position: 'sticky', top: 12 }}>
+        <nav className="cpr-print-hide" style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, position: 'sticky', top: 12 }}>
           <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.textDim, marginBottom: 8, fontWeight: 600 }}>Lifepath</div>
           {STEPS.map((s, i) => railItem(s.eyebrow, i, i === state.step && !atSummary, state.picks[s.id] !== undefined))}
           {railItem('Dossier', STEPS.length, atSummary, false, !complete)}
         </nav>
 
-        <main style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, minHeight: 460, display: 'flex', flexDirection: 'column' }}>
+        <main className="cpr-cb-stage" style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, minHeight: 460, display: 'flex', flexDirection: 'column' }}>
           {atSummary ? (
             <Summary
               state={state}
@@ -393,7 +393,7 @@ export default function CharacterBuilder() {
           )}
         </main>
 
-        <aside style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 14, position: 'sticky', top: 12 }}>
+        <aside className="cpr-print-hide" style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 14, position: 'sticky', top: 12 }}>
           <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.textDim, marginBottom: 10, fontWeight: 600 }}>Dossier</div>
           {STEPS.map(s => {
             const pick = state.picks[s.id]
@@ -410,7 +410,7 @@ export default function CharacterBuilder() {
       </div>
 
       {toast && (
-        <div style={{
+        <div className="cpr-print-hide" style={{
           position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
           background: T.gold, color: '#000', fontSize: 12, fontWeight: 600, padding: '9px 16px',
           borderRadius: 6, zIndex: 20,
@@ -422,6 +422,14 @@ export default function CharacterBuilder() {
       <style>{`
         @media (max-width: 980px) {
           .cpr-cb-layout { grid-template-columns: 1fr !important; }
+        }
+        .cpr-print-only { display: none; }
+        @media print {
+          body, .cpr-app-root { background: #fff !important; }
+          .cpr-print-hide { display: none !important; }
+          .cpr-cb-stage { background: #fff !important; border: none !important; min-height: 0 !important; }
+          .cpr-print-only { display: block !important; }
+          @page { margin: 0.5in; }
         }
       `}</style>
     </div>
@@ -553,72 +561,166 @@ function Summary({
 
   const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
   const role = opt('role')
+  const build = ROLE_BUILDS[role.t]
 
   return (
-    <div style={{ padding: '24px 26px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 14, flexWrap: 'wrap', borderBottom: `2px solid ${T.red}`, paddingBottom: 14, marginBottom: 18 }}>
-        <h2 style={{ margin: 0, fontSize: 26, color: T.text }}>Character Dossier</h2>
-        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', background: T.red, color: '#fff', padding: '6px 12px', borderRadius: 6, boxShadow: `0 0 14px ${T.red}66` }}>{role.t}</span>
-      </div>
+    <>
+      <div className="cpr-print-hide" style={{ padding: '24px 26px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 14, flexWrap: 'wrap', borderBottom: `2px solid ${T.red}`, paddingBottom: 14, marginBottom: 18 }}>
+          <h2 style={{ margin: 0, fontSize: 26, color: T.text }}>Character Dossier</h2>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', background: T.red, color: '#fff', padding: '6px 12px', borderRadius: 6, boxShadow: `0 0 14px ${T.red}66` }}>{role.t}</span>
+        </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-        {STEPS.map(s => (
-          <span key={s.id} style={{ fontSize: 11, color: T.cyan, border: `1px solid ${T.cyan}`, padding: '4px 10px', borderRadius: 5 }}>{opt(s.id).t}</span>
-        ))}
-      </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          {STEPS.map(s => (
+            <span key={s.id} style={{ fontSize: 11, color: T.cyan, border: `1px solid ${T.cyan}`, padding: '4px 10px', borderRadius: 5 }}>{opt(s.id).t}</span>
+          ))}
+        </div>
 
-      <div style={{ background: T.surface2, borderLeft: `3px solid ${T.gold}`, padding: '16px 18px', fontSize: 14, lineHeight: 1.7, marginBottom: 22, borderRadius: '0 8px 8px 0' }}>
-        {buildBio(state.picks)}
-      </div>
+        <div style={{ background: T.surface2, borderLeft: `3px solid ${T.gold}`, padding: '16px 18px', fontSize: 14, lineHeight: 1.7, marginBottom: 22, borderRadius: '0 8px 8px 0' }}>
+          {buildBio(state.picks)}
+        </div>
 
-      {ROLE_BUILDS[role.t] && (
-        <>
-          <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-            Suggested Build Direction
-            <span style={{ fontSize: 10, letterSpacing: 0, textTransform: 'none', color: T.textDim, fontWeight: 400 }}>— {role.t}</span>
-          </div>
-          <div style={{ background: T.surface2, border: `1px solid ${T.red}55`, borderRadius: 8, padding: '16px 18px', marginBottom: 8 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 14 }} className="cpr-cb-grid">
-              <div>
-                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.gold, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Prioritize</div>
-                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{ROLE_BUILDS[role.t].primary}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.gold, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Key Skills</div>
-                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{ROLE_BUILDS[role.t].skills}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Keep Light</div>
-                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.textMuted }}>{ROLE_BUILDS[role.t].light}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.cyan, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Background Tie-In</div>
-                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{ROLE_BUILDS[role.t].note}</div>
+        <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10 }}>Roleplay Cues</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12, marginBottom: 22 }} className="cpr-cb-grid">
+          {STEPS.map(s => (
+            <div key={s.id} style={{ background: T.surface2, border: `1px solid ${T.border}`, padding: '12px 14px', borderRadius: 8 }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase' }}>{s.eyebrow} — {opt(s.id).t}</div>
+              <div style={{ fontSize: 12.5, marginTop: 5, lineHeight: 1.5, color: T.text }}>{opt(s.id).cue}</div>
+            </div>
+          ))}
+        </div>
+
+        {build && (
+          <>
+            <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              Suggested Build Direction
+              <span style={{ fontSize: 10, letterSpacing: 0, textTransform: 'none', color: T.textDim, fontWeight: 400 }}>— {role.t}</span>
+            </div>
+            <div style={{ background: T.surface2, border: `1px solid ${T.red}55`, borderRadius: 8, padding: '16px 18px', marginBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 14 }} className="cpr-cb-grid">
+                <div>
+                  <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.gold, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Prioritize</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{build.primary}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.gold, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Key Skills</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{build.skills}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Keep Light</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.textMuted }}>{build.light}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.cyan, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Background Tie-In</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{build.note}</div>
+                </div>
               </div>
             </div>
-          </div>
-          <div style={{ fontSize: 10.5, color: T.textDim, marginBottom: 22, fontStyle: 'italic' }}>
-            Directional guidance only — check your core rulebook or GM for exact point totals and Role Ability rules.
-          </div>
-        </>
-      )}
+            <div style={{ fontSize: 10.5, color: T.textDim, marginBottom: 22, fontStyle: 'italic' }}>
+              Directional guidance only — check your core rulebook or GM for exact point totals and Role Ability rules.
+            </div>
+          </>
+        )}
 
-      <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10 }}>Roleplay Cues</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12, marginBottom: 22 }} className="cpr-cb-grid">
-        {STEPS.map(s => (
-          <div key={s.id} style={{ background: T.surface2, border: `1px solid ${T.border}`, padding: '12px 14px', borderRadius: 8 }}>
-            <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase' }}>{s.eyebrow} — {opt(s.id).t}</div>
-            <div style={{ fontSize: 12.5, marginTop: 5, lineHeight: 1.5, color: T.text }}>{opt(s.id).cue}</div>
-          </div>
-        ))}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button onClick={() => window.print()} style={{ ...navBtn(false, true), display: 'flex', alignItems: 'center', gap: 7 }}>
+            <FileDown size={13} /> Download Character Sheet (PDF)
+          </button>
+          <button onClick={onCopy} style={{ ...navBtn(false), display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Copy size={13} /> Copy Dossier as Text
+          </button>
+          <button onClick={onEdit} style={navBtn(false)}>← Edit Answers</button>
+          <button onClick={onReroll} style={navBtn(false)}>Reroll Everything</button>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <button onClick={onCopy} style={{ ...navBtn(false, true), display: 'flex', alignItems: 'center', gap: 7 }}>
-          <Copy size={13} /> Copy Dossier as Text
-        </button>
-        <button onClick={onEdit} style={navBtn(false)}>← Edit Answers</button>
-        <button onClick={onReroll} style={navBtn(false)}>Reroll Everything</button>
+      <PrintSheet state={state} />
+    </>
+  )
+}
+
+const ATTRS: [string, string][] = [
+  ['INT', 'Intelligence'], ['REF', 'Reflexes'], ['DEX', 'Dexterity'], ['TECH', 'Technique'], ['COOL', 'Cool'],
+  ['WILL', 'Willpower'], ['LUCK', 'Luck'], ['MOVE', 'Movement'], ['BODY', 'Body'], ['EMP', 'Empathy'],
+]
+
+function PrintSheet({ state }: { state: SavedState }) {
+  const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
+  const role = opt('role')
+  const build = ROLE_BUILDS[role.t]
+  const lifepathRows: [string, string][] = STEPS.map(s => [s.eyebrow, opt(s.id).t])
+
+  return (
+    <div className="cpr-print-only" style={{ background: '#fff', color: '#111', fontFamily: 'Georgia, "Times New Roman", serif', padding: '0.4in' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '3px solid #111', paddingBottom: 10, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555' }}>Cyberpunk RED — Edgerunner Character Sheet</div>
+          <h1 style={{ margin: '2px 0 0', fontSize: 24 }}>Handle: <span style={{ borderBottom: '1px solid #111', display: 'inline-block', minWidth: 220 }}>&nbsp;</span></h1>
+        </div>
+        <div style={{ textAlign: 'right', fontSize: 12 }}>
+          <div>Role: <b>{role.t}</b></div>
+          <div>Role Ability: <span style={{ borderBottom: '1px solid #111', display: 'inline-block', minWidth: 160 }}>&nbsp;</span></div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Attributes</div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+        {ATTRS.map(([abbr, full]) => {
+          const highlighted = !!build && build.primary.includes(abbr)
+          return (
+            <div key={abbr} title={full} style={{
+              width: 62, border: `2px solid ${highlighted ? '#111' : '#999'}`, borderRadius: 4,
+              textAlign: 'center', padding: '6px 2px', background: highlighted ? '#eee' : '#fff',
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 700 }}>{abbr}{highlighted ? ' ★' : ''}</div>
+              <div style={{ height: 22, borderBottom: '1px solid #999', marginTop: 4 }} />
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Key Skills to Prioritize</div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 8 }}>{build ? build.skills : 'Pick skills that match your Role.'}</div>
+          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Keep Light</div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.6 }}>{build ? build.light : '—'}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Other Skills (fill in)</div>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 10 }}>
+              <div style={{ flex: 1, borderBottom: '1px solid #999', height: 14 }} />
+              <div style={{ width: 34, borderBottom: '1px solid #999', height: 14 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Lifepath</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 16 }}>
+        <tbody>
+          {lifepathRows.map(([k, v], i) => (
+            <tr key={k} style={{ background: i % 2 === 0 ? '#f4f4f4' : '#fff' }}>
+              <td style={{ padding: '4px 8px', fontWeight: 700, width: 140, border: '1px solid #ccc' }}>{k}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #ccc' }}>{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Background</div>
+      <p style={{ fontSize: 12.5, lineHeight: 1.6, marginTop: 0, marginBottom: 16 }}>{buildBio(state.picks)}</p>
+
+      <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Roleplay Notes</div>
+      <ul style={{ fontSize: 12, lineHeight: 1.7, marginTop: 0, paddingLeft: 18, marginBottom: 16 }}>
+        {STEPS.map(s => <li key={s.id}>{opt(s.id).cue}</li>)}
+      </ul>
+
+      <div style={{ fontSize: 9.5, color: '#777', borderTop: '1px solid #ccc', paddingTop: 8 }}>
+        Generated with Edgerunner Builder at dmtoolkit.org/cyberpunk-red — skill/attribute priorities are directional
+        guidance only. Confirm exact point totals and Role Ability rules against your core rulebook or GM.
       </div>
     </div>
   )

@@ -242,7 +242,7 @@ export default function CyberpunkRedApp() {
   const macro = foundryActor ? buildCyberpunkRedImportMacro(foundryActor) : ''
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="cpr-app-root" style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {showSettings && (
         <ApiKeyModal
           onClose={() => setShowSettings(false)}
@@ -250,7 +250,7 @@ export default function CyberpunkRedApp() {
         />
       )}
 
-      <header style={{ borderBottom: `1px solid ${T.border}`, background: `linear-gradient(180deg, ${T.surface} 0%, ${T.bg} 100%)`, padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <header className="cpr-print-hide" style={{ borderBottom: `1px solid ${T.border}`, background: `linear-gradient(180deg, ${T.surface} 0%, ${T.bg} 100%)`, padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 16, fontWeight: 700, color: T.accent, letterSpacing: '0.5px' }}>
           ▲ Cyberpunk RED Toolkit
         </span>
