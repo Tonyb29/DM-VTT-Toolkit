@@ -11,6 +11,7 @@ export default defineConfig({
         campaign:   resolve(__dirname, 'campaign.html'),
         pathfinder: resolve(__dirname, 'pathfinder.html'),
         drawsteel:  resolve(__dirname, 'drawsteel.html'),
+        cyberpunk:  resolve(__dirname, 'cyberpunk-red.html'),
       }
     }
   },

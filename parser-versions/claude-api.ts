@@ -661,6 +661,79 @@ Do not add commentary before or after. Use <!-- --> as the exact separator betwe
   return (msg.content[0] as any).text?.trim() ?? '';
 }
 
+// Generate a Cyberpunk RED NPC stat block from a name/concept
+// Returns the label:value plain-text format used by cyberpunk-red-parser.ts
+export async function generateCyberpunkRedStatBlock(name: string, context?: string): Promise<string> {
+  const client = getClient();
+  const contextHint = context?.trim() ? ` Additional context: ${context.trim()}.` : '';
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    messages: [{
+      role: 'user',
+      content: `Generate a Cyberpunk RED NPC (mook) stat block for "${name}".${contextHint}
+
+Output ONLY the stat block in this exact label:value format, one label per line:
+
+NAME: [Name]
+ROLE: [Solo / Netrunner / Tech / Media / Fixer / Nomad / Rockerboy / Cop / Corp / Medtech / Exec — pick the closest fit]
+STATS: INT [1-10], REF [1-10], DEX [1-10], TECH [1-10], COOL [1-10], WILL [1-10], LUCK [1-10], MOVE [1-10], BODY [1-10], EMP [1-10]
+HP: [total HP, typically (BODY+WILL)×2 + 10, roughly 30-50 for mooks]
+SP: [stopping power from armor, typically 4-11]
+SKILLS: [Skill Name] +[N], [Skill Name] +[N], ... (4-8 relevant skills with bonuses, e.g. Handgun +8, Stealth +6)
+WEAPONS: [Weapon Name] ([damage dice, e.g. 2d6]), [Weapon Name] ([damage dice])
+ARMOR: [Armor piece name]
+CYBERWARE: [Cyberware item], [Cyberware item] (omit line if none)
+NOTES: [one sentence of tactics/flavor]
+
+Rules: use real Cyberpunk RED skill names (Athletics, Brawling, Handgun, Heavy Weapons, Stealth, Evasion, Perception, Persuasion, etc.), real Cyberpunk RED weapon/armor names where possible. Do not use markdown, bullet points, or commentary before or after. Output only the labeled lines above.`,
+    }],
+  });
+
+  return (msg.content[0] as any).text?.trim() ?? '';
+}
+
+// Extract a Cyberpunk RED NPC stat block from an image
+export async function extractCyberpunkRedStatBlockFromImage(dataUrl: string): Promise<string> {
+  const client = getClient();
+  const [header, data] = dataUrl.split(',');
+  const mediaType = (header.match(/data:([^;]+)/) ?? [])[1] as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    messages: [{
+      role: 'user',
+      content: [
+        {
+          type: 'image',
+          source: { type: 'base64', media_type: mediaType ?? 'image/png', data },
+        },
+        {
+          type: 'text',
+          text: `Extract the Cyberpunk RED NPC stat block from this image and format it as label:value plain text:
+
+NAME: [Name]
+ROLE: [Role]
+STATS: INT [N], REF [N], DEX [N], TECH [N], COOL [N], WILL [N], LUCK [N], MOVE [N], BODY [N], EMP [N]
+HP: [N]
+SP: [N]
+SKILLS: [Skill] +[N], [Skill] +[N], ...
+WEAPONS: [Weapon] ([damage]), [Weapon] ([damage])
+ARMOR: [Armor piece]
+CYBERWARE: [item], [item] (omit line if none)
+NOTES: [one sentence]
+
+Output ONLY the formatted stat block, no commentary.`,
+        },
+      ],
+    }],
+  });
+
+  return (msg.content[0] as any).text?.trim() ?? '';
+}
+
 // Extract a Draw Steel stat block from an image
 export async function extractDrawSteelStatBlockFromImage(dataUrl: string): Promise<string> {
   const client = getClient();
