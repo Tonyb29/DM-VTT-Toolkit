@@ -129,6 +129,71 @@ const STEPS: Step[] = [
   },
 ]
 
+type RoleBuild = { primary: string; skills: string; light: string; note: string }
+
+const ROLE_BUILDS: Record<string, RoleBuild> = {
+  Rockerboy: {
+    primary: 'COOL and EMP — you move a room and read its mood before anyone else does.',
+    skills: 'Perform (whatever your art is), Persuasion, Wardrobe & Style.',
+    light: 'Combat and tech skills — you’re a headliner, not a hitter.',
+    note: 'Your Role Ability is about rallying people around you, so let your background’s Drive or Reputation pick decide what your following actually gets you.',
+  },
+  Solo: {
+    primary: 'REF above everything else — it’s the stat that should look freakish on the sheet.',
+    skills: 'One weapon skill (Handgun, Rifle, or Martial Arts) maxed — pick the one your background’s Style/Homeland points toward.',
+    light: 'Streetwise, Human Perception, Interrogation — keep these low if you’re playing him green. That gap between "can shoot" and "can’t read a threat" is the whole bit.',
+    note: 'Your Role Ability is battlefield instinct — reflavor it as pure muscle memory from drills, not trauma.',
+  },
+  Netrunner: {
+    primary: 'INT and TECH — the net doesn’t care how tough you are.',
+    skills: 'Interface and a Programming/Electronics skill.',
+    light: 'Physical combat skills and COOL-based social skills — you win from a terminal, not a firefight.',
+    note: 'Your Role Ability lets you pull off net actions no one else at the table can — lean into a background pick (Homeland or Family) that explains where you learned to code.',
+  },
+  Tech: {
+    primary: 'TECH first, INT second — you fix things nobody else understands.',
+    skills: 'Basic Tech plus one specialty (Cybertech, Land Vehicle Tech, Weaponstech — whatever matches your Style).',
+    light: 'Social and stealth skills — you’re useful because of what you can build, not who you know.',
+    note: 'Your Role Ability lets you field-rig repairs under pressure — great fit if your Family Style pick was hands-on (Off-Grid Survivalists, Street-Level Hustlers).',
+  },
+  Medtech: {
+    primary: 'TECH and INT — steady hands and a fast diagnosis.',
+    skills: 'First Aid / Paramedic, plus Human Perception for reading a patient.',
+    light: 'Combat skills — you keep people alive, you don’t usually start the fight.',
+    note: 'Your Role Ability keeps someone breathing when the dice say they shouldn’t — pairs well with a Scar pick like "A Job Gone Wrong."',
+  },
+  Media: {
+    primary: 'INT and COOL — you find the story and you don’t flinch chasing it.',
+    skills: 'Human Perception, Persuasion, Investigation.',
+    light: 'Combat and tech skills — your leverage is what you know, not what you can shoot or fix.',
+    note: 'Your Role Ability breaks a story wide open — your Drive pick (Reputation especially) should tell you what kind of stories you chase.',
+  },
+  Lawman: {
+    primary: 'COOL and REF — procedure under pressure.',
+    skills: 'Handgun, Interrogation, Tactics.',
+    light: 'Criminal-adjacent skills like Streetwise — you’re playing this straight, at least at first.',
+    note: 'Your Role Ability pulls in backup when things go bad — a nice mechanical hook if your War pick was "Frontline" or "Homefront Survivor."',
+  },
+  Exec: {
+    primary: 'COOL and INT — composure and a read on leverage.',
+    skills: 'Persuasion, Trading, Teamwork.',
+    light: 'Combat skills — you win the room, you don’t win the fight.',
+    note: 'Your Role Ability moves resources other Roles can’t touch — your Family Style pick (Corporate Climbers especially) should explain who you can still call.',
+  },
+  Fixer: {
+    primary: 'COOL and EMP — people skills are your whole toolkit.',
+    skills: 'Trading, Streetwise, Personal Grooming or Wardrobe & Style.',
+    light: 'Combat skills — you know a guy who does that, you don’t do it yourself.',
+    note: 'Your Role Ability gets your hands on gear other people can’t find — your Reputation pick ("Everybody Owes Somebody" especially) is basically already this.',
+  },
+  Nomad: {
+    primary: 'REF and TECH — you can drive it and you can fix it.',
+    skills: 'Driving, Basic Tech, a Survival-type skill.',
+    light: 'Corporate/social-climbing skills — the convoy doesn’t care about your boardroom manners.',
+    note: 'Your Role Ability is your pack showing up when you call — pairs naturally with a Nomad Convoy Homeland or Nomad Pack Blood Family pick.',
+  },
+}
+
 const STORAGE_KEY = 'cpr-character-builder-v1'
 
 type SavedState = { step: number; picks: Record<string, number>; mode: Record<string, 'choose' | 'roll'> }
@@ -238,10 +303,19 @@ export default function CharacterBuilder() {
 
   const copyDossier = () => {
     const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
+    const roleBuild = ROLE_BUILDS[opt('role').t]
     const text = 'EDGERUNNER DOSSIER\n' +
       STEPS.map(s => `${s.eyebrow}: ${opt(s.id).t}`).join('\n') +
       '\n\n' + buildBio(state.picks) +
-      '\n\nROLEPLAY CUES\n' + STEPS.map(s => `- ${opt(s.id).cue}`).join('\n')
+      '\n\nROLEPLAY CUES\n' + STEPS.map(s => `- ${opt(s.id).cue}`).join('\n') +
+      (roleBuild
+        ? `\n\nSUGGESTED BUILD DIRECTION (${opt('role').t})\n` +
+          `Prioritize: ${roleBuild.primary}\n` +
+          `Key Skills: ${roleBuild.skills}\n` +
+          `Keep Light: ${roleBuild.light}\n` +
+          `Background Tie-In: ${roleBuild.note}\n` +
+          `(Directional guidance only — check your core rulebook or GM for exact point totals.)`
+        : '')
     navigator.clipboard.writeText(text)
       .then(() => flashToast('Dossier copied to clipboard'))
       .catch(() => flashToast('Copy failed — select text manually'))
@@ -496,6 +570,38 @@ function Summary({
       <div style={{ background: T.surface2, borderLeft: `3px solid ${T.gold}`, padding: '16px 18px', fontSize: 14, lineHeight: 1.7, marginBottom: 22, borderRadius: '0 8px 8px 0' }}>
         {buildBio(state.picks)}
       </div>
+
+      {ROLE_BUILDS[role.t] && (
+        <>
+          <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+            Suggested Build Direction
+            <span style={{ fontSize: 10, letterSpacing: 0, textTransform: 'none', color: T.textDim, fontWeight: 400 }}>— {role.t}</span>
+          </div>
+          <div style={{ background: T.surface2, border: `1px solid ${T.red}55`, borderRadius: 8, padding: '16px 18px', marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 14 }} className="cpr-cb-grid">
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.gold, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Prioritize</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{ROLE_BUILDS[role.t].primary}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.gold, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Key Skills</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{ROLE_BUILDS[role.t].skills}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Keep Light</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.textMuted }}>{ROLE_BUILDS[role.t].light}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.cyan, textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>Background Tie-In</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.text }}>{ROLE_BUILDS[role.t].note}</div>
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 10.5, color: T.textDim, marginBottom: 22, fontStyle: 'italic' }}>
+            Directional guidance only — check your core rulebook or GM for exact point totals and Role Ability rules.
+          </div>
+        </>
+      )}
 
       <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10 }}>Roleplay Cues</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12, marginBottom: 22 }} className="cpr-cb-grid">
