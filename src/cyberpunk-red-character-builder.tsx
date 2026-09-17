@@ -1050,9 +1050,17 @@ export default function CharacterBuilder() {
 
   const randomizeAll = () => {
     // Role first, since which other steps are even active depends on it.
+    // The loop below must NOT re-roll 'role' itself — it's one of the
+    // active steps too, and re-rolling it there would land on a different
+    // Role than the one used to pick which role-gated steps to randomize,
+    // desyncing the two (e.g. Exec's extra steps get rolled, then role
+    // flips to Netrunner, leaving Netrunner's steps never touched).
     const roleStep = STEPS.find(s => s.id === 'role')!
     const picks: Record<string, number> = { role: Math.floor(Math.random() * roleStep.options.length) }
-    for (const s of activeSteps(picks)) picks[s.id] = Math.floor(Math.random() * s.options.length)
+    for (const s of activeSteps(picks)) {
+      if (s.id === 'role') continue
+      picks[s.id] = Math.floor(Math.random() * s.options.length)
+    }
     update({ ...state, picks, step: activeSteps(picks).length })
     flashToast('Full lifepath rolled')
   }
