@@ -30,7 +30,7 @@ const ROLES: { t: string; d: string; ability: string; confirmed: boolean }[] = [
   { t: 'Lawman', d: 'You still believe in the badge — procedure and backup when things go bad.', ability: 'Backup', confirmed: true },
   { t: 'Exec', d: 'You move resources and people other Roles can’t touch. Cool under pressure.', ability: 'Teamwork', confirmed: true },
   { t: 'Fixer', d: 'You know a guy who does that. Connections are your whole toolkit.', ability: 'Operator', confirmed: true },
-  { t: 'Nomad', d: 'Family, convoy, and the open road. You can drive it and you can fix it.', ability: 'Moto', confirmed: false },
+  { t: 'Nomad', d: 'Family, convoy, and the open road. You can drive it and you can fix it.', ability: 'Moto', confirmed: true },
 ]
 
 type WizWeapon = { name: string; damage: string }
