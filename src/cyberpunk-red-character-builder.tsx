@@ -8,10 +8,10 @@ const T = {
   cyan: '#00e5ff', red: '#ff2060', green: '#40e070', gold: '#f0e000',
 }
 
-type Option = { t: string; d: string; cue: string }
-type Step = { id: string; title: string; eyebrow: string; sub: string; options: Option[] }
+export type Option = { t: string; d: string; cue: string }
+export type Step = { id: string; title: string; eyebrow: string; sub: string; options: Option[] }
 
-const STEPS: Step[] = [
+export const STEPS: Step[] = [
   {
     id: 'homeland', title: 'Where Did You Grow Up?', eyebrow: 'Homeland',
     sub: 'Every edgerunner carries their block with them, whether they left it behind or never could. Pick the streets — or district — that raised you.',
@@ -290,9 +290,9 @@ const ROLE_BUILDS: Record<string, RoleBuild> = {
   },
 }
 
-const STORAGE_KEY = 'cpr-character-builder-v1'
+export const STORAGE_KEY = 'cpr-character-builder-v1'
 
-type SavedState = { step: number; picks: Record<string, number>; mode: Record<string, 'choose' | 'roll'> }
+export type SavedState = { step: number; picks: Record<string, number>; mode: Record<string, 'choose' | 'roll'> }
 
 function loadState(): SavedState {
   try {
@@ -309,7 +309,7 @@ function saveState(s: SavedState) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)) } catch { /* ignore */ }
 }
 
-function buildBio(picks: Record<string, number>) {
+export function buildBio(picks: Record<string, number>) {
   const opt = (id: string) => (picks[id] !== undefined ? STEPS.find(s => s.id === id)!.options[picks[id]] : null)
   const homeland = opt('homeland'), family = opt('family'), age = opt('age'), war = opt('war')
   const role = opt('role'), style = opt('style'), drive = opt('drive'), scar = opt('scar'), rep = opt('rep')
