@@ -26,7 +26,7 @@ const ROLES: { t: string; d: string; ability: string; confirmed: boolean }[] = [
   { t: 'Netrunner', d: 'The real fight happens in the net. Intelligence and Technique carry you further than a gun.', ability: 'Interface', confirmed: false },
   { t: 'Tech', d: 'You build, fix, and improve — usually with parts that weren’t meant to go together.', ability: 'Maker', confirmed: true },
   { t: 'Medtech', d: 'You keep people alive when the dice say they shouldn’t be. Technique and a steady hand.', ability: 'Medicine', confirmed: false },
-  { t: 'Media', d: 'You chase the story other people would rather stayed buried. Intelligence and nerve.', ability: 'Truth', confirmed: false },
+  { t: 'Media', d: 'You chase the story other people would rather stayed buried. Intelligence and nerve.', ability: 'Credibility', confirmed: true },
   { t: 'Lawman', d: 'You still believe in the badge — procedure and backup when things go bad.', ability: 'Backup', confirmed: true },
   { t: 'Exec', d: 'You move resources and people other Roles can’t touch. Cool under pressure.', ability: 'Teamwork', confirmed: true },
   { t: 'Fixer', d: 'You know a guy who does that. Connections are your whole toolkit.', ability: 'Operator', confirmed: true },
