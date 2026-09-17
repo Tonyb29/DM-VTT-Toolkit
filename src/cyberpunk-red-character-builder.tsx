@@ -192,8 +192,8 @@ export const STEPS: Step[] = [
     ],
   },
   {
-    id: 'drive', title: 'What Drives You?', eyebrow: 'Motivation',
-    sub: "The thing that actually gets you out of bed for a job — not the cover story, the real one.",
+    id: 'drive', title: 'What Are Your Life Goals?', eyebrow: 'Motivation',
+    sub: "You know your history, your style, your turbulent love life. This is what you actually want out of all of it — the thing that gets you out of bed for a job, not the cover story.",
     options: [
       { t: 'Debt', d: "You owe someone, and they collect. Every job is partly about making that number smaller.", cue: 'Play it a little tense around money talk, even for small amounts.' },
       { t: 'Family', d: "Blood or chosen, someone depends on what you bring home, and that's not negotiable.", cue: 'Play it protective past the point of caution when family comes up.' },
@@ -201,6 +201,10 @@ export const STEPS: Step[] = [
       { t: 'Revenge', d: "Someone's still breathing who shouldn't be, and you haven't forgotten it, no matter how long it's been.", cue: "Play it patient about the one thing you're not patient about at all." },
       { t: 'Escape', d: "One more job and you're gone for good — you've said that before, and you'll probably say it again.", cue: "Play it restless. You're always half-planning an exit, from the job and from the city." },
       { t: 'Belief', d: 'A cause, a crew, or a code you actually follow, even when it costs you.', cue: "Play it principled in ways that occasionally get in your own way, and you wouldn't have it otherwise." },
+      { t: 'Power', d: "Real control — over your own life first, and eventually over the people who used to control it.", cue: 'Play it constantly reading a room for who actually holds leverage, even in casual company.' },
+      { t: 'Reclamation', d: "Something that's rightfully yours is in someone else's hands, and you intend to get it back — whatever that takes.", cue: 'Play it fixated on the specific thing, in a way that surprises people who don’t know the history.' },
+      { t: 'Fear', d: 'You want to become someone nobody in their right mind crosses twice.', cue: 'Play it deliberately intimidating in small, controlled doses — the reputation is a tool, not an accident.' },
+      { t: 'A Clean Break', d: "You want to bury the person you used to be so completely that nobody can dig them back up.", cue: "Play it evasive about your past, with a redirect ready before anyone finishes the question." },
     ],
   },
   {
