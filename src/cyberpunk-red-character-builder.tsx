@@ -893,6 +893,17 @@ export function activeSteps(picks: Record<string, number>): Step[] {
   return STEPS.filter(s => !s.roleGate || s.roleGate === roleName)
 }
 
+// Only Role is required to view the dossier — everything else is
+// skippable. Any step left unanswered falls back to this rather than
+// crashing wherever the dossier/print-sheet/export code reads its pick.
+const UNANSWERED_OPTION: Option = { t: 'Not chosen', d: '', cue: '' }
+function pickOption(picks: Record<string, number>, id: string): Option {
+  const step = STEPS.find(s => s.id === id)
+  const idx = picks[id]
+  if (!step || idx === undefined) return UNANSWERED_OPTION
+  return step.options[idx]
+}
+
 type RoleBuild = { primary: string; skills: string; light: string; note: string }
 
 const ROLE_BUILDS: Record<string, RoleBuild> = {
@@ -1065,6 +1076,23 @@ export default function CharacterBuilder() {
     flashToast('Full lifepath rolled')
   }
 
+  // Rolls a value only for steps you haven't answered yet — whatever
+  // you've already picked (including Role) stays exactly as-is. If Role
+  // itself is still unset, it's rolled first so the right role-gated
+  // steps are included, same reasoning as randomizeAll above.
+  const randomizeRest = () => {
+    let picks: Record<string, number> = { ...state.picks }
+    if (picks.role === undefined) {
+      const roleStep = STEPS.find(s => s.id === 'role')!
+      picks.role = Math.floor(Math.random() * roleStep.options.length)
+    }
+    for (const s of activeSteps(picks)) {
+      if (picks[s.id] === undefined) picks[s.id] = Math.floor(Math.random() * s.options.length)
+    }
+    update({ ...state, picks, step: activeSteps(picks).length })
+    flashToast('Filled in whatever was left blank')
+  }
+
   const resetAll = () => {
     update({ step: 0, picks: {}, mode: {} })
     flashToast('Cleared')
@@ -1073,16 +1101,19 @@ export default function CharacterBuilder() {
   const goto = (idx: number) => update({ ...state, step: idx })
 
   const steps = activeSteps(state.picks)
-  const complete = steps.every(s => state.picks[s.id] !== undefined)
+  // Only Role is required to view the dossier — the rest can be left
+  // blank and finished later, or never.
+  const complete = state.picks.role !== undefined
+  const answeredCount = steps.filter(s => state.picks[s.id] !== undefined).length
   const atSummary = state.step >= steps.length
 
   const copyDossier = () => {
-    const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
+    const opt = (id: string) => pickOption(state.picks, id)
     const roleBuild = ROLE_BUILDS[opt('role').t]
     const text = 'EDGERUNNER DOSSIER\n' +
       steps.map(s => `${s.eyebrow}: ${opt(s.id).t}`).join('\n') +
       '\n\n' + buildBio(state.picks) +
-      '\n\nROLEPLAY CUES\n' + steps.map(s => `- ${opt(s.id).cue}`).join('\n') +
+      '\n\nROLEPLAY CUES\n' + steps.filter(s => opt(s.id).cue).map(s => `- ${opt(s.id).cue}`).join('\n') +
       (roleBuild
         ? `\n\nSUGGESTED BUILD DIRECTION (${opt('role').t})\n` +
           `Prioritize: ${roleBuild.primary}\n` +
@@ -1122,10 +1153,17 @@ export default function CharacterBuilder() {
     <div style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 20px 40px' }}>
       <div className="cpr-print-hide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
         <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.5, maxWidth: 560 }}>
-          A background &amp; roleplay generator — nine lifepath questions, each with a pick-a-description or roll-a-die option.
-          Built for new players who don&apos;t know the setting yet.
+          A background &amp; roleplay generator — a lifepath wizard where each step is a pick-a-description or
+          roll-a-die option. Built for new players who don&apos;t know the setting yet. Only Role is required —
+          answer as many or as few of the rest as you want.
+          {steps.length > 0 && (
+            <span style={{ display: 'block', marginTop: 4, color: T.textDim, fontSize: 11 }}>{answeredCount} of {steps.length} answered</span>
+          )}
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={randomizeRest} style={btnGhost}>
+            <Shuffle size={12} /> Fill In the Rest
+          </button>
           <button onClick={randomizeAll} style={btnGhost}>
             <Shuffle size={12} /> Roll Everything
           </button>
@@ -1328,17 +1366,18 @@ function Summary({
   if (!complete) {
     return (
       <div style={{ padding: 26 }}>
-        <h2 style={{ margin: '0 0 8px', color: T.text }}>Not Finished Yet</h2>
-        <p style={{ color: T.textMuted, fontSize: 13.5 }}>Fill in every entry on the Lifepath rail to unlock your full dossier.</p>
+        <h2 style={{ margin: '0 0 8px', color: T.text }}>Pick a Role First</h2>
+        <p style={{ color: T.textMuted, fontSize: 13.5 }}>Role is the only required step — everything else on the Lifepath rail is optional and can be left blank.</p>
         <button onClick={onEdit} style={navBtn(false, true)}>← Back to Build</button>
       </div>
     )
   }
 
   const steps = activeSteps(state.picks)
-  const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
+  const opt = (id: string) => pickOption(state.picks, id)
   const role = opt('role')
   const build = ROLE_BUILDS[role.t]
+  const answeredSteps = steps.filter(s => state.picks[s.id] !== undefined)
 
   return (
     <>
@@ -1349,24 +1388,34 @@ function Summary({
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-          {steps.map(s => (
+          {answeredSteps.map(s => (
             <span key={s.id} style={{ fontSize: 11, color: T.cyan, border: `1px solid ${T.cyan}`, padding: '4px 10px', borderRadius: 5 }}>{opt(s.id).t}</span>
           ))}
         </div>
+
+        {answeredSteps.length < steps.length && (
+          <div style={{ fontSize: 11, color: T.textDim, marginBottom: 20, fontStyle: 'italic' }}>
+            {steps.length - answeredSteps.length} step(s) left blank — use "Fill In the Rest" on the Build tab if you want them answered too.
+          </div>
+        )}
 
         <div style={{ background: T.surface2, borderLeft: `3px solid ${T.gold}`, padding: '16px 18px', fontSize: 14, lineHeight: 1.7, marginBottom: 22, borderRadius: '0 8px 8px 0' }}>
           {buildBio(state.picks)}
         </div>
 
-        <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10 }}>Roleplay Cues</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12, marginBottom: 22 }} className="cpr-cb-grid">
-          {steps.map(s => (
-            <div key={s.id} style={{ background: T.surface2, border: `1px solid ${T.border}`, padding: '12px 14px', borderRadius: 8 }}>
-              <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase' }}>{s.eyebrow} — {opt(s.id).t}</div>
-              <div style={{ fontSize: 12.5, marginTop: 5, lineHeight: 1.5, color: T.text }}>{opt(s.id).cue}</div>
+        {answeredSteps.length > 0 && (
+          <>
+            <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10 }}>Roleplay Cues</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12, marginBottom: 22 }} className="cpr-cb-grid">
+              {answeredSteps.map(s => (
+                <div key={s.id} style={{ background: T.surface2, border: `1px solid ${T.border}`, padding: '12px 14px', borderRadius: 8 }}>
+                  <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase' }}>{s.eyebrow} — {opt(s.id).t}</div>
+                  <div style={{ fontSize: 12.5, marginTop: 5, lineHeight: 1.5, color: T.text }}>{opt(s.id).cue}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
 
         {build && (
           <>
@@ -1424,10 +1473,11 @@ const ATTRS: [string, string][] = [
 
 function PrintSheet({ state }: { state: SavedState }) {
   const steps = activeSteps(state.picks)
-  const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
+  const opt = (id: string) => pickOption(state.picks, id)
   const role = opt('role')
   const build = ROLE_BUILDS[role.t]
-  const lifepathRows: [string, string][] = steps.map(s => [s.eyebrow, opt(s.id).t])
+  const answeredSteps = steps.filter(s => state.picks[s.id] !== undefined)
+  const lifepathRows: [string, string][] = answeredSteps.map(s => [s.eyebrow, opt(s.id).t])
 
   return (
     <div className="cpr-print-only" style={{ background: '#fff', color: '#111', fontFamily: 'Georgia, "Times New Roman", serif', padding: '0.4in' }}>
@@ -1493,7 +1543,7 @@ function PrintSheet({ state }: { state: SavedState }) {
 
       <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Roleplay Notes</div>
       <ul style={{ fontSize: 12, lineHeight: 1.7, marginTop: 0, paddingLeft: 18, marginBottom: 16 }}>
-        {steps.map(s => <li key={s.id}>{opt(s.id).cue}</li>)}
+        {answeredSteps.map(s => <li key={s.id}>{opt(s.id).cue}</li>)}
       </ul>
 
       <div style={{ fontSize: 9.5, color: '#777', borderTop: '1px solid #ccc', paddingTop: 8 }}>
