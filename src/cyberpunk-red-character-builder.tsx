@@ -540,6 +540,63 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'nomadPackSize', title: 'How Big Is Your Pack?', eyebrow: 'Pack Size', roleGate: 'Nomad',
+    sub: 'Every Pack is family, but the scale of that family changes everything about how it operates.',
+    options: [
+      { t: 'A Single Extended Tribe', d: 'One close-knit extended family, small enough that everyone genuinely knows everyone.', cue: 'Play it intensely personal about Pack matters — nothing about the family is abstract to you.' },
+      { t: 'A Couple Dozen', d: 'Small and tight, a scale where reputation inside the Pack still spreads by word of mouth alone.', cue: 'Play it familiar and informal, even about Pack business.' },
+      { t: 'Forty or Fifty', d: 'Big enough now that the Pack needs real structure and roles to function.', cue: 'Play it aware of your specific place in a hierarchy, even a loose one.' },
+      { t: 'A Hundred or More', d: 'A genuine rolling community, not just a convoy anymore.', cue: 'Play it a little formal about Pack protocol — there are too many people now for pure improvisation.' },
+      { t: 'A Blood Family', d: 'Hundreds strong — a real institution with its own history, reputation, and weight on The Street.', cue: 'Play it proud of the Family name, dropping it like it should mean something to whoever’s listening.' },
+      { t: 'An Affiliated Family', d: 'Several Blood Families bound together — massive, political, and complicated in ways smaller Packs never have to worry about.', cue: 'Play it politically minded about inter-Family relationships, even in casual conversation.' },
+    ],
+  },
+  {
+    id: 'nomadDomain', title: "Is Your Pack Based on Land, Air, or Sea?", eyebrow: 'Domain', roleGate: 'Nomad',
+    sub: 'Not every Pack rides the highway. Where your family actually operates shapes everything about how you move.',
+    options: [
+      { t: 'Land', d: 'The classic highway convoy — trucks, vans, bikes, and the open road between safe zones.', cue: 'Play it restless indoors, most at ease with a road stretching out ahead of you.' },
+      { t: 'Air', d: 'Your Pack keeps the Deltajock supply lines open, running sky routes to the Orbital Highriders and beyond.', cue: 'Play it casually unbothered by heights and altitude that would unsettle most people.' },
+      { t: 'Sea', d: 'Your Pack runs the container-ship convoys that keep coastal trade moving.', cue: 'Play it comfortable with open water and unstable footing in a way landlocked people notice.' },
+    ],
+  },
+  {
+    id: 'nomadJob', title: 'What Do You Do for Your Pack?', eyebrow: 'Pack Role', roleGate: 'Nomad',
+    sub: 'Every member of the Pack pulls their weight somehow. This is yours.',
+    options: [
+      { t: 'Scout', d: 'You negotiate and scout ahead — the Pack’s first contact with anyone new.', cue: 'Play it socially fluent and quick to read a stranger’s intentions.' },
+      { t: 'Outrider', d: 'You handle protection and weapons — the Pack’s answer when the road gets dangerous.', cue: 'Play it constantly scanning terrain and sightlines, even off duty.' },
+      { t: 'Transport Pilot/Driver', d: 'You drive or pilot, keeping the Pack’s vehicles moving safely between stops.', cue: 'Play it deeply attached to whatever you drive, treating it like a member of the family.' },
+      { t: 'Loadmaster', d: 'You move large cargo — the trucker keeping the Pack’s freight business running.', cue: 'Play it practical and logistics-minded, thinking in weight and cargo space.' },
+      { t: 'Solo Smuggler', d: 'You run solo smuggling jobs the rest of the Pack doesn’t need to know the details of.', cue: 'Play it comfortable operating alone, even though you’d never say the Pack doesn’t have your back.' },
+      { t: 'Procurement', d: 'You source fuel, vehicles, and parts — keeping the Pack supplied and running.', cue: 'Play it always working an angle on where to get something the Pack needs, cheaper or faster.' },
+    ],
+  },
+  {
+    id: 'nomadPhilosophy', title: "What's Your Pack's Overall Philosophy?", eyebrow: 'Pack Philosophy', roleGate: 'Nomad',
+    sub: 'Not every Pack operates the same way. This is what yours actually stands for.',
+    options: [
+      { t: 'Genuinely Good', d: 'Your Pack works for good, accepts outsiders, and just wants to get along with the world.', cue: 'Play it warmly open to strangers, more trusting than most Nomads bother to be.' },
+      { t: 'Family Business', d: 'Fair and honest, run like a family concern — a Pack that keeps its word.', cue: 'Play it straightforward in dealings, treating your word as a real commitment.' },
+      { t: 'Mostly Clean', d: 'Slips into something unethical occasionally, but rare enough that it still counts as standards.', cue: 'Play it uncomfortable when those rare slips come up.' },
+      { t: 'Rule-Bender', d: 'Willing to bend any rule that gets in the way of what the Pack actually needs.', cue: 'Play it pragmatic about the Pack’s survival over outside notions of fairness.' },
+      { t: 'Ruthless', d: 'Self-centered and willing to do real harm if it gets the Pack ahead.', cue: 'Play it coldly practical about anything that isn’t Pack business.' },
+      { t: 'Highway Terror', d: 'Your Pack rages up and down the highways — killing, looting, and terrorizing whoever’s in the way.', cue: 'Play it unbothered by a reputation that makes most people afraid of your Pack’s colors.' },
+    ],
+  },
+  {
+    id: 'nomadThreat', title: "Who's Gunning for Your Pack?", eyebrow: 'Pack Threat', roleGate: 'Nomad',
+    sub: 'Life on the road means someone, somewhere, has a problem with your Family.',
+    options: [
+      { t: 'Organized Crime', d: 'A crime family considers your Pack a standing problem on their territory.', cue: 'Play it careful about which roads and towns your Pack avoids, and why.' },
+      { t: 'Boostergangs', d: 'A gang has decided your Pack is worth robbing or driving off.', cue: 'Play it tactically alert passing through gang-controlled stretches of road.' },
+      { t: 'Drug Runners', d: 'A smuggling operation sees your routes as competition or opportunity.', cue: 'Play it suspicious of unfamiliar convoys sharing your route.' },
+      { t: 'Dirty Politicians', d: 'Someone with political power wants your Pack’s activities shut down or controlled.', cue: 'Play it wary of checkpoints and officials more than most Nomads bother to be.' },
+      { t: 'A Rival Pack', d: 'Another Pack in the same business sees you as competition worth eliminating.', cue: 'Play it competitive and territorial about routes and contracts.' },
+      { t: 'Dirty Cops', d: 'Corrupt Lawmen shake down or harass your Pack whenever they get the chance.', cue: 'Play it resigned and quietly bitter about corrupt checkpoints.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
