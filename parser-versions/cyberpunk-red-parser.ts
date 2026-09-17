@@ -151,53 +151,90 @@ function parseLabelFormat(text: string): CPRNpc | null {
   return { name: name || 'Unknown NPC', role, stats, hp, sp, skills, weapons, armor, cyberware, notes };
 }
 
+// Grabs the next number (or an em-dash/hyphen standing in for "N/A") that
+// follows `labelPattern` anywhere after `fromIndex`, regardless of whether
+// the label and its value landed on the same line or separate lines in the
+// clipboard text — real-world copy/paste from a rendered page doesn't
+// reliably preserve one layout. Returns null (and an unchanged cursor) if
+// the label isn't found at all, so callers can leave a field at its default
+// without derailing the rest of the parse.
+function grabNumberAfter(text: string, fromIndex: number, labelPattern: string): { value: number | null; end: number } {
+  const re = new RegExp(`\\b(?:${labelPattern})\\b\\s*:?\\s*(-?\\d+|\\u2014|-)`, 'i');
+  const m = re.exec(text.slice(fromIndex));
+  if (!m) return { value: null, end: fromIndex };
+  const raw = m[1];
+  const value = /^-?\d+$/.test(raw) ? parseInt(raw, 10) : 0;
+  return { value, end: fromIndex + (m.index as number) + m[0].length };
+}
+
+// Finds `labelPattern` as a whole line (allowing trailing junk on that same
+// line) starting the line-scan from `fromIndex`; returns the line index
+// after the label line, or null if not found within the given lines.
+function findLineIndex(lines: string[], fromIdx: number, labelPattern: string): number | null {
+  const re = new RegExp(`^(?:${labelPattern})\\b`, 'i');
+  for (let i = fromIdx; i < lines.length; i++) {
+    if (re.test(lines[i])) return i;
+  }
+  return null;
+}
+
 // Parses the plain-text layout produced when copying an NPC stat block
-// directly off a rendered character-builder page (e.g. Demiplane Nexus):
-// no "LABEL:" prefixes — just a name, then each stat's abbreviation and
-// value on their own lines, a Weapons list (name/damage pairs), an
-// "Armor: <name>" line with Head/Body SP pairs, a "Skill Bases" line,
-// and a "Cyberware Special Equipment" line. Tolerates extra page chrome
-// (tooltips, intro paragraphs) before/after the block, and — if several
-// NPCs were copied at once — parses only the first one found.
-function parseDemiplaneStatBlock(text: string): CPRNpc | null {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  if (!lines.length) return null;
+// directly off a rendered character-builder page (e.g. Demiplane Nexus).
+// Real clipboard output from a page like that doesn't reliably keep every
+// "label" and its "value" on two clean separate lines the way retyping it
+// would — so attribute/HP extraction below is whitespace-agnostic (a
+// label's value can be on the same line or the next) rather than assuming
+// strict line-by-line pairing. Tolerates extra page chrome (tooltips,
+// intro paragraphs) before/after the block, and — if several NPCs were
+// copied at once — parses only the first one found.
+function parseDemiplaneStatBlock(rawText: string): CPRNpc | null {
+  // Normalize invisible/odd whitespace that a real clipboard paste can carry
+  // (non-breaking spaces, zero-width chars) which would otherwise break
+  // strict text matching.
+  const text = rawText
+    .replace(/ /g, ' ')
+    .replace(/[​‌‍﻿]/g, '');
 
   const STAT_ABBR = ['INT', 'REF', 'DEX', 'TECH', 'COOL', 'WILL', 'LUCK', 'MOVE', 'BODY', 'EMP'];
 
-  let nameIdx = -1;
-  for (let i = 0; i < lines.length - 1; i++) {
-    if (lines[i + 1].toUpperCase() === 'INT') { nameIdx = i; break; }
-  }
-  if (nameIdx === -1) return null;
+  const introMatch = /\bINT\b/i.exec(text);
+  if (!introMatch) return null;
 
-  const name = lines[nameIdx];
-  let idx = nameIdx + 1;
+  const precedingLines = text.slice(0, introMatch.index).split('\n').map(l => l.trim()).filter(Boolean);
+  const name = precedingLines.length ? precedingLines[precedingLines.length - 1] : 'Unknown NPC';
 
   const stats = {} as Record<StatKey, number>;
   for (const key of STAT_KEYS) stats[key] = 0;
 
+  let cursor = introMatch.index;
   for (const abbr of STAT_ABBR) {
-    if (idx >= lines.length || lines[idx].toUpperCase() !== abbr) break;
-    idx++;
-    if (idx >= lines.length) break;
-    const m = lines[idx].match(/-?\d+/);
-    stats[abbr.toLowerCase() as StatKey] = m ? parseInt(m[0], 10) : 0;
-    idx++;
+    const { value, end } = grabNumberAfter(text, cursor, abbr);
+    if (value === null) continue; // leave default 0, don't move the cursor
+    stats[abbr.toLowerCase() as StatKey] = value;
+    cursor = end;
   }
 
-  let hp = 30;
-  if (idx < lines.length && /^hit points$/i.test(lines[idx])) {
-    idx++;
-    hp = parseInt(lines[idx], 10) || 30;
-    idx++;
-  }
-  if (idx < lines.length && /^seriously wounded$/i.test(lines[idx])) idx += 2;
-  if (idx < lines.length && /^death save$/i.test(lines[idx])) idx += 2;
+  const hpGrab = grabNumberAfter(text, cursor, 'Hit\\s+Points');
+  const hp = hpGrab.value ?? 30;
+  if (hpGrab.value !== null) cursor = hpGrab.end;
+
+  // Skip past Seriously Wounded / Death Save if present — not needed, but
+  // advancing the cursor keeps later section searches from re-matching them.
+  const swGrab = grabNumberAfter(text, cursor, 'Seriously\\s+Wounded');
+  if (swGrab.value !== null) cursor = swGrab.end;
+  const dsGrab = grabNumberAfter(text, cursor, 'Death\\s+Save');
+  if (dsGrab.value !== null) cursor = dsGrab.end;
+
+  // From here on, work line-by-line over the remaining text — these
+  // sections are free-form lists rather than single scalar values.
+  const rest = text.slice(cursor);
+  const lines = rest.split('\n').map(l => l.trim()).filter(Boolean);
+  let idx = 0;
 
   const weapons: CPRWeapon[] = [];
-  if (idx < lines.length && /^weapons$/i.test(lines[idx])) {
-    idx++;
+  const weaponsIdx = findLineIndex(lines, idx, 'Weapons');
+  if (weaponsIdx !== null) {
+    idx = weaponsIdx + 1;
     const weaponLines: string[] = [];
     while (idx < lines.length && !/^armor\s*:/i.test(lines[idx])) {
       weaponLines.push(lines[idx]);
@@ -216,25 +253,22 @@ function parseDemiplaneStatBlock(text: string): CPRNpc | null {
   if (idx < lines.length && /^armor\s*:/i.test(lines[idx])) {
     const m = lines[idx].match(/^armor\s*:\s*(.+)$/i);
     const armorName = m ? m[1].trim() : 'Armor';
+    const armorRest = lines.slice(idx).join(' ');
     idx++;
-    let headSp = 0, bodySp = 0;
-    if (idx < lines.length && /^head$/i.test(lines[idx])) {
-      idx++;
-      headSp = parseInt(lines[idx], 10) || 0;
-      idx++;
-    }
-    if (idx < lines.length && /^body$/i.test(lines[idx])) {
-      idx++;
-      bodySp = parseInt(lines[idx], 10) || 0;
-      idx++;
-    }
+    const headM = armorRest.match(/\bHead\b\s*:?\s*(\d+)\s*SP/i);
+    const bodyM = armorRest.match(/\bBody\b\s*:?\s*(\d+)\s*SP/i);
+    const headSp = headM ? parseInt(headM[1], 10) : 0;
+    const bodySp = bodyM ? parseInt(bodyM[1], 10) : 0;
     armor.push(armorName);
     sp = bodySp || headSp;
+    // Skip past whichever Head/Body lines we consumed via the join-scan above.
+    while (idx < lines.length && (/^head\b/i.test(lines[idx]) || /^body\b/i.test(lines[idx]) || /^\d+\s*SP$/i.test(lines[idx]))) idx++;
   }
 
   let skills: CPRSkill[] = [];
-  if (idx < lines.length && /^skill bases$/i.test(lines[idx])) {
-    idx++;
+  const skillsIdx = findLineIndex(lines, idx, 'Skill\\s+Bases');
+  if (skillsIdx !== null) {
+    idx = skillsIdx + 1;
     const skillLines: string[] = [];
     while (idx < lines.length && !/^cyberware/i.test(lines[idx])) {
       skillLines.push(lines[idx]);
@@ -249,10 +283,11 @@ function parseDemiplaneStatBlock(text: string): CPRNpc | null {
   }
 
   let cyberware: string[] = [];
-  if (idx < lines.length && /^cyberware(\s+special\s+equipment)?$/i.test(lines[idx])) {
-    idx++;
+  const equipIdx = findLineIndex(lines, idx, 'Cyberware(?:\\s+Special\\s+Equipment)?');
+  if (equipIdx !== null) {
+    idx = equipIdx + 1;
     const equipLines: string[] = [];
-    while (idx < lines.length && !(idx + 1 < lines.length && lines[idx + 1].toUpperCase() === 'INT')) {
+    while (idx < lines.length && !(idx + 1 < lines.length && lines[idx + 1].toUpperCase() === 'INT') && !/\bINT\b/i.test(lines[idx])) {
       equipLines.push(lines[idx]);
       idx++;
     }
