@@ -118,6 +118,7 @@ export const LIFEPATH_FIELDS = [
 export interface CPRPlayerCharacter {
   name: string;
   role: string;
+  roleAbility?: string;
   roleRank: number;
   stats: Record<PCStatKey, number>;
   hp: number;
@@ -271,7 +272,7 @@ function roleItem(pc: CPRPlayerCharacter) {
     system: {
       abilities: [], addRoleAbilityRank: true, bonusRatio: 1, bonuses: [],
       description: { value: '' }, favorite: false, hasRoll: false, isSituational: false,
-      mainRoleAbility: '', onByDefault: false, rank: pc.roleRank, skill: '--',
+      mainRoleAbility: pc.roleAbility || '', onByDefault: false, rank: pc.roleRank, skill: '--',
       source: { book: 'Core', page: 0 }, stat: '--', universalBonuses: [],
     },
     effects: [], folder: null, sort: 0, ownership: { default: 0 }, flags: {}, _stats: _stats(),

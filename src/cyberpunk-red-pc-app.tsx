@@ -16,17 +16,21 @@ const T = {
   cyan: '#00e5ff', red: '#ff2060', green: '#40e070', gold: '#f0e000',
 }
 
-const ROLES: { t: string; d: string }[] = [
-  { t: 'Rockerboy', d: 'You perform, and the performance is the weapon — a voice and a following people rally behind.' },
-  { t: 'Solo', d: 'Combat is your trade, and you charge for it. Reflex-driven, weapon-focused.' },
-  { t: 'Netrunner', d: 'The real fight happens in the net. Intelligence and Technique carry you further than a gun.' },
-  { t: 'Tech', d: 'You build, fix, and improve — usually with parts that weren’t meant to go together.' },
-  { t: 'Medtech', d: 'You keep people alive when the dice say they shouldn’t be. Technique and a steady hand.' },
-  { t: 'Media', d: 'You chase the story other people would rather stayed buried. Intelligence and nerve.' },
-  { t: 'Lawman', d: 'You still believe in the badge — procedure and backup when things go bad.' },
-  { t: 'Exec', d: 'You move resources and people other Roles can’t touch. Cool under pressure.' },
-  { t: 'Fixer', d: 'You know a guy who does that. Connections are your whole toolkit.' },
-  { t: 'Nomad', d: 'Family, convoy, and the open road. You can drive it and you can fix it.' },
+// Role Ability names are confirmed for Tech ("Maker", from the real Gasket
+// export) and Exec ("Teamwork", from the corebook text you sent). The rest
+// are from training knowledge, not verified against a real export or the
+// book — flag anything that looks wrong and I'll fix it.
+const ROLES: { t: string; d: string; ability: string; confirmed: boolean }[] = [
+  { t: 'Rockerboy', d: 'You perform, and the performance is the weapon — a voice and a following people rally behind.', ability: 'Charismatic Impact', confirmed: false },
+  { t: 'Solo', d: 'Combat is your trade, and you charge for it. Reflex-driven, weapon-focused.', ability: 'Combat Awareness', confirmed: false },
+  { t: 'Netrunner', d: 'The real fight happens in the net. Intelligence and Technique carry you further than a gun.', ability: 'Interface', confirmed: false },
+  { t: 'Tech', d: 'You build, fix, and improve — usually with parts that weren’t meant to go together.', ability: 'Maker', confirmed: true },
+  { t: 'Medtech', d: 'You keep people alive when the dice say they shouldn’t be. Technique and a steady hand.', ability: 'Medicine', confirmed: false },
+  { t: 'Media', d: 'You chase the story other people would rather stayed buried. Intelligence and nerve.', ability: 'Truth', confirmed: false },
+  { t: 'Lawman', d: 'You still believe in the badge — procedure and backup when things go bad.', ability: 'Backup', confirmed: false },
+  { t: 'Exec', d: 'You move resources and people other Roles can’t touch. Cool under pressure.', ability: 'Teamwork', confirmed: true },
+  { t: 'Fixer', d: 'You know a guy who does that. Connections are your whole toolkit.', ability: 'Operator', confirmed: false },
+  { t: 'Nomad', d: 'Family, convoy, and the open road. You can drive it and you can fix it.', ability: 'Moto', confirmed: false },
 ]
 
 type WizWeapon = { name: string; damage: string }
@@ -36,6 +40,7 @@ type WizState = {
   step: number
   name: string
   role: string
+  roleAbility: string
   roleRank: number
   stats: Record<PCStatKey, number>
   skillLevels: Record<string, number>
@@ -60,7 +65,7 @@ const STEP_LABELS: Record<StepId, string> = {
 
 function defaultState(): WizState {
   return {
-    step: 0, name: '', role: '', roleRank: 4,
+    step: 0, name: '', role: '', roleAbility: '', roleRank: 4,
     stats: Object.fromEntries(PC_STAT_KEYS.map(k => [k, 5])) as Record<PCStatKey, number>,
     skillLevels: {}, weapons: [], armor: [], cyberware: [], gear: [],
     hp: 30, humanity: 50, lifepath: {}, notes: '', importedFromBuilder: false,
@@ -301,18 +306,28 @@ function RoleStep({ state, update, onBack, onNext }: {
         {ROLES.map(r => (
           <button
             key={r.t}
-            onClick={() => update({ role: r.t })}
+            onClick={() => update({ role: r.t, roleAbility: r.ability })}
             style={{
               textAlign: 'left', background: state.role === r.t ? `${T.red}14` : T.surface2,
               border: `1px solid ${state.role === r.t ? T.red : T.border}`,
               padding: '12px 14px', borderRadius: 8, cursor: 'pointer', color: T.text,
             }}
           >
-            <div style={{ fontWeight: 700, fontSize: 14 }}>{r.t}</div>
+            <div style={{ fontWeight: 700, fontSize: 14, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              {r.t}
+              <span style={{ fontSize: 10, fontWeight: 400, color: T.cyan }}>{r.ability}{!r.confirmed && <span title="Not yet verified against the core book" style={{ color: T.gold }}> ?</span>}</span>
+            </div>
             <div style={{ marginTop: 4, fontSize: 12, color: T.textMuted, lineHeight: 1.4 }}>{r.d}</div>
           </button>
         ))}
       </div>
+
+      {state.role && !ROLES.find(r => r.t === state.role)?.confirmed && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: `${T.gold}14`, border: `1px solid ${T.gold}44`, borderRadius: 7, padding: '9px 12px', fontSize: 11.5, color: T.text, lineHeight: 1.5, marginBottom: 16, maxWidth: 500 }}>
+          <AlertTriangle size={13} color={T.gold} style={{ flex: 'none', marginTop: 1 }} />
+          <div>"{state.roleAbility}" for {state.role} is from general knowledge, not verified against the core book or a real export — double check the name before relying on it.</div>
+        </div>
+      )}
 
       <div style={{ marginBottom: 20, maxWidth: 220 }}>
         <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 5 }}>
@@ -532,6 +547,7 @@ function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => 
   const pc: CPRPlayerCharacter = {
     name: state.name || 'Unknown Edgerunner',
     role: state.role,
+    roleAbility: state.roleAbility,
     roleRank: state.roleRank,
     stats: state.stats,
     hp: state.hp,
@@ -558,7 +574,7 @@ function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => 
     <div style={{ padding: '24px 26px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 14, flexWrap: 'wrap', borderBottom: `2px solid ${T.red}`, paddingBottom: 14, marginBottom: 18 }}>
         <h2 style={{ margin: 0, fontSize: 26, color: T.text }}>{pc.name}</h2>
-        {pc.role && <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', background: T.red, color: '#fff', padding: '6px 12px', borderRadius: 6 }}>{pc.role} (Rank {pc.roleRank})</span>}
+        {pc.role && <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', background: T.red, color: '#fff', padding: '6px 12px', borderRadius: 6 }}>{pc.role} — {pc.roleAbility} (Rank {pc.roleRank})</span>}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', gap: 6, marginBottom: 16 }}>
