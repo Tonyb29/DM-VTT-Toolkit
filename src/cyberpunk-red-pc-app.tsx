@@ -71,6 +71,15 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
       'Persuasion', 'Resist Torture/Drugs', 'Shoulder Arms', 'Stealth', 'Tactics',
     ],
   },
+  Rockerboy: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Athletics', 'Brawling', 'Composition', 'Concentration', 'Conversation', 'Education',
+      'Evasion', 'First Aid', 'Handgun', 'Human Perception', 'Language (Streetslang)',
+      'Local Expert (Your Home)', 'Melee Weapon', 'Perception', 'Personal Grooming',
+      'Persuasion', 'Play Instrument', 'Stealth', 'Streetwise', 'Wardrobe & Style',
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket

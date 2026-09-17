@@ -82,6 +82,7 @@ export const SKILL_CATALOG: SkillDef[] = [
   { name: "Pick Lock", stat: 'tech', category: 'techniqueSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 142 },
   { name: "Conceal/Reveal Object", stat: 'int', category: 'awarenessSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 131 },
   { name: "Acting", stat: 'cool', category: 'performanceSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 137 },
+  { name: "Play Instrument", stat: 'tech', category: 'performanceSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 137 },
   { name: "Air Vehicle Tech", stat: 'tech', category: 'techniqueSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 140 },
   { name: "Pilot Air Vehicle", stat: 'ref', category: 'controlSkills', difficulty: 'difficult', basic: false, skillType: 'generic', page: 132 },
   { name: "Forgery", stat: 'tech', category: 'techniqueSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 141 },
