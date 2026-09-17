@@ -424,6 +424,66 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'medtechType', title: 'What Kind of Medtech Are You?', eyebrow: 'Medtech Type', roleGate: 'Medtech',
+    sub: 'Every Medtech patches people up in a different way. This is your specialty.',
+    options: [
+      { t: 'Surgeon', d: 'You open people up and put them back together, cyberware and all, with a steady hand and no hesitation.', cue: 'Play it clinically calm in situations that would panic almost anyone else.' },
+      { t: 'General Practitioner', d: 'You handle the everyday stuff — checkups, minor injuries, the unglamorous baseline of keeping people alive.', cue: 'Play it warmly bedside, the kind of doctor people actually trust with small worries.' },
+      { t: 'Trauma Medic', d: 'You work the worst moment of someone’s day, stabilizing what you can before it’s too late.', cue: 'Play it fast and decisive under pressure, impatient with hesitation in a crisis.' },
+      { t: 'Psychiatrist', d: 'You treat the mind, not the body — which in this city is its own kind of trauma work.', cue: 'Play it quietly reading people’s mental state in every conversation, on reflex.' },
+      { t: 'Cyberpsycho Therapist', d: 'You work with people on the edge of losing themselves to their own chrome, before it’s too late.', cue: 'Play it watchful of anyone’s cyberware ratio, out of professional habit.' },
+      { t: 'Ripperdoc', d: 'You install and maintain cyberware on the black market, no questions, no judgment, no real oversight.', cue: 'Play it unfazed by illegal or dangerous requests — you’ve heard worse.' },
+      { t: 'Cryosystems Operator', d: 'You manage cryotanks and stasis systems, keeping people alive in the space between alive and dead.', cue: 'Play it precise and a little detached, thinking in exact numbers and timings.' },
+      { t: 'Pharmacist', d: 'You synthesize and dispense what keeps people functional, numb, or alive, and you know exactly what everything does.', cue: 'Play it quietly encyclopedic about drug interactions, even in casual talk.' },
+      { t: 'Bodysculptor', d: 'You reshape people’s bodies by choice, not necessity — cosmetic work that still requires real surgical skill.', cue: 'Play it aesthetically opinionated, evaluating people’s appearance like a professional.' },
+      { t: 'Forensic Pathologist', d: 'You read bodies after the fact, telling the story of what happened to someone who can’t tell it themselves.', cue: 'Play it unnervingly matter-of-fact about death and injury in conversation.' },
+    ],
+  },
+  {
+    id: 'medtechPartner', title: 'Got a Partner, or Work Alone?', eyebrow: 'Partner', roleGate: 'Medtech',
+    sub: "Some Medtechs work a table with someone else's hands helping. Some don't trust anyone else's hands at all.",
+    options: [
+      { t: 'Work Alone', d: 'Nobody else’s hands in the work — which means nobody to blame, and nobody to help, when it goes wrong.', cue: 'Play it uncomfortable delegating even simple parts of a procedure.' },
+      { t: 'Got a Partner', d: 'Someone else scrubs in with you, every time — a second set of hands you trust completely.', cue: 'Play it reflexively coordinating with your partner, even in conversations that have nothing to do with work.' },
+    ],
+  },
+  {
+    id: 'medtechWorkspace', title: "What's Your Workspace Like?", eyebrow: 'Workspace', roleGate: 'Medtech',
+    sub: 'Where you actually do the work says a lot about how the work gets done.',
+    options: [
+      { t: 'Sterilized Like Clockwork', d: 'Cleaned every single morning, without fail, no matter what happened the night before.', cue: 'Play it slightly compulsive about cleanliness, even outside the workspace.' },
+      { t: 'Comfortably Outdated', d: 'Not state-of-the-art anymore, but it’s yours, and you know exactly where everything is.', cue: 'Play it stubbornly attached to old equipment that still gets the job done.' },
+      { t: 'Dual-Purpose Cryo', d: 'Your cryo equipment doubles as a drink cooler when it’s not saving a life.', cue: 'Play it casually irreverent about equipment other Medtechs treat with more reverence.' },
+      { t: 'Compact and Disposable', d: 'Everything single-use, stored compacted, ready to deploy and just as ready to vanish.', cue: 'Play it efficient and minimalist, uncomfortable with clutter or excess.' },
+      { t: 'Rougher Than Patients Expect', d: 'Not as clean as most people hoped, walking in — but you get results anyway.', cue: 'Play it unbothered by a patient’s visible nerves about the setting.' },
+      { t: 'Meticulously Organized', d: 'Sharpened, sterilized, and arranged with real precision — everything exactly where it should be.', cue: 'Play it quietly irritated when someone disturbs your setup.' },
+    ],
+  },
+  {
+    id: 'medtechClients', title: 'Who Are Your Main Clients?', eyebrow: 'Clients', roleGate: 'Medtech',
+    sub: 'Most Medtechs have a regular pipeline of who actually ends up on the table.',
+    options: [
+      { t: 'Fixer Referrals', d: 'Local Fixers send clients your way, and take their cut for the introduction.', cue: 'Play it professionally friendly with the Fixers who keep your table full.' },
+      { t: 'Local Gangers', d: 'A gang protects your work area or home in exchange for medical help when they need it.', cue: 'Play it calm and unbothered in gang spaces most people would find tense.' },
+      { t: 'Corporate Black-Project Work', d: 'Execs bring you medical work they can’t put through official channels.', cue: 'Play it deliberately incurious about the corporate politics behind a job.' },
+      { t: 'Solos & Combat Types', d: 'Fighters and mercs come to you for patch-ups they’d rather not explain at a hospital.', cue: 'Play it unfazed by combat trauma most doctors would find alarming.' },
+      { t: 'Nomads & Fixers', d: 'Nomad packs and Fixers bring you their wounded, trusting you over anywhere official.', cue: 'Play it warmly familiar with a specific Nomad pack or crew.' },
+      { t: 'Trauma Team Contract', d: 'You do paramedical work under a Trauma Team contract — high stakes, high pay, strict protocol.', cue: 'Play it procedural and protocol-driven, even off the clock.' },
+    ],
+  },
+  {
+    id: 'medtechSupplies', title: 'Where Do You Get Your Supplies?', eyebrow: 'Supplies', roleGate: 'Medtech',
+    sub: 'Medical supplies aren’t always easy to come by legally. This is how you actually keep stocked.',
+    options: [
+      { t: 'Scavenged Stashes', d: 'You scavenge medical supplies out of abandoned City Zones, whatever you can find.', cue: 'Play it resourceful and a little magpie-like about spotting useful salvage.' },
+      { t: 'Battlefield Stripping', d: 'You strip parts and supplies from bodies after firefights — grim, but it keeps you stocked.', cue: 'Play it unsentimental about where your supplies actually came from.' },
+      { t: 'Fixer Trade', d: 'A local Fixer keeps you supplied in exchange for medical work on their people.', cue: 'Play it transactional but reliable with your Fixer contact.' },
+      { t: 'Corporate/Trauma Team Supply', d: 'Execs or a Trauma Team contract keep you stocked in exchange for your services.', cue: 'Play it aware of exactly how replaceable that supply chain makes you.' },
+      { t: 'A Warehouse Backdoor', d: 'You’ve got an unofficial way into a Corporate or hospital supply warehouse.', cue: 'Play it cagey about exactly how that access works, even with people you trust.' },
+      { t: 'Night Market Deals', d: 'You hit the Night Markets and score whatever deals you can find, week to week.', cue: 'Play it always browsing, even off duty — you never really stop shopping for supplies.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
