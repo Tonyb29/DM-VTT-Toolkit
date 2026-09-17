@@ -300,6 +300,68 @@ const ROLE_EQUIPMENT: Partial<Record<string, EquipmentPackage>> = {
       { options: [{ name: 'Interface Plugs', type: 'cyberware' }, { name: 'Wolvers', type: 'cyberware' }] },
     ],
   },
+  Rockerboy: {
+    fixed: [
+      { name: 'Very Heavy Pistol', type: 'weapon', damage: '4d6', isRanged: true, handsReq: 1 },
+      { name: 'Basic VH Pistol Ammunition x50', type: 'gear' },
+      { name: 'Teargas Grenade x2', type: 'gear' },
+      { name: 'Light Armorjack', type: 'armor', headSp: 11, bodySp: 11 },
+      { name: 'Agent', type: 'gear' },
+      { name: 'Computer', type: 'gear' },
+      { name: 'Glow Paint x5', type: 'gear' },
+      { name: 'Pocket Amplifier', type: 'gear' },
+      { name: 'Radio Scanner/Music Player', type: 'gear' },
+      { name: 'Video Camera', type: 'gear' },
+      { name: 'Rockerboy Outfit (Generic Chic Jewelry/Jacket/Top, Leisurewear Jewelry/Mirrorshades/Footwear, Urban Flash Bottoms/Top)', type: 'gear' },
+      { name: 'Audio Recorder', type: 'gear' },
+      { name: 'Chemskin', type: 'cyberware' },
+      { name: 'Cyberaudio Suite', type: 'cyberware' },
+      { name: 'Techhair', type: 'cyberware' },
+    ],
+    choices: [
+      { options: [{ name: 'Heavy Melee Weapon', type: 'weapon', damage: '3d6', isRanged: false, handsReq: 1 }, { name: 'Flashbang Grenade', type: 'gear' }] },
+      { options: [{ name: 'Electric Guitar', type: 'gear' }, { name: 'Bug Detector', type: 'gear' }] },
+    ],
+  },
+  Solo: {
+    fixed: [
+      { name: 'Assault Rifle', type: 'weapon', damage: '5d6', isRanged: true, handsReq: 2 },
+      { name: 'Very Heavy Pistol', type: 'weapon', damage: '4d6', isRanged: true, handsReq: 1 },
+      { name: 'Basic VH Pistol Ammunition x30', type: 'gear' },
+      { name: 'Basic Rifle Ammunition x70', type: 'gear' },
+      { name: 'Light Armorjack', type: 'armor', headSp: 11, bodySp: 11 },
+      { name: 'Agent', type: 'gear' },
+      { name: 'Solo Outfit (Leisurewear Footwear/Jacket/Mirrorshades/Bottoms/Top)', type: 'gear' },
+      { name: 'Biomonitor', type: 'cyberware' },
+      { name: 'Neural Link', type: 'cyberware' },
+    ],
+    choices: [
+      { options: [{ name: 'Heavy Melee Weapon', type: 'weapon', damage: '3d6', isRanged: false, handsReq: 1 }, { name: 'Bulletproof Shield', type: 'gear' }] },
+      { options: [{ name: 'Sandevistan', type: 'cyberware' }, { name: 'Wolvers', type: 'cyberware' }] },
+    ],
+  },
+  Tech: {
+    fixed: [
+      { name: 'Flashbang Grenade', type: 'gear' },
+      { name: 'Light Armorjack', type: 'armor', headSp: 11, bodySp: 11 },
+      { name: 'Agent', type: 'gear' },
+      { name: 'Anti-Smog Breathing Mask', type: 'gear' },
+      { name: 'Disposable Cell Phone', type: 'gear' },
+      { name: 'Duct Tape x5', type: 'gear' },
+      { name: 'Flashlight', type: 'gear' },
+      { name: 'Road Flare x6', type: 'gear' },
+      { name: 'Tech Bag', type: 'gear' },
+      { name: 'Tech Outfit (Generic Chic Bottoms/Tops, Leisurewear Footwear)', type: 'gear' },
+      { name: 'Cybereye', type: 'cyberware' },
+      { name: 'MicroOptics', type: 'cyberware' },
+      { name: 'Skinwatch', type: 'cyberware' },
+      { name: 'Tool Hand', type: 'cyberware' },
+    ],
+    choices: [
+      { options: [{ name: 'Shotgun', type: 'weapon', damage: '5d6', isRanged: true, handsReq: 2 }, { name: 'Assault Rifle', type: 'weapon', damage: '5d6', isRanged: true, handsReq: 2 }] },
+      { options: [{ name: 'Basic Shotgun Shell Ammunition x100', type: 'gear' }, { name: 'Basic Rifle Ammunition x100', type: 'gear' }] },
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
