@@ -597,6 +597,54 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'rockerboyType', title: 'What Kind of Rockerboy Are You?', eyebrow: 'Rockerboy Type', roleGate: 'Rockerboy',
+    sub: 'Every Rockerboy has a medium. This is yours.',
+    options: [
+      { t: 'Musician', d: 'You write, play, and perform your own music, live and loud whenever you can manage it.', cue: 'Play it always half-composing, tapping out rhythms without noticing you’re doing it.' },
+      { t: 'Slam Poet', d: 'Your words alone are the whole performance, no instrument between you and the crowd.', cue: 'Play it precise and rhythmic even in ordinary speech.' },
+      { t: 'Street Artist', d: 'The city itself is your canvas — murals, tags, installations that say something before anyone reads a word.', cue: 'Play it constantly evaluating walls and surfaces as potential canvas.' },
+      { t: 'Performance Artist', d: 'Your body and presence are the art — uncomfortable, provocative, hard to look away from.', cue: 'Play it unusually comfortable with silence and stillness other people find awkward.' },
+      { t: 'Comedian', d: 'You make people laugh at exactly the things they’d rather not think about.', cue: 'Play it reflexively finding the joke in tense situations, sometimes at the worst moment.' },
+      { t: 'Orator', d: 'You speak, and people listen — speeches, sermons, rallies, whatever the moment calls for.', cue: 'Play it naturally commanding a room’s attention just by starting to talk.' },
+      { t: 'Politico', d: 'You organize and agitate, turning performance into actual political pressure.', cue: 'Play it strategic about every public appearance, thinking several moves ahead.' },
+      { t: 'Rap Artist', d: 'Bars and flow are your weapon — sharp, fast, and built to spread.', cue: 'Play it quick with wordplay, almost compulsively, even in casual conversation.' },
+      { t: 'DJ', d: 'You control a room’s energy through sound, reading a crowd in real time and feeding it back to them.', cue: 'Play it hyper-aware of a room’s mood, adjusting your own energy to match or shift it.' },
+      { t: 'Idoru', d: 'You perform as a synthetic or heavily augmented persona — as much a construct as a person, by design.', cue: 'Play it deliberately blurring the line between your performance self and your private self.' },
+    ],
+  },
+  {
+    id: 'rockerboyAct', title: 'Are You in a Group, or a Solo Act?', eyebrow: 'Act', roleGate: 'Rockerboy',
+    sub: 'Some Rockerboys share the stage. Some own it alone.',
+    options: [
+      { t: 'Group Act', d: 'You perform as part of a group, sharing both the spotlight and the risk.', cue: 'Play it reflexively covering for and defending your group, even outside performances.' },
+      { t: 'Solo Act', d: 'It’s just you up there — full credit, full blame, full control.', cue: 'Play it uncomfortable sharing creative control, even in situations that call for it.' },
+    ],
+  },
+  {
+    id: 'rockerboyVenue', title: 'Where Do You Perform?', eyebrow: 'Venue', roleGate: 'Rockerboy',
+    sub: 'Every scene has its rooms. This is where you actually built your name.',
+    options: [
+      { t: 'Alternative Cafes', d: 'Small, intimate spaces that reward substance over spectacle.', cue: 'Play it more comfortable in small, close crowds than big anonymous ones.' },
+      { t: 'Private Clubs', d: 'Exclusive rooms with a curated crowd who already know who you are.', cue: 'Play it a little precious about who’s "worthy" of your performance.' },
+      { t: 'Seedy Dive Bars', d: 'Rough rooms, rougher crowds, but audiences that tell you the unfiltered truth.', cue: 'Play it unbothered by hostile or indifferent crowds — you’ve won over worse.' },
+      { t: 'Guerrilla Performances', d: 'Unpermitted, unannounced, wherever you can set up before someone shuts it down.', cue: 'Play it constantly scanning for exits and authority figures, even mid-performance.' },
+      { t: 'Nightclubs Around the City', d: 'The circuit — bigger rooms, bigger crowds, a real reputation to maintain.', cue: 'Play it professionally polished, treating every set like it matters for your career.' },
+      { t: 'On the Data Pool', d: 'Your stage is entirely digital — streamed, uploaded, and judged by numbers instead of a room’s energy.', cue: 'Play it a little detached from live crowd reactions, more attuned to how something will play back later.' },
+    ],
+  },
+  {
+    id: 'rockerboyThreat', title: "Who's Gunning for You or Your Group?", eyebrow: 'Rockerboy Threat', roleGate: 'Rockerboy',
+    sub: 'Getting a following means getting enemies. This is yours.',
+    options: [
+      { t: 'A Wronged Former Member', d: 'An old group member thinks you did them dirty on the way up, and they’re not wrong to be angry.', cue: 'Play it evasive about the split whenever it comes up in interviews or conversation.' },
+      { t: 'A Rival Act', d: 'A competing group or artist is actively trying to steal your market share.', cue: 'Play it competitive and a little petty about this one specific rival.' },
+      { t: 'Corporate Enemies', d: 'A Corporation doesn’t like your message, and they have real resources to make that a problem.', cue: 'Play it defiant about the message, even when it would be safer to soften it.' },
+      { t: 'A Hostile Critic', d: 'A critic or influencer has made tearing you down their whole personal brand.', cue: 'Play it visibly needled by this one specific critic, more than the stakes really justify.' },
+      { t: 'A Threatened Elder Star', d: 'An older, established star feels threatened by your rising fame and is working to keep you down.', cue: 'Play it performatively respectful in public and privately dismissive of them.' },
+      { t: 'A Personal Vendetta', d: 'A romantic interest or media figure wants revenge for something that was never really about the career.', cue: 'Play it guarded about your personal life whenever this specific person comes up.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
