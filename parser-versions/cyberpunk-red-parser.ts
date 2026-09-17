@@ -83,6 +83,7 @@ const SKILL_DEF_BY_NAME: Record<string, SkillDef> = Object.fromEntries(
 const SPECIALIZATION_FALLBACK: [RegExp, Omit<SkillDef, 'name' | 'page'>][] = [
   [/^Language\s*\(.+\)$/i, { stat: 'int', category: 'educationSkills', difficulty: 'typical', basic: true, skillType: 'language' }],
   [/^Local Expert\s*\(.+\)$/i, { stat: 'int', category: 'educationSkills', difficulty: 'typical', basic: true, skillType: 'generic' }],
+  [/^Science\s*\(.+\)$/i, { stat: 'int', category: 'educationSkills', difficulty: 'difficult', basic: false, skillType: 'specialization' }],
 ];
 
 function skillDef(name: string): { def: Omit<SkillDef, 'name' | 'page'>; recognized: boolean } {

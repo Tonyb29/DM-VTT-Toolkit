@@ -89,6 +89,7 @@ export const SKILL_CATALOG: SkillDef[] = [
   { name: "Stealth", stat: 'dex', category: 'bodySkills', difficulty: 'typical', basic: true, skillType: 'generic', page: 132 },
   { name: "Paramedic", stat: 'tech', category: 'techniqueSkills', difficulty: 'difficult', basic: false, skillType: 'generic', page: 141 },
   { name: "Dance", stat: 'dex', category: 'bodySkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 132 },
+  { name: "Science (Chemistry)", stat: 'int', category: 'educationSkills', difficulty: 'difficult', basic: false, skillType: 'specialization', page: 136 },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────

@@ -46,6 +46,33 @@ const STAT_ARRAYS: { roll: number; values: Record<PCStatKey, number> }[] = [
   { roll: 10, values: { int: 8, ref: 8, dex: 5, tech: 6, cool: 4, will: 4, luck: 6, move: 5, body: 6, emp: 6 } },
 ]
 
+// The Fast and Dirty method gives each Role its own fixed "career skill"
+// list and a point pool to divide across just those (not the full 63-skill
+// catalog) — min/max per skill, all defaulted to a starting value. Filled
+// in role by role as the real data comes in; roles without an entry here
+// fall back to free entry across the full catalog.
+type SkillPool = { points: number; min: number; max: number; default: number; skills: string[] }
+const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
+  Tech: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Athletics', 'Basic Tech', 'Brawling', 'Concentration', 'Conversation', 'Cybertech',
+      'Education', 'Electronics/Security Tech', 'Evasion', 'First Aid', 'Human Perception',
+      'Land Vehicle Tech', 'Language (Streetslang)', 'Local Expert (Your Home)', 'Perception',
+      'Persuasion', 'Science (Chemistry)', 'Shoulder Arms', 'Stealth', 'Weaponstech',
+    ],
+  },
+  Solo: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Athletics', 'Autofire', 'Brawling', 'Concentration', 'Conversation', 'Education',
+      'Evasion', 'First Aid', 'Handgun', 'Human Perception', 'Interrogation',
+      'Language (Streetslang)', 'Local Expert (Your Home)', 'Melee Weapon', 'Perception',
+      'Persuasion', 'Resist Torture/Drugs', 'Shoulder Arms', 'Stealth', 'Tactics',
+    ],
+  },
+}
+
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
 // export) and Exec ("Teamwork", from the corebook text you sent). The rest
 // are from training knowledge, not verified against a real export or the
@@ -461,7 +488,80 @@ function AttributesStep({ state, update, onBack, onNext }: {
 
 // ─── Step 4: Skills ─────────────────────────────────────────────────────────
 
-function SkillsStep({ state, update, onBack, onNext }: {
+function SkillsStep(props: { state: WizState; update: (p: Partial<WizState>) => void; onBack: () => void; onNext: () => void }) {
+  const pool = ROLE_SKILL_SETS[props.state.role]
+  return pool ? <CareerSkillsStep {...props} pool={pool} /> : <FreeSkillsStep {...props} />
+}
+
+// Fast and Dirty: a fixed "career skill" list per Role and a point pool to
+// divide across just those skills (min/max each), not the full catalog.
+function CareerSkillsStep({ state, update, onBack, onNext, pool }: {
+  state: WizState; update: (p: Partial<WizState>) => void; onBack: () => void; onNext: () => void; pool: SkillPool
+}) {
+  const valueOf = (name: string) => state.skillLevels[name] ?? pool.default
+  const spent = pool.skills.reduce((sum, name) => sum + valueOf(name), 0)
+  const remaining = pool.points - spent
+
+  const setLevel = (name: string, v: number) => {
+    const clamped = Math.max(pool.min, Math.min(pool.max, v))
+    update({ skillLevels: { ...state.skillLevels, [name]: clamped } })
+  }
+
+  return (
+    <div style={{ padding: '24px 26px' }}>
+      <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.red, fontWeight: 700 }}>Step 4 of 6</div>
+      <h2 style={{ margin: '6px 0 6px', fontSize: 22, color: T.text }}>Set Your Skills</h2>
+      <p style={{ margin: '0 0 4px', color: T.textMuted, fontSize: 13.5 }}>
+        Divide {pool.points} points across your {state.role}'s career skills. No skill below {pool.min} or above {pool.max}.
+      </p>
+      <div style={{
+        display: 'inline-block', fontSize: 13, fontWeight: 700, padding: '6px 14px', borderRadius: 6, marginBottom: 16,
+        background: remaining === 0 ? `${T.green}22` : remaining < 0 ? `${T.red}22` : T.surface2,
+        color: remaining === 0 ? T.green : remaining < 0 ? T.red : T.gold,
+        border: `1px solid ${remaining === 0 ? T.green : remaining < 0 ? T.red : T.border}`,
+      }}>
+        {remaining === 0 ? 'All points spent ✓' : `Points Remaining: ${remaining}`}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 8, marginBottom: 18 }}>
+        {pool.skills.map(name => {
+          const def = SKILL_CATALOG.find(s => s.name.toLowerCase() === name.toLowerCase())
+          return (
+            <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 6, padding: '7px 10px' }}>
+              <div style={{ fontSize: 12.5, color: T.text }}>
+                {name} {def && <span style={{ color: T.textDim, fontSize: 10 }}>({def.stat.toUpperCase()})</span>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button onClick={() => setLevel(name, valueOf(name) - 1)} disabled={valueOf(name) <= pool.min} style={stepBtn}>−</button>
+                <span style={{ width: 20, textAlign: 'center', fontWeight: 700, fontSize: 14, color: T.text }}>{valueOf(name)}</span>
+                <button onClick={() => setLevel(name, valueOf(name) + 1)} disabled={valueOf(name) >= pool.max} style={stepBtn}>+</button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{ fontSize: 10.5, color: T.textDim, marginBottom: 20 }}>
+        Some source tables mark a skill "(×2)" (e.g. a signature combat skill for the Role) — exact meaning
+        unconfirmed, so it's not applied automatically here. Adjust by hand if your GM rules it as a bonus.
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <button onClick={onBack} style={navBtn(false)}><ChevronLeft size={14} /> Back</button>
+        <button onClick={onNext} disabled={remaining !== 0} style={navBtn(remaining !== 0, true)}>Next <ChevronRight size={14} /></button>
+      </div>
+    </div>
+  )
+}
+
+const stepBtn: React.CSSProperties = {
+  width: 22, height: 22, borderRadius: 4, background: T.surface, border: `1px solid ${T.border}`,
+  color: T.text, cursor: 'pointer', fontSize: 14, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+}
+
+// Fallback for any Role without a career-skill list yet: free entry across
+// the full 63-skill catalog, no budget gating.
+function FreeSkillsStep({ state, update, onBack, onNext }: {
   state: WizState; update: (p: Partial<WizState>) => void; onBack: () => void; onNext: () => void
 }) {
   const categories = Array.from(new Set(SKILL_CATALOG.map(s => s.category)))
@@ -473,8 +573,8 @@ function SkillsStep({ state, update, onBack, onNext }: {
       <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.red, fontWeight: 700 }}>Step 4 of 6</div>
       <h2 style={{ margin: '6px 0 6px', fontSize: 22, color: T.text }}>Allocate Skill Points</h2>
       <PlaceholderBanner>
-        Skill point budget and Role/Education bonuses aren't wired in yet — enter final skill levels directly.
-        All {SKILL_CATALOG.length} Core skills are listed; anything left at 0 stays untrained. ({nonZero} above 0 so far.)
+        No career-skill list for {state.role || 'this Role'} yet — enter final skill levels directly across the
+        full catalog. All {SKILL_CATALOG.length} Core skills are listed; anything left at 0 stays untrained. ({nonZero} above 0 so far.)
       </PlaceholderBanner>
 
       <div style={{ maxHeight: 480, overflowY: 'auto', paddingRight: 6, marginBottom: 18 }}>
