@@ -484,6 +484,62 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'netrunnerType', title: 'What Kind of Runner Are You?', eyebrow: 'Runner Type', roleGate: 'Netrunner',
+    sub: 'Every Netrunner has a reason they jack in. This is yours.',
+    options: [
+      { t: 'Freelance Hacker', d: "You hack for hire — whoever pays gets the job, no questions about their reasons.", cue: 'Play it transactional about the work, careful never to get personally invested in a client’s cause.' },
+      { t: 'Corporate Clone Runner', d: 'You hack for the Corp that owns your contract, one indistinguishable cog among many.', cue: 'Play it institutionally cautious, watching what you say even in casual company.' },
+      { t: 'Hacktivist', d: 'You crack systems specifically to expose the people who thought they were untouchable.', cue: 'Play it principled about targets, refusing jobs that don’t serve the cause.' },
+      { t: 'Thrill Cracker', d: 'You crack systems purely for the challenge — the money and the cause are both secondary to the puzzle.', cue: 'Play it visibly more excited by a hard system than by the payout.' },
+      { t: 'Team Freelancer', d: 'You run as part of a regular crew, splitting jobs and covering each other’s blind spots.', cue: 'Play it reflexively coordinating with absent crewmates, even on solo jobs.' },
+      { t: 'Retained Specialist', d: 'You hack on call for a Media, politico, or Lawman who brings you in exactly when they need you.', cue: 'Play it discreet about your retainer, careful not to name who actually signs your checks.' },
+    ],
+  },
+  {
+    id: 'netrunnerPartner', title: 'Got a Partner, or Work Alone?', eyebrow: 'Partner', roleGate: 'Netrunner',
+    sub: 'Running the NET alone means nobody watching your meat while your mind’s somewhere else. Running with a partner means trusting them with your body while you’re gone.',
+    options: [
+      { t: 'Work Alone', d: 'Nobody watches your body while you’re jacked in — which means nobody’s there if something goes wrong on either side.', cue: 'Play it paranoid about your physical surroundings before you ever jack in.' },
+      { t: 'Got a Partner', d: 'Someone guards your body while your mind’s in the Architecture, and you trust them completely to do it.', cue: 'Play it noticeably calmer jacking in when your partner’s actually present.' },
+    ],
+  },
+  {
+    id: 'netrunnerClients', title: 'Who Are Some of Your Other Clients?', eyebrow: 'Other Clients', roleGate: 'Netrunner',
+    sub: 'Beyond the main gig, there’s a regular crowd that keeps hiring you specifically.',
+    options: [
+      { t: 'Fixer Referrals', d: 'Local Fixers send clients your way and take a cut for the introduction.', cue: 'Play it professionally cordial with the Fixers who keep you working.' },
+      { t: 'Ganger Protection Trade', d: 'A gang protects your workspace while you sweep for NET threats, in exchange for your services.', cue: 'Play it calm in gang spaces most people would find tense.' },
+      { t: 'Corporate Black-Project Work', d: 'Execs bring you work they can’t put through official channels.', cue: 'Play it deliberately incurious about the politics behind a corporate job.' },
+      { t: 'Solo Security Contracts', d: 'Solos and other combat types hire you to keep their personal systems secure.', cue: 'Play it a little protective of clients whose lives genuinely depend on your work.' },
+      { t: 'Nomad & Fixer Family Systems', d: 'You keep Nomad and Fixer family networks secure, trusted with more than most outsiders ever get.', cue: 'Play it warmly loyal to a specific family or crew’s systems.' },
+      { t: 'Freelance Data Broker', d: 'You work for yourself, selling whatever data you can find on the open NET.', cue: 'Play it constantly evaluating information for resale value, even in casual conversation.' },
+    ],
+  },
+  {
+    id: 'netrunnerPrograms', title: 'Where Do You Get Your Programs?', eyebrow: 'Programs', roleGate: 'Netrunner',
+    sub: 'Good software is hard to come by legally. This is how you actually stay equipped.',
+    options: [
+      { t: 'Abandoned Zone Digging', d: 'You dig through old abandoned City Zones for forgotten software caches.', cue: 'Play it resourceful and a little obsessive about digital archaeology.' },
+      { t: 'Brain-Burn Looting', d: 'You steal programs from other Netrunners you’ve brain-burned — grim, but it works.', cue: 'Play it coldly practical about where your software actually came from.' },
+      { t: 'Fixer Supply Trade', d: 'A local Fixer supplies you with programs in exchange for hack work.', cue: 'Play it transactional but reliable with your Fixer contact.' },
+      { t: 'Corporate Supply Trade', d: 'Execs supply you with programs in exchange for your services.', cue: 'Play it aware of exactly how replaceable that arrangement makes you.' },
+      { t: 'Warehouse Backdoors', d: 'You’ve got unofficial access into a few Corporate warehouses.', cue: 'Play it cagey about exactly how that access works, even with people you trust.' },
+      { t: 'Night Market Deals', d: 'You hit the Night Markets and score programs whenever you can find them.', cue: 'Play it always browsing, even off the clock.' },
+    ],
+  },
+  {
+    id: 'netrunnerThreat', title: "Who's Gunning for You?", eyebrow: 'Runner Threat', roleGate: 'Netrunner',
+    sub: 'Cracking systems for a living means someone, somewhere, wants you off the NET permanently.',
+    options: [
+      { t: 'Something in the NET', d: 'You think it might be a rogue AI or a NET Ghost. Either way, it’s bad news, and it knows your handle.', cue: 'Play it visibly uneasy jacking into unfamiliar Architecture.' },
+      { t: 'Rival Netrunners', d: 'Other Runners just don’t like you, and they’re not shy about making that a problem.', cue: 'Play it competitive and a little paranoid about other Runners in a room.' },
+      { t: 'Controlling Corporates', d: 'A Corporation wants you working for them exclusively, whether or not that’s actually your choice.', cue: 'Play it wary of offers that sound a little too generous to be optional.' },
+      { t: 'Black Hat Hunters', d: 'Lawmen consider you an illegal black hat and are actively building a case to bust you.', cue: 'Play it careful about digital footprint, even in conversations that have nothing to do with work.' },
+      { t: 'A Burned Client', d: 'An old client thinks you screwed them over, and they’ve never let it go.', cue: 'Play it tense whenever that specific job or client comes up.' },
+      { t: 'A Possessive Client', d: 'A Fixer or other client wants your services exclusively, and doesn’t take no gracefully.', cue: 'Play it cautious about how much freedom you actually have to turn down work.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
