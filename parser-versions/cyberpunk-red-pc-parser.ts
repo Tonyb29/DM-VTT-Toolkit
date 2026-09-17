@@ -278,19 +278,36 @@ function roleItem(pc: CPRPlayerCharacter) {
   };
 }
 
+// A weapon we built ourselves (not pulled from Foundry's compendium) still
+// needs *some* magazine value or it imports empty — best-effort by
+// archetype, not book-accurate capacity.
+function defaultMagazine(w: PCWeapon): number {
+  if (!w.isRanged) return 0;
+  const n = w.name.toLowerCase();
+  if (/shotgun/.test(n)) return 4;
+  if (/smg/.test(n)) return 30;
+  if (/rifle/.test(n)) return 25;
+  if (/launcher|grenade|heavy/.test(n)) return 1;
+  if (/pistol/.test(n)) return 12;
+  return 10;
+}
+
 function weaponItems(pc: CPRPlayerCharacter) {
-  return pc.weapons.map((w, i) => ({
-    _id: makeId(pc.name, w.name, i),
-    name: w.name,
-    img: 'icons/svg/sword.svg',
-    type: 'weapon',
-    system: {
-      damage: w.damage, rof: 1, isRanged: w.isRanged, handsReq: w.handsReq, equipped: 'equipped',
-      description: { value: '' }, favorite: false, quality: 'standard', price: { market: 0 },
-      source: { book: 'Core', page: 0 },
-    },
-    effects: [], folder: null, sort: 0, ownership: { default: 0 }, flags: {}, _stats: _stats(),
-  }));
+  return pc.weapons.map((w, i) => {
+    const mag = defaultMagazine(w);
+    return {
+      _id: makeId(pc.name, w.name, i),
+      name: w.name,
+      img: 'icons/svg/sword.svg',
+      type: 'weapon',
+      system: {
+        damage: w.damage, rof: 1, isRanged: w.isRanged, handsReq: w.handsReq, equipped: 'equipped',
+        description: { value: '' }, favorite: false, quality: 'standard', price: { market: 0 },
+        source: { book: 'Core', page: 0 }, magazine: { value: mag, max: mag },
+      },
+      effects: [], folder: null, sort: 0, ownership: { default: 0 }, flags: {}, _stats: _stats(),
+    };
+  });
 }
 
 function armorItems(pc: CPRPlayerCharacter) {
@@ -336,11 +353,21 @@ export function toCyberpunkRedFoundryCharacter(pc: CPRPlayerCharacter): Record<s
   const lifepath: Record<string, string> = {};
   for (const [, key] of LIFEPATH_FIELDS) lifepath[key] = pc.lifepath[key] || '';
 
+  // Foundry's CPR system tracks "current" SP as a separate actor-level pool
+  // (system.externalData), not something derived from the armor item — an
+  // equipped armor item still blocks 0 damage until this is set.
+  const maxHeadSp = pc.armor.reduce((m, a) => Math.max(m, a.headSp), 0);
+  const maxBodySp = pc.armor.reduce((m, a) => Math.max(m, a.bodySp), 0);
+
   return {
     _id: makeId(pc.name, 'actor', 0),
     name: pc.name, type: 'character', img: 'icons/svg/mystery-man.svg',
     effects: [], folder: null, flags: {}, ownership: { default: 0 }, _stats: _stats(),
     system: {
+      externalData: {
+        currentArmorHead: { value: maxHeadSp, max: maxHeadSp },
+        currentArmorBody: { value: maxBodySp, max: maxBodySp },
+      },
       stats: {
         int: { value: pc.stats.int }, ref: { value: pc.stats.ref }, dex: { value: pc.stats.dex },
         tech: { value: pc.stats.tech }, cool: { value: pc.stats.cool }, will: { value: pc.stats.will },
@@ -380,6 +407,36 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
 (async () => {
   const actorData = ${json};
 
+  // Weapons built by this tool are simplified stubs (name, damage, rof,
+  // handsReq) — no dvTable, no correct weaponSkill, no loaded magazine.
+  // If the actual weapon exists in the system's core compendium, swap in
+  // its real data (keeping our parsed damage, in case it's non-standard).
+  let weaponMatches = 0, weaponCustom = 0;
+  try {
+    const pack = game.packs.get('cyberpunk-red-core.core_weapons');
+    if (pack) {
+      const compendiumWeapons = await pack.getDocuments();
+      const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
+      for (const item of actorData.items) {
+        if (item.type !== 'weapon') continue;
+        const target = normalize(item.name);
+        let match = compendiumWeapons.find(w => normalize(w.name) === target);
+        if (!match) match = compendiumWeapons.find(w => target.includes(normalize(w.name)) || normalize(w.name).includes(target));
+        if (match) {
+          const src = match.toObject();
+          item.img = src.img;
+          item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
+          if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
+          weaponMatches++;
+        } else {
+          weaponCustom++;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Cyberpunk RED weapon compendium lookup failed, using simplified weapons.', e);
+  }
+
   const existing = game.actors.getName(actorData.name);
   if (existing) {
     await existing.delete();
@@ -388,7 +445,8 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
 
   const created = await Actor.create(actorData);
   if (created) {
-    ui.notifications.info('✓ Created: ' + created.name);
+    const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
+    ui.notifications.info(\`✓ Created: \${created.name} — \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`);
   } else {
     ui.notifications.error('Failed to create actor — check system compatibility.');
   }

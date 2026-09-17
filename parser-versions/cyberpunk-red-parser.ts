@@ -2,9 +2,11 @@
 // Parse Cyberpunk RED NPC stat blocks (plain-text label format) into
 // Foundry VTT actor JSON for the "Cyberpunk RED - Core" system (mook type).
 
+import { SKILL_CATALOG } from './cyberpunk-red-pc-parser';
+
 const CPR_SYS_ID  = 'cyberpunk-red-core';
-const CPR_SYS_VER = '2.0.0';
-const CPR_CORE_VER = '13.351';
+const CPR_SYS_VER = 'v0.92.4';
+const CPR_CORE_VER = '12.343';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +17,7 @@ export interface CPRSkill {
   name: string;
   level: number;
   stat: StatKey;
+  recognized: boolean;
 }
 
 export interface CPRWeapon {
@@ -25,6 +28,12 @@ export interface CPRWeapon {
   handsReq: number;
 }
 
+export interface CPRArmor {
+  name: string;
+  headSp: number;
+  bodySp: number;
+}
+
 export interface CPRNpc {
   name: string;
   role: string;
@@ -33,7 +42,7 @@ export interface CPRNpc {
   sp: number;
   skills: CPRSkill[];
   weapons: CPRWeapon[];
-  armor: string[];
+  armor: CPRArmor[];
   cyberware: string[];
   notes: string;
 }
@@ -52,34 +61,18 @@ function makeId(actorName: string, itemName: string, idx: number): string {
   return (a + b).slice(0, 16);
 }
 
-// Best-effort skill → governing stat table (Cyberpunk RED core rulebook).
-// Not exhaustive — anything unrecognized defaults to 'ref'. Adjust on the
-// Foundry sheet after import if a skill lands under the wrong stat.
-const SKILL_STAT: Record<string, StatKey> = {
-  athletics: 'dex', brawling: 'body', endurance: 'body', 'resist torture/drugs': 'will',
-  acting: 'cool', bribery: 'cool', interrogation: 'cool', persuasion: 'cool',
-  streetwise: 'cool', trading: 'cool', 'wardrobe & style': 'cool',
-  contortionist: 'dex', dance: 'dex', evasion: 'dex', stealth: 'dex',
-  conversation: 'emp', 'human perception': 'emp', leadership: 'emp',
-  'personal grooming': 'emp', riding: 'emp',
-  accounting: 'int', 'animal handling': 'int', bureaucracy: 'int', business: 'int',
-  composition: 'int', 'conceal/reveal object': 'int', criminology: 'int',
-  cryptography: 'int', deduction: 'int', education: 'int', gamble: 'int',
-  language: 'int', 'library search': 'int', 'local expert': 'int',
-  perception: 'int', science: 'int', tactics: 'int', 'wilderness survival': 'int',
-  autofire: 'ref', 'drive land vehicle': 'ref', handgun: 'ref', 'heavy weapons': 'ref',
-  'martial arts': 'ref', 'melee weapon': 'ref', 'pilot air vehicle': 'ref',
-  'pilot sea vehicle': 'ref', 'shoulder arms': 'ref',
-  'air vehicle tech': 'tech', 'basic tech': 'tech', cybertech: 'tech',
-  demolitions: 'tech', 'electronics/security tech': 'tech', 'first aid': 'tech',
-  forgery: 'tech', 'land vehicle tech': 'tech', 'paint/draw/sculpt': 'tech',
-  paramedic: 'tech', 'photography/film': 'tech', 'pick lock': 'tech',
-  'pick pocket': 'tech', 'play instrument': 'tech', 'sea vehicle tech': 'tech',
-  weaponstech: 'tech',
-};
+// Skill → governing stat, sourced from the same canonical catalog used by
+// the PC Create tool (extracted from a real Foundry character export — the
+// game's own data, not a guessed mapping). Falls back to 'ref' only for a
+// name the catalog genuinely doesn't have, and flags that on the skill so
+// the UI can warn about it.
+const SKILL_STAT_BY_NAME: Record<string, StatKey> = Object.fromEntries(
+  SKILL_CATALOG.map(s => [s.name.toLowerCase(), s.stat as StatKey])
+);
 
-function skillStat(name: string): StatKey {
-  return SKILL_STAT[name.trim().toLowerCase()] ?? 'ref';
+function skillStat(name: string): { stat: StatKey; recognized: boolean } {
+  const stat = SKILL_STAT_BY_NAME[name.trim().toLowerCase()];
+  return stat ? { stat, recognized: true } : { stat: 'ref', recognized: false };
 }
 
 function findLabel(lines: string[], label: string): string {
@@ -96,6 +89,36 @@ function parseCsvList(raw: string): string[] {
   return raw.split(',').map(s => s.trim()).filter(Boolean);
 }
 
+// Splits on commas that are NOT inside parentheses — a single line like
+// "Cyberarm x2 (Popup Grenade Launcher x2, Popup Heavy SMG, Wolvers)" is one
+// cyberware item, not three; a naive comma split breaks it apart.
+function splitTopLevel(raw: string): string[] {
+  if (!raw) return [];
+  const out: string[] = [];
+  let depth = 0, cur = '';
+  for (const ch of raw) {
+    if (ch === '(') depth++;
+    if (ch === ')') depth = Math.max(0, depth - 1);
+    if (ch === ',' && depth === 0) { out.push(cur.trim()); cur = ''; }
+    else cur += ch;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+// Parses "Name", "Name (Head N, Body N)", or "Name (N SP)" armor entries —
+// the same syntax the PC Create tool accepts — so a single armor piece
+// carries separate head/body SP instead of one merged number.
+function parseArmorEntries(raw: string, fallbackSp: number): CPRArmor[] {
+  return splitTopLevel(raw).map(entry => {
+    const both = entry.match(/^(.+?)\s*\(\s*Head\s*(\d+)\s*,\s*Body\s*(\d+)\s*\)\s*$/i);
+    if (both) return { name: both[1].trim(), headSp: parseInt(both[2], 10), bodySp: parseInt(both[3], 10) };
+    const single = entry.match(/^(.+?)\s*\(\s*(\d+)\s*SP\s*\)\s*$/i);
+    if (single) return { name: single[1].trim(), headSp: parseInt(single[2], 10), bodySp: parseInt(single[2], 10) };
+    return { name: entry.trim(), headSp: fallbackSp, bodySp: fallbackSp };
+  }).filter(a => a.name);
+}
+
 function parseStats(raw: string): Record<StatKey, number> {
   const stats = {} as Record<StatKey, number>;
   for (const key of STAT_KEYS) stats[key] = 5;
@@ -110,12 +133,16 @@ function parseStats(raw: string): Record<StatKey, number> {
   return stats;
 }
 
+// Label-format skills use "Name +N" — N is already a raw skill rank (this
+// tool's own convention, matching how Foundry stores skill.level), not a
+// book "Skill Base" total, so no stat subtraction happens here.
 function parseSkills(raw: string): CPRSkill[] {
   return parseCsvList(raw).map(entry => {
     const m = entry.match(/^(.+?)\s*\+(\d+)$/);
     const name = (m ? m[1] : entry).trim();
     const level = m ? parseInt(m[2], 10) : 0;
-    return { name, level, stat: skillStat(name) };
+    const { stat, recognized } = skillStat(name);
+    return { name, level, stat, recognized };
   });
 }
 
@@ -144,8 +171,8 @@ function parseLabelFormat(text: string): CPRNpc | null {
   const sp = parseInt(findLabel(lines, 'SP'), 10) || 0;
   const skills = parseSkills(findLabel(lines, 'SKILLS'));
   const weapons = parseWeapons(findLabel(lines, 'WEAPONS'));
-  const armor = parseCsvList(findLabel(lines, 'ARMOR'));
-  const cyberware = parseCsvList(findLabel(lines, 'CYBERWARE'));
+  const armor = parseArmorEntries(findLabel(lines, 'ARMOR'), sp);
+  const cyberware = splitTopLevel(findLabel(lines, 'CYBERWARE'));
   const notes = findLabel(lines, 'NOTES');
 
   return { name: name || 'Unknown NPC', role, stats, hp, sp, skills, weapons, armor, cyberware, notes };
@@ -248,7 +275,7 @@ function parseDemiplaneStatBlock(rawText: string): CPRNpc | null {
     }
   }
 
-  const armor: string[] = [];
+  const armor: CPRArmor[] = [];
   let sp = 0;
   if (idx < lines.length && /^armor\s*:/i.test(lines[idx])) {
     const m = lines[idx].match(/^armor\s*:\s*(.+)$/i);
@@ -259,12 +286,16 @@ function parseDemiplaneStatBlock(rawText: string): CPRNpc | null {
     const bodyM = armorRest.match(/\bBody\b\s*:?\s*(\d+)\s*SP/i);
     const headSp = headM ? parseInt(headM[1], 10) : 0;
     const bodySp = bodyM ? parseInt(bodyM[1], 10) : 0;
-    armor.push(armorName);
+    armor.push({ name: armorName, headSp, bodySp });
     sp = bodySp || headSp;
     // Skip past whichever Head/Body lines we consumed via the join-scan above.
     while (idx < lines.length && (/^head\b/i.test(lines[idx]) || /^body\b/i.test(lines[idx]) || /^\d+\s*SP$/i.test(lines[idx]))) idx++;
   }
 
+  // Book "Skill Bases" are STAT + Skill combined already (the Mooks and
+  // Grunts intro says so outright), but Foundry adds STAT itself at roll
+  // time — so the level we store has to be the book total MINUS the
+  // governing stat, clamped at 0, or every roll comes out doubled.
   let skills: CPRSkill[] = [];
   const skillsIdx = findLineIndex(lines, idx, 'Skill\\s+Bases');
   if (skillsIdx !== null) {
@@ -277,8 +308,10 @@ function parseDemiplaneStatBlock(rawText: string): CPRNpc | null {
     skills = parseCsvList(skillLines.join(' ')).map(entry => {
       const m = entry.match(/^(.+?)\s+(\d+)$/);
       const skillName = (m ? m[1] : entry).trim();
-      const level = m ? parseInt(m[2], 10) : 0;
-      return { name: skillName, level, stat: skillStat(skillName) };
+      const bookTotal = m ? parseInt(m[2], 10) : 0;
+      const { stat, recognized } = skillStat(skillName);
+      const level = Math.max(0, bookTotal - stats[stat]);
+      return { name: skillName, level, stat, recognized };
     });
   }
 
@@ -291,7 +324,7 @@ function parseDemiplaneStatBlock(rawText: string): CPRNpc | null {
       equipLines.push(lines[idx]);
       idx++;
     }
-    cyberware = parseCsvList(equipLines.join(' '));
+    cyberware = splitTopLevel(equipLines.join(' '));
   }
 
   return { name: name || 'Unknown NPC', role: '', stats, hp, sp, skills, weapons, armor, cyberware, notes: '' };
@@ -331,7 +364,22 @@ function skillItem(skill: CPRSkill, actorName: string, idx: number) {
   };
 }
 
+// A weapon that isn't in the Foundry compendium (see the macro's runtime
+// lookup below) still needs *some* magazine value or it imports empty —
+// this is a best-effort default by archetype, not book-accurate capacity.
+function defaultMagazine(weapon: CPRWeapon): number {
+  if (!weapon.isRanged) return 0;
+  const n = weapon.name.toLowerCase();
+  if (/shotgun/.test(n)) return 4;
+  if (/smg/.test(n)) return 30;
+  if (/rifle/.test(n)) return 25;
+  if (/launcher|grenade|heavy/.test(n)) return 1;
+  if (/pistol/.test(n)) return 12;
+  return 10;
+}
+
 function weaponItem(weapon: CPRWeapon, actorName: string, idx: number) {
+  const mag = defaultMagazine(weapon);
   return {
     _id: makeId(actorName, weapon.name, idx),
     name: weapon.name,
@@ -348,14 +396,15 @@ function weaponItem(weapon: CPRWeapon, actorName: string, idx: number) {
       isRanged: weapon.isRanged,
       handsReq: weapon.handsReq,
       equipped: 'equipped',
+      magazine: { value: mag, max: mag },
     },
   };
 }
 
-function armorItem(name: string, sp: number, actorName: string, idx: number) {
+function armorItem(armor: CPRArmor, actorName: string, idx: number) {
   return {
-    _id: makeId(actorName, name, idx),
-    name,
+    _id: makeId(actorName, armor.name, idx),
+    name: armor.name,
     type: 'armor',
     img: 'icons/svg/shield.svg',
     effects: [],
@@ -365,9 +414,10 @@ function armorItem(name: string, sp: number, actorName: string, idx: number) {
     _stats: { systemId: CPR_SYS_ID, systemVersion: CPR_SYS_VER, coreVersion: CPR_CORE_VER, createdTime: null, modifiedTime: null, lastModifiedBy: null },
     system: {
       isBodyLocation: true,
-      isHeadLocation: false,
+      isHeadLocation: true,
       isShield: false,
-      bodyLocation: { sp, ablation: 0 },
+      bodyLocation: { sp: armor.bodySp, ablation: 0 },
+      headLocation: { sp: armor.headSp, ablation: 0 },
       equipped: 'equipped',
     },
   };
@@ -393,9 +443,17 @@ export function toCyberpunkRedFoundryActor(npc: CPRNpc): Record<string, unknown>
   const items = [
     ...npc.skills.map((s, i) => skillItem(s, npc.name, i)),
     ...npc.weapons.map((w, i) => weaponItem(w, npc.name, i)),
-    ...npc.armor.map((a, i) => armorItem(a, npc.sp, npc.name, i)),
+    ...npc.armor.map((a, i) => armorItem(a, npc.name, i)),
     ...npc.cyberware.map((c, i) => cyberwareItem(c, npc.name, i)),
   ];
+
+  // Foundry's CPR system tracks "current" SP as a separate actor-level
+  // pool (system.externalData), not something it derives from the armor
+  // item automatically — an equipped armor item with SP 11 still blocks
+  // 0 damage until this is set. Take the best (max) SP per location
+  // across all armor entries, matching "wear your best piece" logic.
+  const maxHeadSp = npc.armor.reduce((m, a) => Math.max(m, a.headSp), 0);
+  const maxBodySp = npc.armor.reduce((m, a) => Math.max(m, a.bodySp), 0);
 
   return {
     _id: actorId,
@@ -414,6 +472,10 @@ export function toCyberpunkRedFoundryActor(npc: CPRNpc): Record<string, unknown>
         seriouslyWounded: Math.floor(npc.hp / 2),
         humanity: { value: 50, max: 50 },
       },
+      externalData: {
+        currentArmorHead: { value: maxHeadSp, max: maxHeadSp },
+        currentArmorBody: { value: maxBodySp, max: maxBodySp },
+      },
       information: {
         alias: npc.role,
         notes: npc.notes,
@@ -425,13 +487,51 @@ export function toCyberpunkRedFoundryActor(npc: CPRNpc): Record<string, unknown>
 
 // ─── Macro Builder ────────────────────────────────────────────────────────────
 
-export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>): string {
+export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc: CPRNpc): string {
   const json = JSON.stringify(actor, null, 2);
+  const unrecognized = JSON.stringify(npc.skills.filter(s => !s.recognized).map(s => s.name));
   return `// Cyberpunk RED Import Macro — generated by dmtoolkit.org
 // Requires: Foundry VTT + "Cyberpunk RED - Core" system
-// Run in Foundry's macro editor (Ctrl+Enter or Execute)
+// Macro Type must be set to "Script" (not "Chat") — see the macro's Type dropdown
 (async () => {
   const actorData = ${json};
+  const unrecognizedSkills = ${unrecognized};
+
+  // Drop it in a "Mooks" folder instead of the Actors root.
+  let folder = game.folders.find(f => f.type === 'Actor' && f.name === 'Mooks');
+  if (!folder) folder = await Folder.create({ name: 'Mooks', type: 'Actor', color: '#ff2060' });
+  actorData.folder = folder.id;
+
+  // Weapons built by this tool are simplified stubs (name, damage, rof,
+  // handsReq) — no dvTable, no correct weaponSkill, no loaded magazine.
+  // If the actual weapon exists in the system's core compendium, swap in
+  // its real data (keeping our parsed damage, in case Poor/Excellent
+  // Quality changed it from the stock value).
+  let weaponMatches = 0, weaponCustom = 0;
+  try {
+    const pack = game.packs.get('cyberpunk-red-core.core_weapons');
+    if (pack) {
+      const compendiumWeapons = await pack.getDocuments();
+      const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
+      for (const item of actorData.items) {
+        if (item.type !== 'weapon') continue;
+        const target = normalize(item.name);
+        let match = compendiumWeapons.find(w => normalize(w.name) === target);
+        if (!match) match = compendiumWeapons.find(w => target.includes(normalize(w.name)) || normalize(w.name).includes(target));
+        if (match) {
+          const src = match.toObject();
+          item.img = src.img;
+          item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
+          if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
+          weaponMatches++;
+        } else {
+          weaponCustom++;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Cyberpunk RED weapon compendium lookup failed, using simplified weapons.', e);
+  }
 
   const existing = game.actors.getName(actorData.name);
   if (existing) {
@@ -441,7 +541,12 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>): st
 
   const created = await Actor.create(actorData);
   if (created) {
-    ui.notifications.info('✓ Created: ' + created.name);
+    const skillCount = actorData.items.filter(i => i.type === 'skill').length;
+    const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
+    let msg = \`✓ Created: \${created.name} — \${skillCount} skills, \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
+    if (unrecognizedSkills.length) msg += \`. \${unrecognizedSkills.length} skill name(s) not recognized — defaulted to REF.\`;
+    ui.notifications.info(msg);
+    if (unrecognizedSkills.length) console.warn('Cyberpunk RED import — unrecognized skills (defaulted to REF, check governing stat manually):', unrecognizedSkills);
   } else {
     ui.notifications.error('Failed to create actor — check system compatibility.');
   }

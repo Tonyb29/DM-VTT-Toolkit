@@ -148,7 +148,7 @@ function StatPreview({ npc }: { npc: CPRNpc }) {
 
       {(npc.armor.length > 0 || npc.cyberware.length > 0) && (
         <div style={{ fontSize: 12, color: T.textMuted }}>
-          {npc.armor.length > 0 && <div>Armor: {npc.armor.join(', ')}</div>}
+          {npc.armor.length > 0 && <div>Armor: {npc.armor.map(a => `${a.name} (Head ${a.headSp}/Body ${a.bodySp})`).join(', ')}</div>}
           {npc.cyberware.length > 0 && <div>Cyberware: {npc.cyberware.join(', ')}</div>}
         </div>
       )}
@@ -240,7 +240,7 @@ export default function CyberpunkRedApp() {
   }
 
   const foundryActor = parsed ? toCyberpunkRedFoundryActor(parsed) : null
-  const macro = foundryActor ? buildCyberpunkRedImportMacro(foundryActor) : ''
+  const macro = foundryActor && parsed ? buildCyberpunkRedImportMacro(foundryActor, parsed) : ''
 
   return (
     <div className="cpr-app-root" style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
