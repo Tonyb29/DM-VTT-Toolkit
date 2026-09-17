@@ -89,6 +89,15 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
       'Persuasion', 'Stealth', 'Tracking', 'Trading', 'Wilderness Survival',
     ],
   },
+  Netrunner: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Athletics', 'Basic Tech', 'Brawling', 'Conceal/Reveal Object', 'Concentration',
+      'Conversation', 'Cryptography', 'Cybertech', 'Education', 'Electronics/Security Tech',
+      'Evasion', 'First Aid', 'Handgun', 'Human Perception', 'Language (Streetslang)',
+      'Library Search', 'Local Expert (Your Home)', 'Perception', 'Persuasion', 'Stealth',
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
