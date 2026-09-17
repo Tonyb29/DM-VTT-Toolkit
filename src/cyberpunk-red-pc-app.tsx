@@ -7,7 +7,7 @@ import {
   toCyberpunkRedFoundryCharacter, buildCyberpunkRedCharacterMacro,
   SKILL_CATALOG, PC_STAT_KEYS, PCStatKey, LIFEPATH_FIELDS, CPRPlayerCharacter,
 } from '../parser-versions/cyberpunk-red-pc-parser'
-import { STEPS as CB_STEPS, STORAGE_KEY as CB_STORAGE_KEY, SavedState as CBSavedState, buildBio as cbBuildBio } from './cyberpunk-red-character-builder'
+import { STEPS as CB_STEPS, activeSteps as cbActiveSteps, STORAGE_KEY as CB_STORAGE_KEY, SavedState as CBSavedState, buildBio as cbBuildBio } from './cyberpunk-red-character-builder'
 
 const T = {
   bg: '#08050a', surface: '#120c16', surface2: '#1a1220',
@@ -113,7 +113,7 @@ function readCharacterBuilderDossier(): { role: string; bio: string; lifepath: R
     if (!raw) return null
     const saved = JSON.parse(raw) as CBSavedState
     if (!saved?.picks) return null
-    const complete = CB_STEPS.every(s => saved.picks[s.id] !== undefined)
+    const complete = cbActiveSteps(saved.picks).every(s => saved.picks[s.id] !== undefined)
     if (!complete) return null
     const roleStep = CB_STEPS.find(s => s.id === 'role')
     const role = roleStep ? roleStep.options[saved.picks.role].t : ''

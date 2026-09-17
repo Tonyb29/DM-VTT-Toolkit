@@ -9,7 +9,7 @@ const T = {
 }
 
 export type Option = { t: string; d: string; cue: string }
-export type Step = { id: string; title: string; eyebrow: string; sub: string; options: Option[] }
+export type Step = { id: string; title: string; eyebrow: string; sub: string; options: Option[]; roleGate?: string }
 
 export const STEPS: Step[] = [
   {
@@ -180,6 +180,82 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'execType', title: 'What Kind of Corp Do You Work For?', eyebrow: 'Corp Type', roleGate: 'Exec',
+    sub: 'Every Exec climbs a ladder that belongs to somebody. This is the industry yours is built on.',
+    options: [
+      { t: 'Financial', d: 'Your Corp moves money — banking, investment, insurance, the machinery behind everyone else’s machinery.', cue: 'Play it reflexively aware of the cost of everything, out loud, even when nobody asked.' },
+      { t: 'Media & Communications', d: 'Your Corp controls what people see, hear, and believe — networks, data feeds, the narrative itself.', cue: 'Play it image-conscious about how a moment will be spun, even in private conversation.' },
+      { t: 'Cybertech & Medical', d: 'Your Corp builds the chrome and the cures — cyberware, prosthetics, the hardware people trust with their bodies.', cue: 'Play it clinically curious about anyone’s visible cyberware, cataloguing it without meaning to.' },
+      { t: 'Pharmaceuticals & Biotech', d: 'Your Corp makes what keeps people alive, functional, or numb — and prices it accordingly.', cue: 'Play it a little too comfortable discussing what a life is worth in eddies.' },
+      { t: 'General Consumables', d: 'Your Corp makes what people eat, wear, and use every day — unglamorous, and everywhere.', cue: 'Play it surprisingly proud of a product line most people would consider beneath you.' },
+      { t: 'Energy Production', d: 'Your Corp keeps the lights on for half the city, and knows exactly what leverage that buys.', cue: 'Play it quietly aware you could make someone’s week very dark, and never actually say it.' },
+      { t: 'Personal Electronics & Robotics', d: 'Your Corp builds the gear people carry, wear, and trust with their daily lives.', cue: 'Play it evaluating everyone’s tech like a walking product review.' },
+      { t: 'Corporate Services', d: 'Your Corp sells other Corporations the tools to run themselves — consulting, security, infrastructure.', cue: 'Play it fluent in corporate jargon even outside the office, and a little oblivious to how that sounds.' },
+      { t: 'Consumer Services', d: 'Your Corp sells experiences and convenience directly to people — hospitality, entertainment, retail at scale.', cue: 'Play it customer-service smooth even in situations that clearly don’t call for it.' },
+      { t: 'Real Estate & Construction', d: 'Your Corp decides what gets built, torn down, and who gets to live there.', cue: 'Play it appraising every building you walk into, out of old habit.' },
+    ],
+  },
+  {
+    id: 'execDivision', title: 'What Division Do You Work In?', eyebrow: 'Division', roleGate: 'Exec',
+    sub: 'Every Corp has departments, and yours decided what kind of problems you solve.',
+    options: [
+      { t: 'Procurement', d: 'You source what the Corp needs, from whoever has it, however that has to happen.', cue: 'Play it always working an angle on where to get something cheaper or faster.' },
+      { t: 'Manufacturing', d: 'You keep production running, on schedule, over budget concerns, over almost anything else.', cue: 'Play it impatient with delays and inefficiency, even in casual life.' },
+      { t: 'Research and Development', d: 'You work on what’s next, often before it’s legal, safe, or fully understood.', cue: 'Play it curious to the point of recklessness about how things work.' },
+      { t: 'Human Resources', d: 'You manage people as a resource — hiring, firing, and the quiet work of making problems disappear.', cue: 'Play it unsettlingly calm about difficult personnel decisions.' },
+      { t: 'Public Affairs / Publicity / Advertising', d: 'You manage what the public believes about your Corp, true or not.', cue: 'Play it instinctively reframing bad news into something sellable, mid-sentence.' },
+      { t: 'Mergers and Acquisitions', d: 'You make companies disappear into other companies, and you’re good at making it look friendly.', cue: 'Play it appraising, like you’re always quietly pricing out the room.' },
+    ],
+  },
+  {
+    id: 'execEthics', title: 'How Good or Bad Is Your Corp?', eyebrow: 'Corp Ethics', roleGate: 'Exec',
+    sub: 'Not every Corp is a monster. Not every Corp isn’t, either. This is where yours actually falls.',
+    options: [
+      { t: 'Genuinely Good', d: 'Your Corp actually operates on ethical practice, and actually means it — rare enough that people notice.', cue: 'Play it a little defensive when people assume the worst of your employer.' },
+      { t: 'Fair and Honest', d: 'Your Corp runs a clean, honest business, consistently, without needing a PR department to convince anyone.', cue: 'Play it straightforward in negotiations, almost to a fault.' },
+      { t: 'Mostly Clean', d: 'Your Corp slips into something unethical occasionally, but it’s rare, and it bothers people when it happens.', cue: 'Play it uncomfortable when the Corp’s rare bad moves come up in conversation.' },
+      { t: 'Rule-Bender', d: 'Your Corp will bend what it has to in order to get what it needs, and doesn’t lose sleep over it.', cue: 'Play it pragmatic about ethics — rules are guidelines, not walls.' },
+      { t: 'Ruthless', d: 'Your Corp is profit-centered and willing to do real harm to protect that profit.', cue: 'Play it coldly practical about consequences that would bother most people.' },
+      { t: 'Rotten to the Core', d: 'Your Corp will do anything — illegal, unethical, or worse — as a matter of routine business.', cue: 'Play it unbothered by things that should probably bother you, and a little aware of that.' },
+    ],
+  },
+  {
+    id: 'execReach', title: 'Where Is Your Corp Based?', eyebrow: 'Corp Reach', roleGate: 'Exec',
+    sub: 'How far your Corp’s name actually reaches shapes how far your own reputation travels with it.',
+    options: [
+      { t: 'One City', d: 'Your Corp is a local institution — well known here, and basically unknown everywhere else.', cue: 'Play it surprised and a little thrown whenever someone outside your city recognizes the Corp name.' },
+      { t: 'Several Cities', d: 'Your Corp operates across a handful of cities, big enough to matter, small enough to still be personal.', cue: 'Play it name-dropping other city offices casually, like everyone should know them too.' },
+      { t: 'Statewide', d: 'Your Corp’s name means something across the whole state, not just your corner of it.', cue: 'Play it a little proprietary about your Corp’s territory.' },
+      { t: 'National', d: 'Your Corp operates nationwide — a real institution, with real weight behind its name.', cue: 'Play it casually confident that your Corp’s name will open doors almost anywhere in the country.' },
+      { t: 'International (Select Cities)', d: 'Your Corp has offices in a handful of major cities worldwide — global, but not everywhere.', cue: 'Play it well-traveled and a little detached from any one specific place.' },
+      { t: 'International (Everywhere)', d: 'Your Corp has a footprint essentially everywhere that matters. You represent something genuinely massive.', cue: 'Play it a little numb to scale — a million-eddy decision barely registers as a big deal.' },
+    ],
+  },
+  {
+    id: 'execThreat', title: "Who's Gunning for Your Group?", eyebrow: 'Corp Threat', roleGate: 'Exec',
+    sub: 'Nobody climbs without somebody trying to knock them back down. This is who’s circling.',
+    options: [
+      { t: 'A Rival Corp', d: 'A direct competitor in your industry wants your Corp’s market share, and isn’t picky about how they get it.', cue: 'Play it instantly suspicious of anyone connected to that rival Corp’s name.' },
+      { t: 'Law Enforcement', d: 'Someone with a badge has your Corp’s activities on a watch list, and your name might be on the file too.', cue: 'Play it careful around anything official-looking, more than the situation strictly requires.' },
+      { t: 'Local Media', d: 'A reporter or outlet has decided your Corp is their next big exposé, and they’re digging.', cue: 'Play it guarded around journalists and anyone asking too many casual questions.' },
+      { t: 'Internal Feud', d: 'A rival division inside your own company is working against you, quietly, from the inside.', cue: 'Play it watchful in your own office, more than anywhere else.' },
+      { t: 'Local Government', d: 'A city official or agency has decided your Corp is a problem worth solving.', cue: 'Play it politically careful, weighing every public statement twice.' },
+      { t: 'A Hostile Takeover', d: 'A bigger international player has your Corp in their sights and is circling for an acquisition nobody asked for.', cue: 'Play it privately anxious about job security, however composed you look on the surface.' },
+    ],
+  },
+  {
+    id: 'execBoss', title: "What's Your Relationship With Your Boss?", eyebrow: 'Your Boss', roleGate: 'Exec',
+    sub: 'Every Exec answers to somebody. This is what that actually looks like day to day.',
+    options: [
+      { t: 'A Mentor With Enemies', d: 'Your Boss genuinely mentors you — but their own rivals are a problem you’ve inherited along with the guidance.', cue: 'Play it loyal to your Boss specifically, and wary of anyone known to be their enemy.' },
+      { t: 'Hands-Off', d: 'Your Boss gives you total freedom and pointedly doesn’t ask what you’re doing with it.', cue: 'Play it used to operating with zero oversight, and a little thrown when someone actually checks your work.' },
+      { t: 'A Micromanager', d: 'Your Boss meddles constantly, second-guessing decisions that were never theirs to make.', cue: 'Play it quietly, chronically irritated by unnecessary oversight.' },
+      { t: 'Unpredictable', d: 'Your Boss swings between paranoid and volatile, and you’ve learned to read the warning signs early.', cue: 'Play it hyper-attuned to someone’s mood shifting, watching for the tell before it happens.' },
+      { t: 'Genuinely in Your Corner', d: 'Your Boss is solid — watches your back against rivals and actually means it.', cue: 'Play it fiercely loyal to your Boss specifically, defending them even when it costs you.' },
+      { t: 'Quietly Plotting Against You', d: 'Your Boss sees your rise as a threat and is already working an angle to cut you down.', cue: 'Play it outwardly deferential to your Boss and privately building a plan B.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
@@ -296,6 +372,17 @@ export const STEPS: Step[] = [
     ],
   },
 ]
+
+// Some steps only apply to a specific Role (e.g. an Exec's corp/division
+// questions don't make sense for a Nomad) — this resolves the picked Role
+// and filters them out. Order is preserved from STEPS, so a role-gated
+// step always slots in right after the 'role' step where it's defined.
+export function activeSteps(picks: Record<string, number>): Step[] {
+  const roleIdx = picks['role']
+  const roleStep = STEPS.find(s => s.id === 'role')
+  const roleName = roleStep && roleIdx !== undefined ? roleStep.options[roleIdx].t : undefined
+  return STEPS.filter(s => !s.roleGate || s.roleGate === roleName)
+}
 
 type RoleBuild = { primary: string; skills: string; light: string; note: string }
 
@@ -453,9 +540,11 @@ export default function CharacterBuilder() {
   }
 
   const randomizeAll = () => {
-    const picks: Record<string, number> = {}
-    STEPS.forEach(s => { picks[s.id] = Math.floor(Math.random() * s.options.length) })
-    update({ ...state, picks, step: STEPS.length })
+    // Role first, since which other steps are even active depends on it.
+    const roleStep = STEPS.find(s => s.id === 'role')!
+    const picks: Record<string, number> = { role: Math.floor(Math.random() * roleStep.options.length) }
+    for (const s of activeSteps(picks)) picks[s.id] = Math.floor(Math.random() * s.options.length)
+    update({ ...state, picks, step: activeSteps(picks).length })
     flashToast('Full lifepath rolled')
   }
 
@@ -466,16 +555,17 @@ export default function CharacterBuilder() {
 
   const goto = (idx: number) => update({ ...state, step: idx })
 
-  const complete = Object.keys(state.picks).length >= STEPS.length
-  const atSummary = state.step >= STEPS.length
+  const steps = activeSteps(state.picks)
+  const complete = steps.every(s => state.picks[s.id] !== undefined)
+  const atSummary = state.step >= steps.length
 
   const copyDossier = () => {
     const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
     const roleBuild = ROLE_BUILDS[opt('role').t]
     const text = 'EDGERUNNER DOSSIER\n' +
-      STEPS.map(s => `${s.eyebrow}: ${opt(s.id).t}`).join('\n') +
+      steps.map(s => `${s.eyebrow}: ${opt(s.id).t}`).join('\n') +
       '\n\n' + buildBio(state.picks) +
-      '\n\nROLEPLAY CUES\n' + STEPS.map(s => `- ${opt(s.id).cue}`).join('\n') +
+      '\n\nROLEPLAY CUES\n' + steps.map(s => `- ${opt(s.id).cue}`).join('\n') +
       (roleBuild
         ? `\n\nSUGGESTED BUILD DIRECTION (${opt('role').t})\n` +
           `Prioritize: ${roleBuild.primary}\n` +
@@ -505,7 +595,7 @@ export default function CharacterBuilder() {
         border: `1px solid ${done ? T.red : T.border}`, background: done ? `${T.red}22` : 'transparent',
         color: done ? T.gold : T.textDim, fontSize: 10, fontFamily: 'monospace', borderRadius: 4,
       }}>
-        {done ? <Check size={11} /> : (idx === STEPS.length ? <Star size={11} /> : idx + 1)}
+        {done ? <Check size={11} /> : (idx === steps.length ? <Star size={11} /> : idx + 1)}
       </div>
       <div>{label}</div>
     </div>
@@ -531,8 +621,8 @@ export default function CharacterBuilder() {
       <div style={{ display: 'grid', gridTemplateColumns: '200px minmax(0,1fr) 280px', gap: 18, alignItems: 'start' }} className="cpr-cb-layout">
         <nav className="cpr-print-hide" style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, position: 'sticky', top: 12 }}>
           <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.textDim, marginBottom: 8, fontWeight: 600 }}>Lifepath</div>
-          {STEPS.map((s, i) => railItem(s.eyebrow, i, i === state.step && !atSummary, state.picks[s.id] !== undefined))}
-          {railItem('Dossier', STEPS.length, atSummary, false, !complete)}
+          {steps.map((s, i) => railItem(s.eyebrow, i, i === state.step && !atSummary, state.picks[s.id] !== undefined))}
+          {railItem('Dossier', steps.length, atSummary, false, !complete)}
         </nav>
 
         <main className="cpr-cb-stage" style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, minHeight: 460, display: 'flex', flexDirection: 'column' }}>
@@ -546,24 +636,25 @@ export default function CharacterBuilder() {
             />
           ) : (
             <StepView
-              step={STEPS[state.step]}
+              step={steps[state.step]}
               stepIndex={state.step}
-              mode={state.mode[STEPS[state.step].id] || 'choose'}
-              picked={state.picks[STEPS[state.step].id]}
+              totalSteps={steps.length}
+              mode={state.mode[steps[state.step].id] || 'choose'}
+              picked={state.picks[steps[state.step].id]}
               dieFace={dieFace}
               rolling={rolling}
-              onMode={m => setMode(STEPS[state.step].id, m)}
-              onPick={idx => choose(STEPS[state.step].id, idx)}
-              onRoll={() => roll(STEPS[state.step])}
+              onMode={m => setMode(steps[state.step].id, m)}
+              onPick={idx => choose(steps[state.step].id, idx)}
+              onRoll={() => roll(steps[state.step])}
               onBack={() => goto(Math.max(0, state.step - 1))}
-              onNext={() => goto(Math.min(STEPS.length, state.step + 1))}
+              onNext={() => goto(Math.min(steps.length, state.step + 1))}
             />
           )}
         </main>
 
         <aside className="cpr-print-hide" style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 14, position: 'sticky', top: 12 }}>
           <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.textDim, marginBottom: 10, fontWeight: 600 }}>Dossier</div>
-          {STEPS.map(s => {
+          {steps.map(s => {
             const pick = state.picks[s.id]
             return (
               <div key={s.id} style={{ padding: '7px 0', borderBottom: `1px solid ${T.border}` }}>
@@ -612,9 +703,9 @@ const btnGhost: React.CSSProperties = {
 }
 
 function StepView({
-  step, stepIndex, mode, picked, dieFace, rolling, onMode, onPick, onRoll, onBack, onNext,
+  step, stepIndex, totalSteps, mode, picked, dieFace, rolling, onMode, onPick, onRoll, onBack, onNext,
 }: {
-  step: Step; stepIndex: number; mode: 'choose' | 'roll'; picked?: number
+  step: Step; stepIndex: number; totalSteps: number; mode: 'choose' | 'roll'; picked?: number
   dieFace: number | string; rolling: boolean
   onMode: (m: 'choose' | 'roll') => void
   onPick: (idx: number) => void
@@ -697,7 +788,7 @@ function StepView({
       <div style={{ padding: '14px 24px', borderTop: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between' }}>
         <button onClick={onBack} disabled={stepIndex === 0} style={navBtn(stepIndex === 0)}>← Back</button>
         <button onClick={onNext} disabled={picked === undefined} style={navBtn(picked === undefined, true)}>
-          {stepIndex === STEPS.length - 1 ? 'View Dossier →' : 'Next →'}
+          {stepIndex === totalSteps - 1 ? 'View Dossier →' : 'Next →'}
         </button>
       </div>
     </>
@@ -727,6 +818,7 @@ function Summary({
     )
   }
 
+  const steps = activeSteps(state.picks)
   const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
   const role = opt('role')
   const build = ROLE_BUILDS[role.t]
@@ -740,7 +832,7 @@ function Summary({
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-          {STEPS.map(s => (
+          {steps.map(s => (
             <span key={s.id} style={{ fontSize: 11, color: T.cyan, border: `1px solid ${T.cyan}`, padding: '4px 10px', borderRadius: 5 }}>{opt(s.id).t}</span>
           ))}
         </div>
@@ -751,7 +843,7 @@ function Summary({
 
         <div style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.textMuted, fontWeight: 700, marginBottom: 10 }}>Roleplay Cues</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12, marginBottom: 22 }} className="cpr-cb-grid">
-          {STEPS.map(s => (
+          {steps.map(s => (
             <div key={s.id} style={{ background: T.surface2, border: `1px solid ${T.border}`, padding: '12px 14px', borderRadius: 8 }}>
               <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase' }}>{s.eyebrow} — {opt(s.id).t}</div>
               <div style={{ fontSize: 12.5, marginTop: 5, lineHeight: 1.5, color: T.text }}>{opt(s.id).cue}</div>
@@ -814,10 +906,11 @@ const ATTRS: [string, string][] = [
 ]
 
 function PrintSheet({ state }: { state: SavedState }) {
+  const steps = activeSteps(state.picks)
   const opt = (id: string) => STEPS.find(s => s.id === id)!.options[state.picks[id]]
   const role = opt('role')
   const build = ROLE_BUILDS[role.t]
-  const lifepathRows: [string, string][] = STEPS.map(s => [s.eyebrow, opt(s.id).t])
+  const lifepathRows: [string, string][] = steps.map(s => [s.eyebrow, opt(s.id).t])
 
   return (
     <div className="cpr-print-only" style={{ background: '#fff', color: '#111', fontFamily: 'Georgia, "Times New Roman", serif', padding: '0.4in' }}>
@@ -883,7 +976,7 @@ function PrintSheet({ state }: { state: SavedState }) {
 
       <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6, fontWeight: 700 }}>Roleplay Notes</div>
       <ul style={{ fontSize: 12, lineHeight: 1.7, marginTop: 0, paddingLeft: 18, marginBottom: 16 }}>
-        {STEPS.map(s => <li key={s.id}>{opt(s.id).cue}</li>)}
+        {steps.map(s => <li key={s.id}>{opt(s.id).cue}</li>)}
       </ul>
 
       <div style={{ fontSize: 9.5, color: '#777', borderTop: '1px solid #ccc', paddingTop: 8 }}>
