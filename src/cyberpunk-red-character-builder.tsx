@@ -693,6 +693,78 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'techType', title: 'What Kind of Tech Are You?', eyebrow: 'Tech Type', roleGate: 'Tech',
+    sub: 'Every Tech has a specialty they came up building or fixing. This is yours.',
+    options: [
+      { t: 'Cyberware Technician', d: 'You install, maintain, and modify cyberware — the hardware people trust with their own bodies.', cue: 'Play it clinically curious about anyone’s visible chrome, cataloguing it without meaning to.' },
+      { t: 'Vehicle Mechanic', d: 'You keep cars, bikes, and trucks running long past when they should have died.', cue: 'Play it attentive to engine sounds and mechanical tells most people never notice.' },
+      { t: 'Jack of All Trades', d: 'You fix a little of everything, never quite a specialist, always useful.', cue: 'Play it quick to volunteer for problems outside your stated expertise, because you probably can fix it.' },
+      { t: 'Small Electronics Technician', d: 'You repair and modify the everyday gear people actually carry — Agents, radios, personal tech.', cue: 'Play it fidgety with small objects in your hands, always half-tinkering.' },
+      { t: 'Weaponsmith', d: 'You build and maintain weapons, from street pieces to serious hardware.', cue: 'Play it evaluating everyone’s weapon like a professional the moment you see it.' },
+      { t: 'Crazy Inventor', d: 'You build things nobody asked for, some of which even work as intended.', cue: 'Play it excitable about half-finished projects you insist are almost ready.' },
+      { t: 'Robot and Drone Mechanic', d: 'You keep the city’s automated hardware running — drones, bots, and everything in between.', cue: 'Play it talking to machines like they can hear you, out of long habit.' },
+      { t: 'Heavy Machinery Mechanic', d: 'You work on the big stuff — industrial equipment, construction rigs, things that could crush a person.', cue: 'Play it physically imposing in how you handle tools, built for heavier work than most Techs.' },
+      { t: 'Scavenger', d: 'You find value in what everyone else already wrote off, salvaging usable tech from the wreckage.', cue: 'Play it magpie-like about spotting salvageable parts, even in unrelated conversations.' },
+      { t: 'Nautical Mechanic', d: 'You keep boats, ships, and anything that floats actually seaworthy.', cue: 'Play it more at ease around water and unstable footing than most landlocked people.' },
+    ],
+  },
+  {
+    id: 'techPartner', title: 'Got a Partner, or Work Alone?', eyebrow: 'Partner', roleGate: 'Tech',
+    sub: 'Some Techs work best with a second set of hands. Some can’t stand anyone else touching their tools.',
+    options: [
+      { t: 'Work Alone', d: 'Nobody else touches your tools or your work — full credit, full blame, exactly how you like it.', cue: 'Play it possessive of your workspace and tools, uncomfortable when someone else handles them.' },
+      { t: 'Got a Partner', d: 'Someone else works alongside you, and you’ve built a real rhythm together.', cue: 'Play it reflexively narrating what you’re doing, like your partner’s still in the room even when they’re not.' },
+    ],
+  },
+  {
+    id: 'techWorkspace', title: "What's Your Workspace Like?", eyebrow: 'Workspace', roleGate: 'Tech',
+    sub: 'Where you actually build and fix things says a lot about how your mind works.',
+    options: [
+      { t: 'A Blueprint Mess', d: 'Strewn with paper schematics that only make sense to you, in an order only you understand.', cue: 'Play it able to locate anything instantly in what looks like total chaos to everyone else.' },
+      { t: 'Color-Coded Nightmare', d: 'Everything’s technically organized by color, and it’s still somehow incomprehensible to visitors.', cue: 'Play it mildly offended when someone calls your system confusing.' },
+      { t: 'Digital and Backed Up', d: 'Fully digital, obsessively backed up every single day without fail.', cue: 'Play it visibly anxious about data loss, checking backups more than strictly necessary.' },
+      { t: 'Designed on Your Agent', d: 'You do all your real design work on your Agent, workspace be damned.', cue: 'Play it constantly sketching or annotating on your Agent, even mid-conversation.' },
+      { t: 'A Hoarder’s Stockpile', d: 'You keep everything, just in case — and it usually does come in handy eventually.', cue: 'Play it defensive about your stockpile whenever someone calls it clutter.' },
+      { t: 'A Personal Filing System', d: 'Only you understand how anything is actually organized, and that’s exactly how you like it.', cue: 'Play it faintly territorial when someone tries to "help" reorganize your space.' },
+    ],
+  },
+  {
+    id: 'techClients', title: 'Who Are Your Main Clients?', eyebrow: 'Clients', roleGate: 'Tech',
+    sub: 'Most Techs have a regular pipeline of who actually brings them work.',
+    options: [
+      { t: 'Fixer Referrals', d: 'Local Fixers send clients your way and take their cut for the introduction.', cue: 'Play it professionally cordial with the Fixers who keep your bench full.' },
+      { t: 'Local Gangers', d: 'A gang protects your work area or home in exchange for repairs when they need them.', cue: 'Play it calm and unbothered in gang spaces most people would find tense.' },
+      { t: 'Corporate Black-Project Work', d: 'Execs bring you work they can’t put through official channels.', cue: 'Play it deliberately incurious about the politics behind a corporate job.' },
+      { t: 'Solo Weapon Upkeep', d: 'Solos and combat types rely on you to keep their gear in working order.', cue: 'Play it aware of exactly how much a client’s life depends on your work holding up.' },
+      { t: 'Nomad "Found" Tech', d: 'Nomads and Fixers bring you salvaged tech to repair, no questions about where it came from.', cue: 'Play it incurious on purpose about the provenance of what lands on your bench.' },
+      { t: 'Self-Employed Inventor', d: 'You work for yourself, selling whatever you invent or repair directly.', cue: 'Play it quietly proud of your own work, a little precious about pricing it fairly.' },
+    ],
+  },
+  {
+    id: 'techSupplies', title: 'Where Do You Get Your Supplies?', eyebrow: 'Supplies', roleGate: 'Tech',
+    sub: 'Good parts aren’t always easy to come by legally. This is how you actually stay stocked.',
+    options: [
+      { t: 'Scavenged Wreckage', d: 'You scavenge parts out of abandoned City Zones, whatever’s left to find.', cue: 'Play it resourceful and a little magpie-like about spotting useful salvage.' },
+      { t: 'Battlefield Stripping', d: 'You strip gear from bodies after firefights — grim, but it keeps your bench stocked.', cue: 'Play it unsentimental about where your parts actually came from.' },
+      { t: 'Fixer Supply Trade', d: 'A local Fixer brings you supplies in exchange for repair work.', cue: 'Play it transactional but reliable with your Fixer contact.' },
+      { t: 'Corporate Supply Trade', d: 'Execs supply you with parts and materials in exchange for your services.', cue: 'Play it aware of exactly how replaceable that arrangement makes you.' },
+      { t: 'Warehouse Backdoors', d: 'You’ve got an unofficial way into a few Corporate warehouses.', cue: 'Play it cagey about exactly how that access works, even with people you trust.' },
+      { t: 'Night Market Deals', d: 'You hit the Night Markets and score whatever deals you can find, whenever you can.', cue: 'Play it always browsing, even off duty — you never really stop shopping for parts.' },
+    ],
+  },
+  {
+    id: 'techThreat', title: "Who's Gunning for You?", eyebrow: 'Tech Threat', roleGate: 'Tech',
+    sub: 'Building and fixing things for a living still makes you enemies. This is yours.',
+    options: [
+      { t: 'Territorial Gangers', d: 'A Combat Zone gang wants you working for them exclusively, and they’re not asking nicely.', cue: 'Play it evasive about your schedule and location in gang territory.' },
+      { t: 'A Rival Tech', d: 'Another Tech is actively trying to poach your customers out from under you.', cue: 'Play it protective of client relationships, quick to badmouth this one specific rival.' },
+      { t: 'Controlling Corporates', d: 'A Corporation wants you working for them exclusively, whether or not that’s actually your choice.', cue: 'Play it wary of offers that sound a little too generous to be optional.' },
+      { t: 'A Threatened Manufacturer', d: 'A larger manufacturer sees your mods as a real threat to their business and wants you stopped.', cue: 'Play it defensive about your own designs whenever a big brand name comes up.' },
+      { t: 'A Burned Client', d: 'An old client thinks you screwed them over, and they’ve never let it go.', cue: 'Play it tense whenever that specific job or client comes up.' },
+      { t: 'A Resource Rival', d: 'A rival Tech is actively trying to outmaneuver you for the same parts and supplies.', cue: 'Play it competitive and quietly territorial about your supply lines.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
