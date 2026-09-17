@@ -116,6 +116,15 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
       'Perception', 'Persuasion', 'Photography/Film', 'Stealth',
     ],
   },
+  Lawman: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Athletics', 'Autofire', 'Brawling', 'Concentration', 'Conversation', 'Criminology',
+      'Deduction', 'Education', 'Evasion', 'First Aid', 'Handgun', 'Human Perception',
+      'Interrogation', 'Language (Streetslang)', 'Local Expert (Your Home)', 'Perception',
+      'Persuasion', 'Shoulder Arms', 'Stealth', 'Tracking',
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
