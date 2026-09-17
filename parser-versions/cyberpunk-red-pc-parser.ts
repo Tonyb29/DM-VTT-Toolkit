@@ -28,6 +28,7 @@ export interface SkillDef {
 export const SKILL_CATALOG: SkillDef[] = [
   { name: "Basic Tech", stat: 'tech', category: 'techniqueSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 140 },
   { name: "Melee Weapon", stat: 'dex', category: 'fightingSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 137 },
+  { name: "Martial Arts (Karate)", stat: 'dex', category: 'fightingSkills', difficulty: 'difficult', basic: false, skillType: 'specialization', page: 137 },
   { name: "Athletics", stat: 'dex', category: 'bodySkills', difficulty: 'typical', basic: true, skillType: 'generic', page: 131 },
   { name: "Trading", stat: 'cool', category: 'socialSkills', difficulty: 'typical', basic: false, skillType: 'generic', page: 139 },
   { name: "Electronics/Security Tech", stat: 'tech', category: 'techniqueSkills', difficulty: 'difficult', basic: false, skillType: 'generic', page: 141 },
