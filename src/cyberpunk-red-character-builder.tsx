@@ -256,6 +256,66 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'fixerType', title: 'What Kind of Fixer Are You?', eyebrow: 'Fixer Type', roleGate: 'Fixer',
+    sub: 'Every Fixer moves something between people who need it and people who have it. This is your specific angle.',
+    options: [
+      { t: 'Gang Broker', d: 'You negotiate deals between rival gangs — gray-zone work nobody else survives brokering twice.', cue: 'Play it neutral by necessity, careful never to visibly favor one side over another.' },
+      { t: 'Rare Goods Procurer', d: 'You source hard-to-find items for a small, particular, well-paying clientele.', cue: 'Play it quietly proud of your sourcing network, dropping hints about it without ever naming names.' },
+      { t: 'Talent Agent', d: 'You broker Solo and Tech services as their agent, taking a cut off every placement you land.', cue: 'Play it constantly evaluating people’s skills, like you’re always building a mental roster.' },
+      { t: 'Night Market Supplier', d: 'You keep everyday goods moving into the Night Markets — food, medicine, the unglamorous necessities.', cue: 'Play it logistically minded, thinking in inventory and supply lines even in casual conversation.' },
+      { t: 'Black Market Runner', d: 'You move the genuinely illegal stuff — street drugs, milspec hardware, things that get people killed.', cue: 'Play it carefully compartmentalized — you never know more about a deal than you need to.' },
+      { t: 'Parts Broker', d: 'You supply Techs and Medtechs with the parts and medical supplies they can’t get through normal channels.', cue: 'Play it fluent in technical jargon you learned secondhand from your clients.' },
+      { t: 'Market Operator', d: 'You run the day-to-day of several Night Markets without owning a piece of any of them.', cue: 'Play it constantly working the room, greeting half the vendors by name.' },
+      { t: 'Heavy Equipment Broker', d: 'You arrange use contracts for military vehicles, aircraft, and heavy machinery.', cue: 'Play it name-dropping specs and capabilities like other people talk about the weather.' },
+      { t: 'Scavenger Fence', d: 'You move goods for scavenger crews raiding Corps and Combat Zones, no questions asked about where it came from.', cue: 'Play it incurious on purpose — you’ve trained yourself not to ask the obvious follow-up.' },
+      { t: 'Exclusive Agent', d: 'You work solely for one Media personality, Rockerboy, or Nomad Pack, and your fortunes rise and fall with theirs.', cue: 'Play it fiercely protective of your one client’s interests, sometimes past the point of your own.' },
+    ],
+  },
+  {
+    id: 'fixerPartner', title: 'Got a Partner, or Work Alone?', eyebrow: 'Partner', roleGate: 'Fixer',
+    sub: "Some Fixers split the risk and the take. Some don't trust anyone enough to.",
+    options: [
+      { t: 'Got a Partner', d: "Someone shares the risk and the take with you, and covers you when a deal goes sideways.", cue: 'Play it reflexively checking in with your partner before committing to anything major.' },
+      { t: 'Work Alone', d: "Nobody to split the take with — and nobody to watch your back when a deal goes bad, either.", cue: "Play it self-reliant to a fault, uncomfortable delegating even small parts of a job." },
+    ],
+  },
+  {
+    id: 'fixerOffice', title: 'What’s Your "Office" Like?', eyebrow: 'Office', roleGate: 'Fixer',
+    sub: "Every Fixer needs somewhere to work out of, even if 'somewhere' changes by the week.",
+    options: [
+      { t: 'No Fixed Office', d: 'You stay mobile on purpose — nowhere to raid, nowhere to stake out.', cue: 'Play it restless about staying anywhere too long, even in casual social settings.' },
+      { t: 'A Bar Booth', d: 'A specific table at a specific bar is basically yours, and everyone who matters knows it.', cue: 'Play it territorial about your booth, mildly irritated if someone else is sitting in it.' },
+      { t: 'Dead Drops Only', d: 'Data Pool messages and anonymous drops — you avoid face-to-face whenever you can manage it.', cue: 'Play it visibly uncomfortable in unavoidable in-person meetings.' },
+      { t: 'A Spare Room', d: 'Tucked into a warehouse, shop, or clinic that officially does something else entirely.', cue: 'Play it protective of the cover business, careful not to let the two worlds visibly overlap.' },
+      { t: 'An Abandoned Building', d: 'Otherwise empty, which suits you and your clientele just fine.', cue: 'Play it unbothered by squalor that would put most people off — it’s just the office to you.' },
+      { t: 'A Cube Hotel Lobby', d: 'You basically live in the lobby, and the staff have stopped asking questions.', cue: 'Play it on a first-name basis with hotel staff, security, and half the regulars.' },
+    ],
+  },
+  {
+    id: 'fixerClients', title: 'Who Are Your Side Clients?', eyebrow: 'Side Clients', roleGate: 'Fixer',
+    sub: 'Beyond the main hustle, there’s a regular crowd that keeps coming back to you specifically.',
+    options: [
+      { t: 'Rockerboys & Medias', d: 'They use you to land gigs, contacts, and the occasional favor nobody else can pull off.', cue: 'Play it a little starstruck underneath the professionalism, even after all this time.' },
+      { t: 'Local Gangers', d: 'They protect your work and your home turf in exchange for what you can get them.', cue: 'Play it comfortable in gang spaces most people would find genuinely dangerous.' },
+      { t: 'Corporate Execs', d: 'They use you for black-project procurement they can’t put on any official books.', cue: 'Play it deliberately vague about corporate clients, even to people you otherwise trust.' },
+      { t: 'Solos & Combat Types', d: 'They use you to find work and make contacts they can’t reach on their own.', cue: 'Play it quick to assess anyone’s combat capability out of old professional habit.' },
+      { t: 'Nomads & Fellow Fixers', d: 'They use you to broker transactions and deals across territory you know better than they do.', cue: 'Play it collegial and competitive with other Fixers in equal measure.' },
+      { t: 'Politicos & Execs', d: 'They depend on you for information more than goods — you know things before the news does.', cue: 'Play it careful about what you reveal you know, and when.' },
+    ],
+  },
+  {
+    id: 'fixerThreat', title: "Who's Gunning for You?", eyebrow: 'Fixer Threat', roleGate: 'Fixer',
+    sub: "Moving between that many people and that much product, someone's eventually going to have a problem with you.",
+    options: [
+      { t: 'Territorial Gangers', d: 'A Combat Zone gang wants you working exclusively for them, and they’re not asking nicely twice.', cue: 'Play it evasive about your schedule and movements in gang territory.' },
+      { t: 'Rival Fixers', d: 'Someone’s actively working to poach your client list out from under you.', cue: 'Play it protective of client relationships, name-dropping loyalty when it’s useful.' },
+      { t: 'Controlling Execs', d: 'A Corporation wants you on retainer, exclusively, whether that’s actually your choice or not.', cue: 'Play it wary of any offer that sounds a little too generous to be optional.' },
+      { t: 'Loose-End Cleanup', d: 'An enemy of a former client wants you gone before you can talk about what you saw.', cue: 'Play it watchful in a way that seems paranoid until someone learns why.' },
+      { t: 'A Burned Client', d: 'Someone thinks you screwed them over on a deal, and they’ve never let it go.', cue: 'Play it tense whenever that specific deal or client comes up, even in passing.' },
+      { t: 'A Resource Rival', d: 'A rival Fixer is actively trying to outmaneuver you for the same parts and supplies.', cue: 'Play it competitive and quietly territorial about your supply lines.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
