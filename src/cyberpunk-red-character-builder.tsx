@@ -376,6 +376,54 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'mediaType', title: 'What Kind of Media Are You?', eyebrow: 'Media Type', roleGate: 'Media',
+    sub: 'Every Media chases the truth in a different format. This is yours.',
+    options: [
+      { t: 'Blogger', d: 'Independent and unfiltered — you run on volume and speed, publishing before the story’s even finished happening.', cue: 'Play it constantly half-distracted, already drafting the next post in your head.' },
+      { t: 'Writer (Books)', d: 'Long-form and deliberate — built to outlast a single news cycle by design.', cue: 'Play it patient and a little dismissive of stories that don’t have room to breathe.' },
+      { t: 'Videographer', d: 'Visuals do the talking — edited footage is your real voice, more than anything you say out loud.', cue: 'Play it constantly framing the room, mentally shot-listing conversations as they happen.' },
+      { t: 'Documentarian', d: 'Long-form investigation packaged as story — months per project, depth over speed.', cue: 'Play it slow to commit to an opinion out loud until you’ve fully worked the angle.' },
+      { t: 'Investigative Reporter', d: 'You chase the story other people would rather stayed buried, however long it takes.', cue: 'Play it unable to let a loose thread go, even in conversations that have nothing to do with work.' },
+      { t: 'Street Scribe', d: 'You write for and about the street itself, passed hand to hand as much as it’s ever posted online.', cue: 'Play it fluent in whatever the block is actually talking about, before it’s anywhere else.' },
+    ],
+  },
+  {
+    id: 'mediaReach', title: 'How Does Your Work Reach the Public?', eyebrow: 'Media Reach', roleGate: 'Media',
+    sub: 'The format you publish through shapes who actually sees what you make.',
+    options: [
+      { t: 'Monthly Magazine', d: 'A print or data publication people actually wait for, issue to issue.', cue: 'Play it deadline-driven, thinking in monthly cycles even about unrelated plans.' },
+      { t: 'Blog', d: 'Self-published, self-controlled, and immediate — nobody between you and the post button.', cue: 'Play it a little defensive about editorial independence, even when nobody’s challenged it.' },
+      { t: 'Mainstream Vid Feed', d: 'A real channel slot with real production behind it, and real oversight that comes with that.', cue: 'Play it camera-aware, subtly performing even in unrecorded conversation.' },
+      { t: 'News Channel', d: 'A formal broadcast outlet, with the structure, editors, and institutional weight that implies.', cue: 'Play it careful with wording, like everything you say might get quoted.' },
+      { t: '"Book" Sales', d: 'Physical or data-slab copies people actually buy and keep — a rarer kind of staying power.', cue: 'Play it a little precious about your published work, protective of it in conversation.' },
+      { t: 'Screamsheets', d: 'Cheap, disposable street-level print that somehow everyone still reads.', cue: 'Play it street-fluent and unpretentious about the medium — you know exactly who reads this and why.' },
+    ],
+  },
+  {
+    id: 'mediaEthics', title: 'How Ethical Are You?', eyebrow: 'Media Ethics', roleGate: 'Media',
+    sub: 'Not every byline means the same thing. This is what yours actually stands for.',
+    options: [
+      { t: 'Verified Truth Only', d: 'Fair, honest, strict standards — you only report what you can actually prove.', cue: 'Play it a little rigid about sourcing, even in casual conversation.' },
+      { t: 'Honest but Loose', d: 'Fair reporting, but you’ll run on rumor and hearsay when it’s all you’ve got.', cue: 'Play it quick to caveat a claim with "allegedly," out of old habit.' },
+      { t: 'Mostly Clean', d: 'You slip occasionally, but rarely enough that it still counts as having standards.', cue: 'Play it uncomfortable when those rare slips come up.' },
+      { t: 'Rule-Bender for the Right Reasons', d: 'Willing to bend the rules, but only against people who’ve genuinely got it coming.', cue: 'Play it self-righteous about the ends justifying the means, at least in this one area.' },
+      { t: 'Muckraker', d: 'Ruthless and determined to make it big, even if that means breaking the law to get the story.', cue: 'Play it visibly hungry for the next big scoop, past the point that’s comfortable to watch.' },
+      { t: 'Pen for Hire', d: 'Totally corrupt — bribable, and your reporting goes to whoever pays the most.', cue: 'Play it transactional about the truth itself, and mildly annoyed when people expect otherwise.' },
+    ],
+  },
+  {
+    id: 'mediaStories', title: 'What Types of Stories Do You Want to Tell?', eyebrow: 'Media Focus', roleGate: 'Media',
+    sub: 'Every Media has a beat — the kind of story they keep coming back to.',
+    options: [
+      { t: 'Political Intrigue', d: 'You chase power plays, backroom deals, and the people who think nobody’s watching.', cue: 'Play it cynical about anyone in office, reflexively.' },
+      { t: 'Ecological Impact', d: 'You cover what the War and the Corps did to the world itself, and who’s still doing it.', cue: 'Play it quietly angry about environmental damage most people have stopped noticing.' },
+      { t: 'Celebrity News', d: 'You track the famous and the infamous, and you know which lines they don’t want crossed.', cue: 'Play it fluent in who’s who, dropping names like it’s nothing.' },
+      { t: 'Corporate Takedowns', d: 'You build cases against Corporations that think they’re untouchable.', cue: 'Play it methodical and patient, building a story like a legal case.' },
+      { t: 'Editorials', d: 'You write opinion, not just fact — your byline comes with a point of view people expect.', cue: 'Play it opinionated by default, quick to state a position even off the clock.' },
+      { t: 'Propaganda', d: 'You write what someone needs people to believe, and you’re very good at making it land.', cue: 'Play it persuasive in ordinary conversation, almost without trying.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
