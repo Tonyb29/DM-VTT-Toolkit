@@ -98,6 +98,15 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
       'Library Search', 'Local Expert (Your Home)', 'Perception', 'Persuasion', 'Stealth',
     ],
   },
+  Medtech: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Athletics', 'Basic Tech', 'Brawling', 'Concentration', 'Conversation', 'Cybertech',
+      'Deduction', 'Education', 'Evasion', 'First Aid', 'Human Perception',
+      'Language (Streetslang)', 'Local Expert (Your Home)', 'Paramedic', 'Perception',
+      'Persuasion', 'Resist Torture/Drugs', 'Science (Chemistry)', 'Shoulder Arms', 'Stealth',
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
