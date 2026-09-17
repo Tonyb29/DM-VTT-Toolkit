@@ -2,7 +2,7 @@
 // Parse Cyberpunk RED NPC stat blocks (plain-text label format) into
 // Foundry VTT actor JSON for the "Cyberpunk RED - Core" system (mook type).
 
-import { SKILL_CATALOG } from './cyberpunk-red-pc-parser';
+import { SKILL_CATALOG, SkillDef } from './cyberpunk-red-pc-parser';
 
 const CPR_SYS_ID  = 'cyberpunk-red-core';
 const CPR_SYS_VER = 'v0.92.4';
@@ -17,6 +17,9 @@ export interface CPRSkill {
   name: string;
   level: number;
   stat: StatKey;
+  category: string;
+  difficulty: string;
+  skillType: string;
   recognized: boolean;
 }
 
@@ -61,18 +64,34 @@ function makeId(actorName: string, itemName: string, idx: number): string {
   return (a + b).slice(0, 16);
 }
 
-// Skill → governing stat, sourced from the same canonical catalog used by
-// the PC Create tool (extracted from a real Foundry character export — the
-// game's own data, not a guessed mapping). Falls back to 'ref' only for a
-// name the catalog genuinely doesn't have, and flags that on the skill so
-// the UI can warn about it.
-const SKILL_STAT_BY_NAME: Record<string, StatKey> = Object.fromEntries(
-  SKILL_CATALOG.map(s => [s.name.toLowerCase(), s.stat as StatKey])
+// Skill → full definition (stat, category, difficulty, skillType), sourced
+// from the same canonical catalog used by the PC Create tool (extracted
+// from a real Foundry character export — the game's own data, not a
+// guessed mapping). Missing category/difficulty entirely — not just a
+// wrong stat — is what leaves every skill filed under "awarenessSkills"
+// on the sheet, since that's the schema's own default when the field is
+// never set.
+const SKILL_DEF_BY_NAME: Record<string, SkillDef> = Object.fromEntries(
+  SKILL_CATALOG.map(s => [s.name.toLowerCase(), s])
 );
 
-function skillStat(name: string): { stat: StatKey; recognized: boolean } {
-  const stat = SKILL_STAT_BY_NAME[name.trim().toLowerCase()];
-  return stat ? { stat, recognized: true } : { stat: 'ref', recognized: false };
+// "Language (Native)" and "Local Expert (Your Home)" style entries name a
+// player-chosen specialization the catalog can't enumerate in advance —
+// neither is in Foundry's own compendium under that exact name either.
+// Both patterns are consistently INT / educationSkills in the core book,
+// so that's the fallback rather than the generic unrecognized default.
+const SPECIALIZATION_FALLBACK: [RegExp, Omit<SkillDef, 'name' | 'page'>][] = [
+  [/^Language\s*\(.+\)$/i, { stat: 'int', category: 'educationSkills', difficulty: 'typical', basic: true, skillType: 'language' }],
+  [/^Local Expert\s*\(.+\)$/i, { stat: 'int', category: 'educationSkills', difficulty: 'typical', basic: true, skillType: 'generic' }],
+];
+
+function skillDef(name: string): { def: Omit<SkillDef, 'name' | 'page'>; recognized: boolean } {
+  const exact = SKILL_DEF_BY_NAME[name.trim().toLowerCase()];
+  if (exact) return { def: exact, recognized: true };
+  for (const [re, fallback] of SPECIALIZATION_FALLBACK) {
+    if (re.test(name.trim())) return { def: fallback, recognized: true };
+  }
+  return { def: { stat: 'ref', category: 'educationSkills', difficulty: 'typical', basic: false, skillType: 'generic' }, recognized: false };
 }
 
 function findLabel(lines: string[], label: string): string {
@@ -141,8 +160,8 @@ function parseSkills(raw: string): CPRSkill[] {
     const m = entry.match(/^(.+?)\s*\+(\d+)$/);
     const name = (m ? m[1] : entry).trim();
     const level = m ? parseInt(m[2], 10) : 0;
-    const { stat, recognized } = skillStat(name);
-    return { name, level, stat, recognized };
+    const { def, recognized } = skillDef(name);
+    return { name, level, stat: def.stat, category: def.category, difficulty: def.difficulty, skillType: def.skillType, recognized };
   });
 }
 
@@ -309,9 +328,9 @@ function parseDemiplaneStatBlock(rawText: string): CPRNpc | null {
       const m = entry.match(/^(.+?)\s+(\d+)$/);
       const skillName = (m ? m[1] : entry).trim();
       const bookTotal = m ? parseInt(m[2], 10) : 0;
-      const { stat, recognized } = skillStat(skillName);
-      const level = Math.max(0, bookTotal - stats[stat]);
-      return { name: skillName, level, stat, recognized };
+      const { def, recognized } = skillDef(skillName);
+      const level = Math.max(0, bookTotal - stats[def.stat]);
+      return { name: skillName, level, stat: def.stat, category: def.category, difficulty: def.difficulty, skillType: def.skillType, recognized };
     });
   }
 
@@ -360,7 +379,10 @@ function skillItem(skill: CPRSkill, actorName: string, idx: number) {
     flags: {},
     ownership: { default: 0 },
     _stats: { systemId: CPR_SYS_ID, systemVersion: CPR_SYS_VER, coreVersion: CPR_CORE_VER, createdTime: null, modifiedTime: null, lastModifiedBy: null },
-    system: { level: skill.level, stat: skill.stat, core: false, basic: false },
+    system: {
+      level: skill.level, stat: skill.stat, category: skill.category,
+      difficulty: skill.difficulty, skillType: skill.skillType, core: false, basic: false,
+    },
   };
 }
 
@@ -376,6 +398,20 @@ function defaultMagazine(weapon: CPRWeapon): number {
   if (/launcher|grenade|heavy/.test(n)) return 1;
   if (/pistol/.test(n)) return 12;
   return 10;
+}
+
+// Foundry's weapon item defaults weaponSkill to Handgun when it isn't set
+// explicitly — which is exactly wrong for anything melee. Named cyberweapons
+// (claws, snakes, etc.) read as melee by name even though CPRWeapon.isRanged
+// already filters most of these out.
+function defaultWeaponSkill(weapon: CPRWeapon): string {
+  const n = weapon.name.toLowerCase();
+  if (!weapon.isRanged) return 'Melee Weapon';
+  if (/shotgun|rifle/.test(n)) return 'Shoulder Arms';
+  if (/smg|autofire/.test(n)) return 'Autofire';
+  if (/launcher|grenade|heavy/.test(n)) return 'Heavy Weapons';
+  if (/bow/.test(n)) return 'Archery';
+  return 'Handgun';
 }
 
 function weaponItem(weapon: CPRWeapon, actorName: string, idx: number) {
@@ -397,6 +433,7 @@ function weaponItem(weapon: CPRWeapon, actorName: string, idx: number) {
       handsReq: weapon.handsReq,
       equipped: 'equipped',
       magazine: { value: mag, max: mag },
+      weaponSkill: defaultWeaponSkill(weapon),
     },
   };
 }
@@ -497,8 +534,9 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
   const actorData = ${json};
   const unrecognizedSkills = ${unrecognized};
 
-  // Drop it in a "Mooks" folder instead of the Actors root.
-  let folder = game.folders.find(f => f.type === 'Actor' && f.name === 'Mooks');
+  // Reuse an existing "Mooks"-ish folder rather than scattering NPCs across
+  // near-duplicate folders (e.g. "Mooks & ICE" already exists in the world).
+  let folder = game.folders.find(f => f.type === 'Actor' && /mook/i.test(f.name));
   if (!folder) folder = await Folder.create({ name: 'Mooks', type: 'Actor', color: '#ff2060' });
   actorData.folder = folder.id;
 
@@ -506,37 +544,54 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
   // handsReq) — no dvTable, no correct weaponSkill, no loaded magazine.
   // If the actual weapon exists in the system's core compendium, swap in
   // its real data (keeping our parsed damage, in case Poor/Excellent
-  // Quality changed it from the stock value).
+  // Quality changed it from the stock value). Named cyberweapons (claws,
+  // snakes, popup launchers) usually aren't in core_weapons at all — they
+  // live in core_cyberware as isWeapon items with their combat stats
+  // already attached, so that's checked second.
   let weaponMatches = 0, weaponCustom = 0;
   try {
-    const pack = game.packs.get('cyberpunk-red-core.core_weapons');
-    if (pack) {
-      const compendiumWeapons = await pack.getDocuments();
-      const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
-      for (const item of actorData.items) {
-        if (item.type !== 'weapon') continue;
-        const target = normalize(item.name);
-        let match = compendiumWeapons.find(w => normalize(w.name) === target);
-        if (!match) match = compendiumWeapons.find(w => target.includes(normalize(w.name)) || normalize(w.name).includes(target));
-        if (match) {
-          const src = match.toObject();
-          item.img = src.img;
-          item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
-          if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
-          weaponMatches++;
-        } else {
-          weaponCustom++;
-        }
+    const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
+    const findMatch = (list, target) =>
+      list.find(w => normalize(w.name) === target) ||
+      list.find(w => target.includes(normalize(w.name)) || normalize(w.name).includes(target));
+
+    const weaponsPack = game.packs.get('cyberpunk-red-core.core_weapons');
+    const compendiumWeapons = weaponsPack ? await weaponsPack.getDocuments() : [];
+    const cyberwarePack = game.packs.get('cyberpunk-red-core.core_cyberware');
+    const cyberweapons = cyberwarePack
+      ? (await cyberwarePack.getDocuments()).filter(c => c.system?.isWeapon)
+      : [];
+
+    for (const item of actorData.items) {
+      if (item.type !== 'weapon') continue;
+      const target = normalize(item.name);
+      let match = findMatch(compendiumWeapons, target) || findMatch(cyberweapons, target);
+      if (match) {
+        const src = match.toObject();
+        item.img = src.img;
+        item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
+        if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
+        weaponMatches++;
+      } else {
+        weaponCustom++;
       }
     }
   } catch (e) {
     console.warn('Cyberpunk RED weapon compendium lookup failed, using simplified weapons.', e);
   }
 
-  const existing = game.actors.getName(actorData.name);
-  if (existing) {
-    await existing.delete();
-    ui.notifications.info('Replaced existing actor: ' + actorData.name);
+  // Never silently delete an existing actor — someone may have hand-tuned
+  // it since the last import. Ask, and default to "no".
+  const existing = game.actors.filter(a => a.name === actorData.name);
+  if (existing.length) {
+    const proceed = await Dialog.confirm({
+      title: 'Actor Already Exists',
+      content: \`<p>\${existing.length} actor(s) named "\${actorData.name}" already exist.</p>
+                 <p>Import as a new copy alongside them? (Cancel to stop and rename/delete manually.)</p>\`,
+      yes: () => true, no: () => false, defaultYes: false,
+    });
+    if (!proceed) { ui.notifications.warn('Import cancelled — no changes made.'); return; }
+    actorData.name = \`\${actorData.name} (imported \${new Date().toLocaleDateString()})\`;
   }
 
   const created = await Actor.create(actorData);

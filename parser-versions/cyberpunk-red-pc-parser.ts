@@ -292,6 +292,18 @@ function defaultMagazine(w: PCWeapon): number {
   return 10;
 }
 
+// Foundry defaults weaponSkill to Handgun when it isn't set explicitly,
+// which is wrong for anything melee.
+function defaultWeaponSkill(w: PCWeapon): string {
+  const n = w.name.toLowerCase();
+  if (!w.isRanged) return 'Melee Weapon';
+  if (/shotgun|rifle/.test(n)) return 'Shoulder Arms';
+  if (/smg|autofire/.test(n)) return 'Autofire';
+  if (/launcher|grenade|heavy/.test(n)) return 'Heavy Weapons';
+  if (/bow/.test(n)) return 'Archery';
+  return 'Handgun';
+}
+
 function weaponItems(pc: CPRPlayerCharacter) {
   return pc.weapons.map((w, i) => {
     const mag = defaultMagazine(w);
@@ -304,6 +316,7 @@ function weaponItems(pc: CPRPlayerCharacter) {
         damage: w.damage, rof: 1, isRanged: w.isRanged, handsReq: w.handsReq, equipped: 'equipped',
         description: { value: '' }, favorite: false, quality: 'standard', price: { market: 0 },
         source: { book: 'Core', page: 0 }, magazine: { value: mag, max: mag },
+        weaponSkill: defaultWeaponSkill(w),
       },
       effects: [], folder: null, sort: 0, ownership: { default: 0 }, flags: {}, _stats: _stats(),
     };
@@ -411,36 +424,53 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
   // handsReq) — no dvTable, no correct weaponSkill, no loaded magazine.
   // If the actual weapon exists in the system's core compendium, swap in
   // its real data (keeping our parsed damage, in case it's non-standard).
+  // Named cyberweapons usually aren't in core_weapons at all — they live in
+  // core_cyberware as isWeapon items with their combat stats already
+  // attached, so that's checked second.
   let weaponMatches = 0, weaponCustom = 0;
   try {
-    const pack = game.packs.get('cyberpunk-red-core.core_weapons');
-    if (pack) {
-      const compendiumWeapons = await pack.getDocuments();
-      const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
-      for (const item of actorData.items) {
-        if (item.type !== 'weapon') continue;
-        const target = normalize(item.name);
-        let match = compendiumWeapons.find(w => normalize(w.name) === target);
-        if (!match) match = compendiumWeapons.find(w => target.includes(normalize(w.name)) || normalize(w.name).includes(target));
-        if (match) {
-          const src = match.toObject();
-          item.img = src.img;
-          item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
-          if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
-          weaponMatches++;
-        } else {
-          weaponCustom++;
-        }
+    const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
+    const findMatch = (list, target) =>
+      list.find(w => normalize(w.name) === target) ||
+      list.find(w => target.includes(normalize(w.name)) || normalize(w.name).includes(target));
+
+    const weaponsPack = game.packs.get('cyberpunk-red-core.core_weapons');
+    const compendiumWeapons = weaponsPack ? await weaponsPack.getDocuments() : [];
+    const cyberwarePack = game.packs.get('cyberpunk-red-core.core_cyberware');
+    const cyberweapons = cyberwarePack
+      ? (await cyberwarePack.getDocuments()).filter(c => c.system?.isWeapon)
+      : [];
+
+    for (const item of actorData.items) {
+      if (item.type !== 'weapon') continue;
+      const target = normalize(item.name);
+      let match = findMatch(compendiumWeapons, target) || findMatch(cyberweapons, target);
+      if (match) {
+        const src = match.toObject();
+        item.img = src.img;
+        item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
+        if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
+        weaponMatches++;
+      } else {
+        weaponCustom++;
       }
     }
   } catch (e) {
     console.warn('Cyberpunk RED weapon compendium lookup failed, using simplified weapons.', e);
   }
 
-  const existing = game.actors.getName(actorData.name);
-  if (existing) {
-    await existing.delete();
-    ui.notifications.info('Replaced existing actor: ' + actorData.name);
+  // Never silently delete an existing actor — someone may have hand-tuned
+  // it since the last import. Ask, and default to "no".
+  const existing = game.actors.filter(a => a.name === actorData.name);
+  if (existing.length) {
+    const proceed = await Dialog.confirm({
+      title: 'Actor Already Exists',
+      content: \`<p>\${existing.length} actor(s) named "\${actorData.name}" already exist.</p>
+                 <p>Import as a new copy alongside them? (Cancel to stop and rename/delete manually.)</p>\`,
+      yes: () => true, no: () => false, defaultYes: false,
+    });
+    if (!proceed) { ui.notifications.warn('Import cancelled — no changes made.'); return; }
+    actorData.name = \`\${actorData.name} (imported \${new Date().toLocaleDateString()})\`;
   }
 
   const created = await Actor.create(actorData);
