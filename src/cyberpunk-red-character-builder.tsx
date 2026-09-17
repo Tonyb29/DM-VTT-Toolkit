@@ -316,6 +316,66 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'lawmanPosition', title: 'What Is Your Position on the Force?', eyebrow: 'Position', roleGate: 'Lawman',
+    sub: 'Every badge does a different job. This is the specific work that made you who you are.',
+    options: [
+      { t: 'Guard', d: 'Static posts and checkpoints — unglamorous, but you know exactly what’s supposed to be where.', cue: 'Play it procedural and detail-obsessed about anything out of place.' },
+      { t: 'Standard Beat or Patrol', d: 'A regular route, on foot or in a car — you’re the public face of the badge for a whole neighborhood.', cue: 'Play it recognizably friendly to locals, on a first-name basis with half the block.' },
+      { t: 'Criminal Investigation', d: 'Building cases, following leads, the slow paperwork side of catching people who don’t want to be caught.', cue: 'Play it patient and detail-fixated, noticing inconsistencies in casual conversation.' },
+      { t: 'Special Weapons and Tactics', d: 'The breach team — you’re called in after talking has already failed.', cue: 'Play it economical with words and hyper-aware of entry points in any room.' },
+      { t: 'Motor Patrol', d: 'Highways and vehicle pursuit — more road than street, longer shifts, longer sightlines.', cue: 'Play it restless indoors, more comfortable behind a wheel than on foot.' },
+      { t: 'Internal Affairs', d: 'You investigate your own, which makes you nobody’s favorite face in the building.', cue: 'Play it isolated among other Lawmen, used to being watched more than trusted.' },
+    ],
+  },
+  {
+    id: 'lawmanJurisdiction', title: "How Wide Is Your Group's Jurisdiction?", eyebrow: 'Jurisdiction', roleGate: 'Lawman',
+    sub: 'Where you actually have authority shapes what kind of trouble finds you.',
+    options: [
+      { t: 'Corporate Zones', d: 'You police the people who technically outrank you, and everyone involved knows it.', cue: 'Play it deferential to corporate authority in a way that occasionally makes your own job harder.' },
+      { t: 'Standard City Patrol Zone', d: 'Ordinary neighborhoods, ordinary problems — the baseline of the job most people imagine.', cue: 'Play it steady and unshaken by the routine chaos of an average shift.' },
+      { t: 'Combat Zones', d: 'The parts of the city everyone else has given up on. You didn’t.', cue: 'Play it grimly unsurprised by anything, no matter how bad it gets.' },
+      { t: 'Outer City', d: 'The sprawl past where anyone official really wants to patrol.', cue: 'Play it self-reliant — backup is a long way off out here, and you know it.' },
+      { t: 'Recovery Zones', d: 'Areas still being rebuilt, where patrol work tangles constantly with reconstruction politics.', cue: 'Play it caught between enforcing the law and protecting people trying to rebuild their lives.' },
+      { t: 'Open Highways', d: 'The roads between everywhere — long shifts, high speeds, and nobody around if it goes wrong.', cue: 'Play it hyper-alert to vehicles and traffic patterns, even off duty.' },
+    ],
+  },
+  {
+    id: 'lawmanCorruption', title: 'How Corrupt Is Your Group?', eyebrow: 'Corruption', roleGate: 'Lawman',
+    sub: 'Not every badge means the same thing. This is what yours actually stands for, day to day.',
+    options: [
+      { t: 'Genuinely Clean', d: 'Fair, honest policing with real ethical standards behind it — and you’re proud of that.', cue: 'Play it a little defensive when people assume every cop is dirty.' },
+      { t: 'Fair but Hard', d: 'Honest policing, but no mercy once someone’s crossed the line.', cue: 'Play it rigid about consequences, even for minor infractions.' },
+      { t: 'Mostly Clean', d: 'Slips into something unethical occasionally, but it’s rare enough to still be the exception.', cue: 'Play it uncomfortable when those rare slips come up in conversation.' },
+      { t: 'Rule-Bender', d: 'Willing to bend any rule necessary to get the bad guys, paperwork be damned.', cue: 'Play it pragmatic about procedure — results matter more than the method.' },
+      { t: 'Ruthless', d: 'Determined to control the street, even if that means breaking the same laws you enforce.', cue: 'Play it coldly practical about tactics that would trouble most people.' },
+      { t: 'Totally Corrupt', d: 'Bribes, illegal business, unethical work — routine, and barely worth commenting on anymore.', cue: 'Play it unbothered by corruption that should probably still bother you.' },
+    ],
+  },
+  {
+    id: 'lawmanThreat', title: "Who's Gunning for Your Group?", eyebrow: 'Lawman Threat', roleGate: 'Lawman',
+    sub: 'Wearing the badge makes you a target for a specific kind of enemy.',
+    options: [
+      { t: 'Organized Crime', d: 'A crime family considers your unit a standing problem, and they play the long game.', cue: 'Play it careful about who you trust with your schedule and movements.' },
+      { t: 'Boostergangs', d: 'A gang has your unit on their list, loud and immediate about it.', cue: 'Play it tactically alert in gang territory, more than the situation always requires.' },
+      { t: 'A Police Accountability Group', d: 'Activists and watchdogs are building a case against your unit specifically.', cue: 'Play it self-conscious about how your actions will look after the fact.' },
+      { t: 'Dirty Politicians', d: 'Someone with political power wants your unit’s investigations to quietly stop.', cue: 'Play it wary of anyone in office being unusually friendly to you.' },
+      { t: 'Smugglers', d: 'A smuggling operation has decided your unit is bad for business and worth removing.', cue: 'Play it suspicious of unmarked vehicles and cargo more than most people would be.' },
+      { t: 'Street Criminals', d: 'Plain street-level crime has it out for you personally, not just the badge.', cue: 'Play it recognizable and a little exposed walking through certain blocks off duty.' },
+    ],
+  },
+  {
+    id: 'lawmanTarget', title: "Who Is Your Group's Major Target?", eyebrow: 'Major Target', roleGate: 'Lawman',
+    sub: 'Every unit has a white whale — the thing you’re actually building your career around taking down.',
+    options: [
+      { t: 'Organized Crime', d: 'Your unit has been building a case against a crime family for longer than you’ve been on it.', cue: 'Play it fixated on this one investigation, bringing it up more than strictly necessary.' },
+      { t: 'Boostergangs', d: 'You’ve made gang suppression your unit’s whole reason for being.', cue: 'Play it able to rattle off gang names, colors, and turf lines like a second language.' },
+      { t: 'Drug Runners', d: 'You’re working the supply chains, trying to choke off product before it hits the street.', cue: 'Play it clinically knowledgeable about drugs and their effects, purely from the job.' },
+      { t: 'Dirty Politicians', d: 'You’re after corruption in office, which makes your job more dangerous than most people realize.', cue: 'Play it cynical about anyone with real political power, on principle.' },
+      { t: 'Smugglers', d: 'You track what’s moving in and out of the city that shouldn’t be.', cue: 'Play it detail-obsessed about logistics, routes, and shipping patterns.' },
+      { t: 'Street Crime', d: 'You focus on the everyday crime that actually touches most people’s lives.', cue: 'Play it grounded and community-focused, more invested in the neighborhood than the headlines.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
