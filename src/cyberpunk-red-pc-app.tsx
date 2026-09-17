@@ -21,7 +21,7 @@ const T = {
 // are from training knowledge, not verified against a real export or the
 // book — flag anything that looks wrong and I'll fix it.
 const ROLES: { t: string; d: string; ability: string; confirmed: boolean }[] = [
-  { t: 'Rockerboy', d: 'You perform, and the performance is the weapon — a voice and a following people rally behind.', ability: 'Charismatic Impact', confirmed: false },
+  { t: 'Rockerboy', d: 'You perform, and the performance is the weapon — a voice and a following people rally behind.', ability: 'Charismatic Impact', confirmed: true },
   { t: 'Solo', d: 'Combat is your trade, and you charge for it. Reflex-driven, weapon-focused.', ability: 'Combat Awareness', confirmed: false },
   { t: 'Netrunner', d: 'The real fight happens in the net. Intelligence and Technique carry you further than a gun.', ability: 'Interface', confirmed: true },
   { t: 'Tech', d: 'You build, fix, and improve — usually with parts that weren’t meant to go together.', ability: 'Maker', confirmed: true },
