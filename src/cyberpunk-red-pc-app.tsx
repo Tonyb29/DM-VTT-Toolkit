@@ -29,7 +29,7 @@ const ROLES: { t: string; d: string; ability: string; confirmed: boolean }[] = [
   { t: 'Media', d: 'You chase the story other people would rather stayed buried. Intelligence and nerve.', ability: 'Truth', confirmed: false },
   { t: 'Lawman', d: 'You still believe in the badge — procedure and backup when things go bad.', ability: 'Backup', confirmed: false },
   { t: 'Exec', d: 'You move resources and people other Roles can’t touch. Cool under pressure.', ability: 'Teamwork', confirmed: true },
-  { t: 'Fixer', d: 'You know a guy who does that. Connections are your whole toolkit.', ability: 'Operator', confirmed: false },
+  { t: 'Fixer', d: 'You know a guy who does that. Connections are your whole toolkit.', ability: 'Operator', confirmed: true },
   { t: 'Nomad', d: 'Family, convoy, and the open road. You can drive it and you can fix it.', ability: 'Moto', confirmed: false },
 ]
 
