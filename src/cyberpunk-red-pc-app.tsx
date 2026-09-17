@@ -134,6 +134,15 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
       'Pick Lock', 'Stealth', 'Streetwise', 'Trading',
     ],
   },
+  Exec: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Accounting', 'Athletics', 'Brawling', 'Bureaucracy', 'Business', 'Concentration',
+      'Conversation', 'Deduction', 'Education', 'Evasion', 'First Aid', 'Handgun',
+      'Human Perception', 'Language (Streetslang)', 'Lip Reading', 'Local Expert (Your Home)',
+      'Perception', 'Personal Grooming', 'Persuasion', 'Stealth',
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
