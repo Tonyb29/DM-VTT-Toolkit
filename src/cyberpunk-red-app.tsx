@@ -318,7 +318,7 @@ export default function CyberpunkRedApp() {
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 6, fontWeight: 600 }}>
                     PASTE NPC STAT BLOCK
-                    <span style={{ fontWeight: 400, marginLeft: 6, fontSize: 11 }}>— label:value format (NAME, ROLE, STATS, HP, SP, SKILLS, WEAPONS, ARMOR, CYBERWARE, NOTES)</span>
+                    <span style={{ fontWeight: 400, marginLeft: 6, fontSize: 11 }}>— label:value format (NAME, ROLE, STATS, HP, SP, SKILLS, WEAPONS, ARMOR, CYBERWARE, NOTES), or paste a single stat block copied straight off a character-builder page like Demiplane Nexus</span>
                   </div>
                   <textarea
                     value={input}

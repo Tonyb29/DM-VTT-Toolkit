@@ -131,8 +131,7 @@ function parseWeapons(raw: string): CPRWeapon[] {
 
 // ─── Main Parser ──────────────────────────────────────────────────────────────
 
-export function parseCyberpunkRedStatBlock(text: string): CPRNpc | null {
-  if (!text?.trim()) return null;
+function parseLabelFormat(text: string): CPRNpc | null {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   if (!lines.length) return null;
 
@@ -150,6 +149,134 @@ export function parseCyberpunkRedStatBlock(text: string): CPRNpc | null {
   const notes = findLabel(lines, 'NOTES');
 
   return { name: name || 'Unknown NPC', role, stats, hp, sp, skills, weapons, armor, cyberware, notes };
+}
+
+// Parses the plain-text layout produced when copying an NPC stat block
+// directly off a rendered character-builder page (e.g. Demiplane Nexus):
+// no "LABEL:" prefixes — just a name, then each stat's abbreviation and
+// value on their own lines, a Weapons list (name/damage pairs), an
+// "Armor: <name>" line with Head/Body SP pairs, a "Skill Bases" line,
+// and a "Cyberware Special Equipment" line. Tolerates extra page chrome
+// (tooltips, intro paragraphs) before/after the block, and — if several
+// NPCs were copied at once — parses only the first one found.
+function parseDemiplaneStatBlock(text: string): CPRNpc | null {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return null;
+
+  const STAT_ABBR = ['INT', 'REF', 'DEX', 'TECH', 'COOL', 'WILL', 'LUCK', 'MOVE', 'BODY', 'EMP'];
+
+  let nameIdx = -1;
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (lines[i + 1].toUpperCase() === 'INT') { nameIdx = i; break; }
+  }
+  if (nameIdx === -1) return null;
+
+  const name = lines[nameIdx];
+  let idx = nameIdx + 1;
+
+  const stats = {} as Record<StatKey, number>;
+  for (const key of STAT_KEYS) stats[key] = 0;
+
+  for (const abbr of STAT_ABBR) {
+    if (idx >= lines.length || lines[idx].toUpperCase() !== abbr) break;
+    idx++;
+    if (idx >= lines.length) break;
+    const m = lines[idx].match(/-?\d+/);
+    stats[abbr.toLowerCase() as StatKey] = m ? parseInt(m[0], 10) : 0;
+    idx++;
+  }
+
+  let hp = 30;
+  if (idx < lines.length && /^hit points$/i.test(lines[idx])) {
+    idx++;
+    hp = parseInt(lines[idx], 10) || 30;
+    idx++;
+  }
+  if (idx < lines.length && /^seriously wounded$/i.test(lines[idx])) idx += 2;
+  if (idx < lines.length && /^death save$/i.test(lines[idx])) idx += 2;
+
+  const weapons: CPRWeapon[] = [];
+  if (idx < lines.length && /^weapons$/i.test(lines[idx])) {
+    idx++;
+    const weaponLines: string[] = [];
+    while (idx < lines.length && !/^armor\s*:/i.test(lines[idx])) {
+      weaponLines.push(lines[idx]);
+      idx++;
+    }
+    for (let i = 0; i + 1 < weaponLines.length; i += 2) {
+      const wName = weaponLines[i];
+      const damage = weaponLines[i + 1];
+      const isRanged = /pistol|rifle|shotgun|smg|launcher|bow|flamethrower/i.test(wName);
+      weapons.push({ name: wName, damage, rof: 1, isRanged, handsReq: /heavy|rifle|shotgun|flamethrower/i.test(wName) ? 2 : 1 });
+    }
+  }
+
+  const armor: string[] = [];
+  let sp = 0;
+  if (idx < lines.length && /^armor\s*:/i.test(lines[idx])) {
+    const m = lines[idx].match(/^armor\s*:\s*(.+)$/i);
+    const armorName = m ? m[1].trim() : 'Armor';
+    idx++;
+    let headSp = 0, bodySp = 0;
+    if (idx < lines.length && /^head$/i.test(lines[idx])) {
+      idx++;
+      headSp = parseInt(lines[idx], 10) || 0;
+      idx++;
+    }
+    if (idx < lines.length && /^body$/i.test(lines[idx])) {
+      idx++;
+      bodySp = parseInt(lines[idx], 10) || 0;
+      idx++;
+    }
+    armor.push(armorName);
+    sp = bodySp || headSp;
+  }
+
+  let skills: CPRSkill[] = [];
+  if (idx < lines.length && /^skill bases$/i.test(lines[idx])) {
+    idx++;
+    const skillLines: string[] = [];
+    while (idx < lines.length && !/^cyberware/i.test(lines[idx])) {
+      skillLines.push(lines[idx]);
+      idx++;
+    }
+    skills = parseCsvList(skillLines.join(' ')).map(entry => {
+      const m = entry.match(/^(.+?)\s+(\d+)$/);
+      const skillName = (m ? m[1] : entry).trim();
+      const level = m ? parseInt(m[2], 10) : 0;
+      return { name: skillName, level, stat: skillStat(skillName) };
+    });
+  }
+
+  let cyberware: string[] = [];
+  if (idx < lines.length && /^cyberware(\s+special\s+equipment)?$/i.test(lines[idx])) {
+    idx++;
+    const equipLines: string[] = [];
+    while (idx < lines.length && !(idx + 1 < lines.length && lines[idx + 1].toUpperCase() === 'INT')) {
+      equipLines.push(lines[idx]);
+      idx++;
+    }
+    cyberware = parseCsvList(equipLines.join(' '));
+  }
+
+  return { name: name || 'Unknown NPC', role: '', stats, hp, sp, skills, weapons, armor, cyberware, notes: '' };
+}
+
+export function parseCyberpunkRedStatBlock(text: string): CPRNpc | null {
+  if (!text?.trim()) return null;
+
+  // Explicit "LABEL: value" format (this tool's own paste template) takes priority.
+  if (/^\s*(NAME|STATS)\s*:/im.test(text)) {
+    return parseLabelFormat(text);
+  }
+
+  // Otherwise try the unlabeled multi-line layout copied straight off a
+  // character-builder page (Demiplane Nexus and similar).
+  const demiplane = parseDemiplaneStatBlock(text);
+  if (demiplane) return demiplane;
+
+  // Last resort — best-effort label parse even without a clear marker.
+  return parseLabelFormat(text);
 }
 
 // ─── Foundry Exporter ─────────────────────────────────────────────────────────
