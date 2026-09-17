@@ -23,7 +23,7 @@ const T = {
 const ROLES: { t: string; d: string; ability: string; confirmed: boolean }[] = [
   { t: 'Rockerboy', d: 'You perform, and the performance is the weapon — a voice and a following people rally behind.', ability: 'Charismatic Impact', confirmed: false },
   { t: 'Solo', d: 'Combat is your trade, and you charge for it. Reflex-driven, weapon-focused.', ability: 'Combat Awareness', confirmed: false },
-  { t: 'Netrunner', d: 'The real fight happens in the net. Intelligence and Technique carry you further than a gun.', ability: 'Interface', confirmed: false },
+  { t: 'Netrunner', d: 'The real fight happens in the net. Intelligence and Technique carry you further than a gun.', ability: 'Interface', confirmed: true },
   { t: 'Tech', d: 'You build, fix, and improve — usually with parts that weren’t meant to go together.', ability: 'Maker', confirmed: true },
   { t: 'Medtech', d: 'You keep people alive when the dice say they shouldn’t be. Technique and a steady hand.', ability: 'Medicine', confirmed: true },
   { t: 'Media', d: 'You chase the story other people would rather stayed buried. Intelligence and nerve.', ability: 'Credibility', confirmed: true },
