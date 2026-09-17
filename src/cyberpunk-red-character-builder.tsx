@@ -645,6 +645,54 @@ export const STEPS: Step[] = [
     ],
   },
   {
+    id: 'soloType', title: 'What Kind of Solo Are You?', eyebrow: 'Solo Type', roleGate: 'Solo',
+    sub: 'Every Solo sells violence a little differently. This is your specialty.',
+    options: [
+      { t: 'Bodyguard', d: 'You protect people for a living — reactive work, standing between your client and whatever comes for them.', cue: 'Play it constantly positioning yourself between your client and any potential threat, without thinking about it.' },
+      { t: 'Street Muscle for Hire', d: 'You provide intimidation and protection at the street level, no corporate polish required.', cue: 'Play it physically present in a room — you take up space on purpose.' },
+      { t: 'Corporate Enforcer (Moonlighting)', d: 'You handle a Corp’s dirty work by day and take freelance jobs on the side.', cue: 'Play it compartmentalized about the two halves of your work, careful not to let them overlap.' },
+      { t: 'Black Ops Agent', d: 'You handle deniable operations, corporate or freelance, that officially never happened.', cue: 'Play it deliberately vague about your actual employment history.' },
+      { t: 'Vigilante for Hire', d: 'You take jobs that read as justice, even when they’re paid for like anything else.', cue: 'Play it self-righteous about your targets, even when the money is the real reason.' },
+      { t: 'Assassin/Hitman', d: 'You take the job nobody else wants to be responsible for.', cue: 'Play it unnervingly calm discussing violence in the abstract.' },
+    ],
+  },
+  {
+    id: 'soloMorality', title: "What's Your Moral Compass Like?", eyebrow: 'Moral Compass', roleGate: 'Solo',
+    sub: 'Everyone doing this job draws the line somewhere different. This is where yours actually falls.',
+    options: [
+      { t: 'Takes Out the Bad Guys', d: 'You genuinely work for good, choosing targets you believe actually deserve it.', cue: 'Play it selective about jobs, willing to walk away from money that doesn’t sit right.' },
+      { t: 'Spares the Innocent', d: 'You’ll do the job, but the elderly, kids, and pets are always off the table, no exceptions.', cue: 'Play it visibly, immediately hostile toward anyone who threatens a bystander.' },
+      { t: 'Mostly Clean', d: 'You slip into something unethical occasionally, but rare enough that it still counts as standards.', cue: 'Play it uncomfortable when those rare slips come up.' },
+      { t: 'Ruthless for Profit', d: 'You work for anyone, any job, as long as the money’s right.', cue: 'Play it transactional about violence — it’s just the job, nothing personal.' },
+      { t: 'Rule-Bender', d: 'You’ll bend the rules, and the law, whenever it gets the job done faster.', cue: 'Play it pragmatic about legality — it’s a suggestion, not a limit.' },
+      { t: 'Totally Evil', d: 'Illegal, unethical work is routine for you — and honestly, you enjoy it.', cue: 'Play it unsettlingly cheerful about violence that should probably bother you.' },
+    ],
+  },
+  {
+    id: 'soloTerritory', title: "What's Your Operational Territory?", eyebrow: 'Territory', roleGate: 'Solo',
+    sub: 'Where you actually work shapes who you know, who you’ve crossed, and who’s still watching.',
+    options: [
+      { t: 'A Corporate Zone', d: 'You operate within a specific Corporate Zone, playing by its particular set of rules.', cue: 'Play it fluent in corporate etiquette, even when the job itself is anything but polite.' },
+      { t: 'Combat Zones', d: 'You work where the city’s already given up, which means fewer rules and fewer witnesses.', cue: 'Play it grimly unsurprised by anything, even on a bad day.' },
+      { t: 'The Whole City', d: 'You go wherever the job takes you, with no fixed territory to call home turf.', cue: 'Play it adaptable to unfamiliar neighborhoods, reading a new area fast.' },
+      { t: "A Single Corporation's Territory", d: 'You work exclusively within one Corp’s sphere of influence and protection.', cue: 'Play it loyal to that Corp’s interests, even in situations that don’t officially involve them.' },
+      { t: "A Fixer's Territory", d: 'You operate within the territory of one particular Fixer or contact who keeps you working.', cue: 'Play it deferential to that Fixer specifically, more than to anyone else in your professional life.' },
+      { t: 'Wherever the Money Takes You', d: 'No fixed territory — you go where the job pays, full stop.', cue: 'Play it rootless and unattached to any one place, professionally and personally.' },
+    ],
+  },
+  {
+    id: 'soloThreat', title: "Who's Gunning for You?", eyebrow: 'Solo Threat', roleGate: 'Solo',
+    sub: 'This line of work makes enemies as a matter of course. This is the one that actually matters.',
+    options: [
+      { t: 'An Angered Corporation', d: 'A Corp you crossed on a job hasn’t forgotten, and they have real resources to spend on you.', cue: 'Play it wary of anything with that Corp’s branding on it.' },
+      { t: 'A Tackled Boostergang', d: 'A gang you took down earlier wants payback, loudly and specifically.', cue: 'Play it tactically alert in that gang’s territory, more than anywhere else.' },
+      { t: 'Corrupt or Mistaken Lawmen', d: 'Some Lawmen think you’re guilty of something — correctly or not — and they’re not letting it go.', cue: 'Play it cautious around badges, even when you’re not currently doing anything wrong.' },
+      { t: 'A Rival Corp Solo', d: 'Another Corp’s enforcer sees you as competition worth eliminating.', cue: 'Play it professionally competitive and a little obsessive about this one specific rival.' },
+      { t: 'A Threatened Fixer', d: 'A Fixer has started seeing you as a liability instead of an asset.', cue: 'Play it careful about how much you actually reveal to Fixers now.' },
+      { t: 'A Nemesis Solo', d: 'Another Solo has decided this is personal, and neither of you fully remembers who started it.', cue: 'Play it fixated on this one rival in a way that occasionally clouds your judgment.' },
+    ],
+  },
+  {
     id: 'style', title: "What's Your Signature Look?", eyebrow: 'Style',
     sub: 'How you present is armor and message both. Pick the version of yourself people recognize on sight — clothes, hair, all of it.',
     options: [
