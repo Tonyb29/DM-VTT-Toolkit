@@ -107,6 +107,15 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
       'Persuasion', 'Resist Torture/Drugs', 'Science (Chemistry)', 'Shoulder Arms', 'Stealth',
     ],
   },
+  Media: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Athletics', 'Brawling', 'Bribery', 'Composition', 'Concentration', 'Conversation',
+      'Deduction', 'Education', 'Evasion', 'First Aid', 'Handgun', 'Human Perception',
+      'Language (Streetslang)', 'Library Search', 'Lip Reading', 'Local Expert (Your Home)',
+      'Perception', 'Persuasion', 'Photography/Film', 'Stealth',
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
