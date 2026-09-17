@@ -151,6 +151,8 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
 // weapons' stats seen elsewhere this session (Mooks and Grunts data), not
 // guessed cold.
 type PkgItem = { name: string; type: 'weapon' | 'armor' | 'gear' | 'cyberware'; damage?: string; isRanged?: boolean; handsReq?: number; headSp?: number; bodySp?: number }
+const PKG_TYPE_ORDER: PkgItem['type'][] = ['weapon', 'armor', 'cyberware', 'gear']
+const PKG_TYPE_LABEL: Record<PkgItem['type'], string> = { weapon: 'Weapons', armor: 'Armor', gear: 'Gear', cyberware: 'Cyberware' }
 type PkgChoice = { options: PkgItem[] }
 type EquipmentPackage = { fixed: PkgItem[]; choices: PkgChoice[] }
 
@@ -946,37 +948,55 @@ function GearStep({ state, update, onBack, onNext }: {
             <div style={{ fontSize: 12.5, fontWeight: 700, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{state.role} Starting Package (Fast and Dirty)</div>
           </div>
 
-          <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 6 }}>You Get These</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-            {pkg.fixed.map((item, i) => (
-              <span key={i} style={{ fontSize: 11.5, color: T.text, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 5, padding: '4px 8px' }}>
-                {item.name}
-              </span>
-            ))}
+          <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>You Get These</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+            {PKG_TYPE_ORDER.map(type => {
+              const items = pkg.fixed.filter(i => i.type === type)
+              if (!items.length) return null
+              return (
+                <div key={type}>
+                  <div style={{ fontSize: 10.5, color: T.cyan, fontWeight: 700, marginBottom: 4 }}>{PKG_TYPE_LABEL[type]}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {items.map((item, i) => (
+                      <span key={i} style={{ fontSize: 11.5, color: T.text, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 5, padding: '4px 8px' }}>
+                        {item.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {pkg.choices.length > 0 && (
             <>
-              <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 6 }}>Choose One From Each</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>Choose One From Each</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {pkg.choices.map((group, gi) => {
                   const picked = state.packageChoices[`${state.role}:${gi}`] ?? 0
+                  // Label the group by what its options actually are — if
+                  // they're all the same type, say so; otherwise stay generic.
+                  const types = new Set(group.options.map(o => o.type))
+                  const label = types.size === 1 ? PKG_TYPE_LABEL[group.options[0].type] : 'Choice'
                   return (
-                    <div key={gi} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {group.options.map((opt, oi) => (
-                        <button
-                          key={oi}
-                          onClick={() => pickChoice(gi, oi)}
-                          style={{
-                            fontSize: 12, padding: '6px 10px', borderRadius: 6, cursor: 'pointer',
-                            background: picked === oi ? `${T.red}22` : T.surface,
-                            border: `1px solid ${picked === oi ? T.red : T.border}`,
-                            color: picked === oi ? T.text : T.textMuted,
-                          }}
-                        >
-                          {opt.name}
-                        </button>
-                      ))}
+                    <div key={gi}>
+                      <div style={{ fontSize: 10.5, color: T.cyan, fontWeight: 700, marginBottom: 4 }}>{label}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {group.options.map((opt, oi) => (
+                          <button
+                            key={oi}
+                            onClick={() => pickChoice(gi, oi)}
+                            style={{
+                              fontSize: 12, padding: '6px 10px', borderRadius: 6, cursor: 'pointer',
+                              background: picked === oi ? `${T.red}22` : T.surface,
+                              border: `1px solid ${picked === oi ? T.red : T.border}`,
+                              color: picked === oi ? T.text : T.textMuted,
+                            }}
+                          >
+                            {opt.name}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )
                 })}
