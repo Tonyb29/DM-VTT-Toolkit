@@ -80,6 +80,15 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
       'Persuasion', 'Play Instrument', 'Stealth', 'Streetwise', 'Wardrobe & Style',
     ],
   },
+  Nomad: {
+    points: 86, min: 2, max: 6, default: 4,
+    skills: [
+      'Animal Handling', 'Athletics', 'Brawling', 'Concentration', 'Conversation',
+      'Drive Land Vehicle', 'Education', 'Evasion', 'First Aid', 'Handgun', 'Human Perception',
+      'Language (Streetslang)', 'Local Expert (Your Home)', 'Melee Weapon', 'Perception',
+      'Persuasion', 'Stealth', 'Tracking', 'Trading', 'Wilderness Survival',
+    ],
+  },
 }
 
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
