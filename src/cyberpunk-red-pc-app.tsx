@@ -16,6 +16,36 @@ const T = {
   cyan: '#00e5ff', red: '#ff2060', green: '#40e070', gold: '#f0e000',
 }
 
+// A short, plain-language reminder of what each attribute governs — for
+// players who don't already know the system. Original phrasing.
+const STAT_HINTS: Record<PCStatKey, string> = {
+  int: 'Cleverness, awareness, how fast you learn.',
+  ref: 'Reaction speed — aiming, ranged attacks.',
+  dex: 'Physical grace — melee attacks, dodging.',
+  tech: 'Skill with tools and machines.',
+  cool: 'Composure and force of personality.',
+  will: 'Grit under pressure, resistance to stress.',
+  luck: 'A pool you can spend to tip a roll your way — refills next session.',
+  move: 'Running, jumping, swimming speed.',
+  body: 'Toughness and how much damage you can take.',
+  emp: 'Capacity to connect with people — also resists cyberpsychosis.',
+}
+
+// The official "Roll Your Statistics" table — roll a physical d10 and
+// quick-fill the matching spread instead of typing ten numbers by hand.
+const STAT_ARRAYS: { roll: number; values: Record<PCStatKey, number> }[] = [
+  { roll: 1, values: { int: 6, ref: 7, dex: 7, tech: 8, cool: 4, will: 4, luck: 5, move: 5, body: 7, emp: 6 } },
+  { roll: 2, values: { int: 7, ref: 6, dex: 6, tech: 7, cool: 5, will: 3, luck: 7, move: 7, body: 5, emp: 5 } },
+  { roll: 3, values: { int: 8, ref: 6, dex: 5, tech: 7, cool: 5, will: 4, luck: 7, move: 7, body: 5, emp: 7 } },
+  { roll: 4, values: { int: 7, ref: 8, dex: 7, tech: 8, cool: 4, will: 4, luck: 6, move: 5, body: 6, emp: 7 } },
+  { roll: 5, values: { int: 6, ref: 6, dex: 7, tech: 6, cool: 4, will: 3, luck: 7, move: 7, body: 6, emp: 6 } },
+  { roll: 6, values: { int: 8, ref: 7, dex: 5, tech: 6, cool: 3, will: 3, luck: 7, move: 6, body: 6, emp: 7 } },
+  { roll: 7, values: { int: 8, ref: 6, dex: 7, tech: 8, cool: 4, will: 4, luck: 7, move: 6, body: 7, emp: 6 } },
+  { roll: 8, values: { int: 8, ref: 8, dex: 7, tech: 8, cool: 5, will: 4, luck: 6, move: 5, body: 6, emp: 6 } },
+  { roll: 9, values: { int: 6, ref: 6, dex: 7, tech: 8, cool: 3, will: 3, luck: 5, move: 7, body: 7, emp: 7 } },
+  { roll: 10, values: { int: 8, ref: 8, dex: 5, tech: 6, cool: 4, will: 4, luck: 6, move: 5, body: 6, emp: 6 } },
+]
+
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
 // export) and Exec ("Teamwork", from the corebook text you sent). The rest
 // are from training knowledge, not verified against a real export or the
@@ -364,24 +394,46 @@ function AttributesStep({ state, update, onBack, onNext }: {
   state: WizState; update: (p: Partial<WizState>) => void; onBack: () => void; onNext: () => void
 }) {
   const setStat = (k: PCStatKey, v: number) => update({ stats: { ...state.stats, [k]: v } })
+  const applyArray = (values: Record<PCStatKey, number>) => update({ stats: { ...values } })
   return (
     <div style={{ padding: '24px 26px' }}>
       <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.red, fontWeight: 700 }}>Step 3 of 6</div>
       <h2 style={{ margin: '6px 0 6px', fontSize: 22, color: T.text }}>Set Your Attributes</h2>
       <PlaceholderBanner>
-        Point-buy budget and per-point costs aren't wired in yet — enter your allocated values directly for now.
-        Enter final values, not a budget spend; validation against the official point totals is coming.
+        Point-buy budget and per-point costs aren't wired in yet — enter your own values directly, or use the
+        official roll table below if you rolled your stats in person.
       </PlaceholderBanner>
+
+      <div style={{ background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: '14px 16px', marginBottom: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Rolled a d10 in Person?</div>
+        <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 10 }}>Click the number that matches your roll to fill in that spread instantly.</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {STAT_ARRAYS.map(a => (
+            <button
+              key={a.roll}
+              onClick={() => applyArray(a.values)}
+              title={PC_STAT_KEYS.map(k => `${k.toUpperCase()} ${a.values[k]}`).join(' · ')}
+              style={{
+                width: 34, height: 34, borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                background: T.surface, border: `1px solid ${T.border}`, color: T.text,
+              }}
+            >
+              {a.roll}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 10, marginBottom: 20 }}>
         {PC_STAT_KEYS.map(k => (
-          <div key={k} style={{ background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+          <div key={k} style={{ background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 10px', textAlign: 'center' }} title={STAT_HINTS[k]}>
             <div style={{ fontSize: 10, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{k}</div>
             <input
               type="number" value={state.stats[k]}
               onChange={e => setStat(k, parseInt(e.target.value, 10) || 0)}
               style={{ ...fieldBox, width: '100%', textAlign: 'center', fontSize: 16, fontWeight: 700, padding: '4px 2px' }}
             />
+            <div style={{ fontSize: 9, color: T.textDim, marginTop: 4, lineHeight: 1.3 }}>{STAT_HINTS[k]}</div>
           </div>
         ))}
       </div>
