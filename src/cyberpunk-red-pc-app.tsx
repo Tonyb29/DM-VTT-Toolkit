@@ -145,6 +145,73 @@ const ROLE_SKILL_SETS: Partial<Record<string, SkillPool>> = {
   },
 }
 
+// Fast and Dirty starting gear packages: some items are automatic ("fixed"),
+// others are a "choose one of these" group. Damage values for named
+// weapons aren't given in these package tables — filled in from the same
+// weapons' stats seen elsewhere this session (Mooks and Grunts data), not
+// guessed cold.
+type PkgItem = { name: string; type: 'weapon' | 'armor' | 'gear' | 'cyberware'; damage?: string; isRanged?: boolean; handsReq?: number; headSp?: number; bodySp?: number }
+type PkgChoice = { options: PkgItem[] }
+type EquipmentPackage = { fixed: PkgItem[]; choices: PkgChoice[] }
+
+const ROLE_EQUIPMENT: Partial<Record<string, EquipmentPackage>> = {
+  Exec: {
+    fixed: [
+      { name: 'Very Heavy Pistol', type: 'weapon', damage: '4d6', isRanged: true, handsReq: 1 },
+      { name: 'Basic VH Pistol Ammunition x50', type: 'gear' },
+      { name: 'Light Armorjack', type: 'armor', headSp: 11, bodySp: 11 },
+      { name: 'Radio Communicator x4', type: 'gear' },
+      { name: 'Scrambler/Descrambler', type: 'gear' },
+      { name: 'Businesswear Outfit (Jacket, Top, Bottoms, Footwear, Mirrorshades, Jewelry x2)', type: 'gear' },
+      { name: 'Cyberaudio Suite', type: 'cyberware' },
+      { name: 'Internal Agent', type: 'cyberware' },
+    ],
+    choices: [
+      { options: [{ name: 'Biomonitor', type: 'cyberware' }, { name: 'Techhair', type: 'cyberware' }] },
+      { options: [{ name: 'Toxin Binders', type: 'cyberware' }, { name: 'Nasal Filters', type: 'cyberware' }] },
+    ],
+  },
+  Fixer: {
+    fixed: [
+      { name: 'Light Melee Weapon', type: 'weapon', damage: '1d6', isRanged: false, handsReq: 1 },
+      { name: 'Light Armorjack', type: 'armor', headSp: 11, bodySp: 11 },
+      { name: 'Agent', type: 'gear' },
+      { name: 'Bug Detector', type: 'gear' },
+      { name: 'Computer', type: 'gear' },
+      { name: 'Disposable Cell Phone x2', type: 'gear' },
+      { name: 'Street Outfit (Generic Chic Contacts & Jewelry, Leisurewear Mirrorshades, Urban Flash Jacket/Bottoms/Top/Footwear)', type: 'gear' },
+      { name: 'Cyberaudio Suite', type: 'cyberware' },
+      { name: 'Internal Agent', type: 'cyberware' },
+      { name: 'Subdermal Pocket', type: 'cyberware' },
+    ],
+    choices: [
+      { options: [{ name: 'Heavy Pistol', type: 'weapon', damage: '3d6', isRanged: true, handsReq: 1 }, { name: 'Very Heavy Pistol', type: 'weapon', damage: '4d6', isRanged: true, handsReq: 1 }] },
+      { options: [{ name: 'Basic H Pistol Ammunition x100', type: 'gear' }, { name: 'Basic VH Pistol Ammunition x100', type: 'gear' }] },
+      { options: [{ name: 'Voice Stress Analyzer', type: 'cyberware' }, { name: 'Amplified Hearing', type: 'cyberware' }] },
+    ],
+  },
+  Lawman: {
+    fixed: [
+      { name: 'Heavy Pistol', type: 'weapon', damage: '3d6', isRanged: true, handsReq: 1 },
+      { name: 'Basic H Pistol Ammunition x30', type: 'gear' },
+      { name: 'Light Armorjack', type: 'armor', headSp: 11, bodySp: 11 },
+      { name: 'Agent', type: 'gear' },
+      { name: 'Flashlight', type: 'gear' },
+      { name: 'Handcuffs x2', type: 'gear' },
+      { name: 'Radio Communicator', type: 'gear' },
+      { name: 'Road Flare x10', type: 'gear' },
+      { name: 'Patrol Outfit (Generic Chic Jacket/Bottoms/Top, Leisurewear Footwear/Jacket/Bottoms/Mirrorshades/Top)', type: 'gear' },
+      { name: 'Hidden Holster', type: 'cyberware' },
+      { name: 'Subdermal Pocket', type: 'cyberware' },
+    ],
+    choices: [
+      { options: [{ name: 'Assault Rifle', type: 'weapon', damage: '5d6', isRanged: true, handsReq: 2 }, { name: 'Shotgun', type: 'weapon', damage: '5d6', isRanged: true, handsReq: 2 }] },
+      { options: [{ name: 'Basic Rifle Ammunition x100', type: 'gear' }, { name: 'Basic Shotgun Shell Ammunition x100', type: 'gear' }, { name: 'Basic Slug Ammunition x100', type: 'gear' }] },
+      { options: [{ name: 'Bulletproof Shield', type: 'gear' }, { name: 'Smoke Grenade x2', type: 'gear' }] },
+    ],
+  },
+}
+
 // Role Ability names are confirmed for Tech ("Maker", from the real Gasket
 // export) and Exec ("Teamwork", from the corebook text you sent). The rest
 // are from training knowledge, not verified against a real export or the
@@ -182,6 +249,7 @@ type WizState = {
   lifepath: Record<string, string>
   notes: string
   importedFromBuilder: boolean
+  packageChoices: Record<string, number>
 }
 
 const WIZ_STORAGE_KEY = 'cpr-pc-create-v1'
@@ -198,6 +266,7 @@ function defaultState(): WizState {
     stats: Object.fromEntries(PC_STAT_KEYS.map(k => [k, 5])) as Record<PCStatKey, number>,
     skillLevels: {}, weapons: [], armor: [], cyberware: [], gear: [],
     hp: 30, humanity: 50, lifepath: {}, notes: '', importedFromBuilder: false,
+    packageChoices: {},
   }
 }
 
@@ -708,11 +777,65 @@ function GearStep({ state, update, onBack, onNext }: {
   const addCyberware = () => { if (!cName.trim()) return; update({ cyberware: [...state.cyberware, cName.trim()] }); setCName('') }
   const addGear = () => { if (!gName.trim()) return; update({ gear: [...state.gear, gName.trim()] }); setGName('') }
 
+  const pkg = ROLE_EQUIPMENT[state.role]
+  const pickChoice = (groupIdx: number, optIdx: number) =>
+    update({ packageChoices: { ...state.packageChoices, [`${state.role}:${groupIdx}`]: optIdx } })
+
   return (
     <div style={{ padding: '24px 26px' }}>
       <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.red, fontWeight: 700 }}>Step 5 of 6</div>
       <h2 style={{ margin: '6px 0 6px', fontSize: 22, color: T.text }}>Gear & Cyberware</h2>
       <p style={{ margin: '0 0 16px', color: T.textMuted, fontSize: 13.5 }}>Add what your character is carrying and installed with.</p>
+
+      {pkg && (
+        <div style={{ background: T.surface2, border: `1px solid ${T.gold}55`, borderRadius: 8, padding: '16px 18px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <Wand2 size={14} color={T.gold} />
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{state.role} Starting Package (Fast and Dirty)</div>
+          </div>
+
+          <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 6 }}>You Get These</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+            {pkg.fixed.map((item, i) => (
+              <span key={i} style={{ fontSize: 11.5, color: T.text, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 5, padding: '4px 8px' }}>
+                {item.name}
+              </span>
+            ))}
+          </div>
+
+          {pkg.choices.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 6 }}>Choose One From Each</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {pkg.choices.map((group, gi) => {
+                  const picked = state.packageChoices[`${state.role}:${gi}`] ?? 0
+                  return (
+                    <div key={gi} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {group.options.map((opt, oi) => (
+                        <button
+                          key={oi}
+                          onClick={() => pickChoice(gi, oi)}
+                          style={{
+                            fontSize: 12, padding: '6px 10px', borderRadius: 6, cursor: 'pointer',
+                            background: picked === oi ? `${T.red}22` : T.surface,
+                            border: `1px solid ${picked === oi ? T.red : T.border}`,
+                            color: picked === oi ? T.text : T.textMuted,
+                          }}
+                        >
+                          {opt.name}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+          <div style={{ fontSize: 10.5, color: T.textDim, marginTop: 12 }}>
+            This package is combined automatically with anything you add manually below.
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 20 }} className="cpr-pc-grid">
         <div>
@@ -765,8 +888,23 @@ function GearStep({ state, update, onBack, onNext }: {
 
 // ─── Step 6: Review & Export ────────────────────────────────────────────────
 
+// Resolves a Role's starting package (fixed items + whichever option was
+// picked in each choice group) into a flat item list.
+function resolvePackage(state: WizState): PkgItem[] {
+  const pkg = ROLE_EQUIPMENT[state.role]
+  if (!pkg) return []
+  const chosen = pkg.choices.map((group, gi) => group.options[state.packageChoices[`${state.role}:${gi}`] ?? 0])
+  return [...pkg.fixed, ...chosen]
+}
+
 function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => void; onCopy: (msg: string) => void }) {
   const [copied, setCopied] = useState<string | null>(null)
+
+  const pkgItems = resolvePackage(state)
+  const pkgWeapons = pkgItems.filter(i => i.type === 'weapon')
+  const pkgArmor = pkgItems.filter(i => i.type === 'armor')
+  const pkgGear = pkgItems.filter(i => i.type === 'gear').map(i => i.name)
+  const pkgCyberware = pkgItems.filter(i => i.type === 'cyberware').map(i => i.name)
 
   const pc: CPRPlayerCharacter = {
     name: state.name || 'Unknown Edgerunner',
@@ -777,10 +915,16 @@ function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => 
     hp: state.hp,
     humanity: state.humanity,
     skillLevels: new Map(Object.entries(state.skillLevels).filter(([, v]) => v > 0).map(([k, v]) => [k.toLowerCase(), v])),
-    weapons: state.weapons.map(w => ({ name: w.name, damage: w.damage, isRanged: /pistol|rifle|shotgun|smg|heavy|bow|launcher/i.test(w.name), handsReq: /heavy|rifle|shotgun/i.test(w.name) ? 2 : 1 })),
-    armor: state.armor,
-    cyberware: state.cyberware,
-    gear: state.gear,
+    weapons: [
+      ...pkgWeapons.map(w => ({ name: w.name, damage: w.damage || '1d6', isRanged: !!w.isRanged, handsReq: w.handsReq || 1 })),
+      ...state.weapons.map(w => ({ name: w.name, damage: w.damage, isRanged: /pistol|rifle|shotgun|smg|heavy|bow|launcher/i.test(w.name), handsReq: /heavy|rifle|shotgun/i.test(w.name) ? 2 : 1 })),
+    ],
+    armor: [
+      ...pkgArmor.map(a => ({ name: a.name, headSp: a.headSp || 0, bodySp: a.bodySp || 0 })),
+      ...state.armor,
+    ],
+    cyberware: [...pkgCyberware, ...state.cyberware],
+    gear: [...pkgGear, ...state.gear],
     lifepath: state.lifepath,
     notes: state.notes,
   }
