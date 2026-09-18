@@ -46,6 +46,16 @@ const STAT_ARRAYS: { roll: number; values: Record<PCStatKey, number> }[] = [
   { roll: 10, values: { int: 8, ref: 8, dex: 5, tech: 6, cool: 4, will: 4, luck: 6, move: 5, body: 6, emp: 6 } },
 ]
 
+// Derived Stats — HP = 10 + 5x(BODY and WILL averaged, rounded up);
+// Humanity = EMP x 10; Seriously Wounded = half of HP, rounded up;
+// Death Save = BODY. Verified against the official table (all 140 cells).
+function computeHP(body: number, will: number): number {
+  return 10 + 5 * Math.ceil((body + will) / 2)
+}
+function computeHumanity(emp: number): number {
+  return emp * 10
+}
+
 // The Fast and Dirty method gives each Role its own fixed "career skill"
 // list and a point pool to divide across just those (not the full 63-skill
 // catalog) — min/max per skill, all defaulted to a starting value. Filled
@@ -419,7 +429,7 @@ function defaultState(): WizState {
     step: 0, name: '', role: '', roleAbility: '', roleRank: 4,
     stats: Object.fromEntries(PC_STAT_KEYS.map(k => [k, 5])) as Record<PCStatKey, number>,
     skillLevels: {}, weapons: [], armor: [], cyberware: [], gear: [],
-    hp: 30, humanity: 50, lifepath: {}, notes: '', importedFromBuilder: false,
+    hp: computeHP(5, 5), humanity: computeHumanity(5), lifepath: {}, notes: '', importedFromBuilder: false,
     packageChoices: {},
   }
 }
@@ -716,8 +726,14 @@ function PlaceholderBanner({ children }: { children: React.ReactNode }) {
 function AttributesStep({ state, update, onBack, onNext }: {
   state: WizState; update: (p: Partial<WizState>) => void; onBack: () => void; onNext: () => void
 }) {
-  const setStat = (k: PCStatKey, v: number) => update({ stats: { ...state.stats, [k]: v } })
-  const applyArray = (values: Record<PCStatKey, number>) => update({ stats: { ...values } })
+  const setStat = (k: PCStatKey, v: number) => {
+    const stats = { ...state.stats, [k]: v }
+    update({ stats, hp: computeHP(stats.body, stats.will), humanity: computeHumanity(stats.emp) })
+  }
+  const applyArray = (values: Record<PCStatKey, number>) => {
+    update({ stats: { ...values }, hp: computeHP(values.body, values.will), humanity: computeHumanity(values.emp) })
+  }
+  const seriouslyWounded = Math.ceil(state.hp / 2)
   return (
     <div style={{ padding: '24px 26px' }}>
       <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.red, fontWeight: 700 }}>Step 3 of 6</div>
@@ -761,17 +777,30 @@ function AttributesStep({ state, update, onBack, onNext }: {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 20, marginBottom: 8, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 5 }}>HP</div>
+          <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 5 }}>
+            HP <span style={{ fontWeight: 400, textTransform: 'none' }}>(10 + 5x BODY &amp; WILL avg, rounded up)</span>
+          </div>
           <input type="number" value={state.hp} onChange={e => update({ hp: parseInt(e.target.value, 10) || 0 })} style={{ ...fieldBox, width: 100 }} />
         </div>
         <div>
           <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 5 }}>
-            Humanity <span style={{ fontWeight: 400, textTransform: 'none' }}>(usually EMP × 10)</span>
+            Humanity <span style={{ fontWeight: 400, textTransform: 'none' }}>(EMP × 10)</span>
           </div>
           <input type="number" value={state.humanity} onChange={e => update({ humanity: parseInt(e.target.value, 10) || 0 })} style={{ ...fieldBox, width: 100 }} />
         </div>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 5 }}>Seriously Wounded</div>
+          <div style={{ ...fieldBox, width: 100, display: 'flex', alignItems: 'center', color: T.textMuted }}>{seriouslyWounded}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: '0.06em', color: T.textDim, textTransform: 'uppercase', marginBottom: 5 }}>Death Save</div>
+          <div style={{ ...fieldBox, width: 100, display: 'flex', alignItems: 'center', color: T.textMuted }}>{state.stats.body}</div>
+        </div>
+      </div>
+      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 20 }}>
+        HP and Humanity auto-fill from your Attributes above (and update if you change them) — edit the boxes directly if you need to override.
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>

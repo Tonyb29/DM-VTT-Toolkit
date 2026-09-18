@@ -508,8 +508,8 @@ export function toCyberpunkRedFoundryActor(npc: CPRNpc): Record<string, unknown>
       stats: Object.fromEntries(STAT_KEYS.map(k => [k, { value: npc.stats[k] }])),
       derivedStats: {
         hp: { value: npc.hp, max: npc.hp },
-        seriouslyWounded: Math.floor(npc.hp / 2),
-        humanity: { value: 50, max: 50 },
+        seriouslyWounded: Math.ceil(npc.hp / 2),
+        humanity: { value: npc.stats.emp * 10, max: npc.stats.emp * 10 },
       },
       externalData: {
         currentArmorHead: { value: maxHeadSp, max: maxHeadSp },

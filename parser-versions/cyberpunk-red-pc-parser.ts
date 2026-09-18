@@ -394,8 +394,8 @@ export function toCyberpunkRedFoundryCharacter(pc: CPRPlayerCharacter): Record<s
       derivedStats: {
         hp: { value: pc.hp, max: pc.hp, transactions: [] },
         humanity: { value: pc.humanity, max: pc.humanity, transactions: [] },
-        seriouslyWounded: Math.floor(pc.hp / 2),
-        deathSave: { basePenalty: 0, penalty: 0, value: 0 },
+        seriouslyWounded: Math.ceil(pc.hp / 2),
+        deathSave: { basePenalty: 0, penalty: 0, value: pc.stats.body },
         // Foundry recalculates run/walk from MOVE on load — these are just a
         // reasonable starting snapshot, not load-bearing.
         run: { value: pc.stats.move * 3 }, walk: { value: pc.stats.move * 2 },
