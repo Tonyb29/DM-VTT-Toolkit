@@ -550,7 +550,7 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
   // snakes, popup launchers) usually aren't in core_weapons at all — they
   // live in core_cyberware as isWeapon items with their combat stats
   // already attached, so that's checked second.
-  let weaponMatches = 0, weaponCustom = 0;
+  let weaponMatches = 0, weaponCustom = 0, cyberweaponMatches = 0;
   try {
     const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
     const findMatch = (list, target) =>
@@ -565,17 +565,33 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
       : [];
 
     for (const item of actorData.items) {
-      if (item.type !== 'weapon') continue;
-      const target = normalize(item.name);
-      let match = findMatch(compendiumWeapons, target) || findMatch(cyberweapons, target);
-      if (match) {
-        const src = match.toObject();
-        item.img = src.img;
-        item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
-        if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
-        weaponMatches++;
-      } else {
-        weaponCustom++;
+      if (item.type === 'weapon') {
+        const target = normalize(item.name);
+        let match = findMatch(compendiumWeapons, target) || findMatch(cyberweapons, target);
+        if (match) {
+          const src = match.toObject();
+          item.img = src.img;
+          item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
+          if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
+          weaponMatches++;
+        } else {
+          weaponCustom++;
+        }
+      } else if (item.type === 'cyberware') {
+        // Named combat cyberware (Wolvers, Cybersnake, Popup Grenade
+        // Launcher...) is parsed off the CYBERWARE line, not WEAPONS, so it
+        // never goes through the weapon branch above and is created as a
+        // bare cyberware item with no isWeapon/damage/weaponSkill data —
+        // which is exactly what makes Foundry's sheet default its (unset)
+        // weaponSkill to Handgun, even for something like Wolvers claws.
+        const target = normalize(item.name);
+        const match = findMatch(cyberweapons, target);
+        if (match) {
+          const src = match.toObject();
+          item.img = src.img;
+          item.system = { ...src.system, equipped: 'equipped' };
+          cyberweaponMatches++;
+        }
       }
     }
   } catch (e) {
@@ -601,6 +617,7 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
     const skillCount = actorData.items.filter(i => i.type === 'skill').length;
     const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
     let msg = \`✓ Created: \${created.name} — \${skillCount} skills, \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
+    if (cyberweaponMatches) msg += \`, \${cyberweaponMatches} combat cyberware matched to compendium\`;
     if (unrecognizedSkills.length) msg += \`. \${unrecognizedSkills.length} skill name(s) not recognized — defaulted to REF.\`;
     ui.notifications.info(msg);
     if (unrecognizedSkills.length) console.warn('Cyberpunk RED import — unrecognized skills (defaulted to REF, check governing stat manually):', unrecognizedSkills);

@@ -400,7 +400,7 @@ export function toCyberpunkRedFoundryCharacter(pc: CPRPlayerCharacter): Record<s
         // reasonable starting snapshot, not load-bearing.
         run: { value: pc.stats.move * 3 }, walk: { value: pc.stats.move * 2 },
       },
-      information: { alias: '', description: '', history: '', notes: pc.notes },
+      information: { alias: '', description: pc.notes, history: '', notes: '' },
       reputation: { transactions: [], value: 0 },
       roleInfo: { activeRole: pc.role, activeNetRole: '' },
       wealth: { transactions: [], value: 0 },
@@ -431,7 +431,7 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
   // Named cyberweapons usually aren't in core_weapons at all — they live in
   // core_cyberware as isWeapon items with their combat stats already
   // attached, so that's checked second.
-  let weaponMatches = 0, weaponCustom = 0;
+  let weaponMatches = 0, weaponCustom = 0, cyberweaponMatches = 0;
   try {
     const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
     const findMatch = (list, target) =>
@@ -446,17 +446,31 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
       : [];
 
     for (const item of actorData.items) {
-      if (item.type !== 'weapon') continue;
-      const target = normalize(item.name);
-      let match = findMatch(compendiumWeapons, target) || findMatch(cyberweapons, target);
-      if (match) {
-        const src = match.toObject();
-        item.img = src.img;
-        item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
-        if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
-        weaponMatches++;
-      } else {
-        weaponCustom++;
+      if (item.type === 'weapon') {
+        const target = normalize(item.name);
+        let match = findMatch(compendiumWeapons, target) || findMatch(cyberweapons, target);
+        if (match) {
+          const src = match.toObject();
+          item.img = src.img;
+          item.system = { ...src.system, damage: item.system.damage, equipped: 'equipped' };
+          if (item.system.magazine) item.system.magazine.value = item.system.magazine.max;
+          weaponMatches++;
+        } else {
+          weaponCustom++;
+        }
+      } else if (item.type === 'cyberware') {
+        // Named combat cyberware (Wolvers, Cybersnake, Popup Grenade
+        // Launcher...) is a bare cyberware item with no isWeapon/damage/
+        // weaponSkill data unless we fill it in from the compendium — left
+        // alone, Foundry's sheet defaults its unset weaponSkill to Handgun.
+        const target = normalize(item.name);
+        const match = findMatch(cyberweapons, target);
+        if (match) {
+          const src = match.toObject();
+          item.img = src.img;
+          item.system = { ...src.system, equipped: 'equipped' };
+          cyberweaponMatches++;
+        }
       }
     }
   } catch (e) {
@@ -480,7 +494,9 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
   const created = await Actor.create(actorData);
   if (created) {
     const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
-    ui.notifications.info(\`✓ Created: \${created.name} — \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`);
+    let msg = \`✓ Created: \${created.name} — \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
+    if (cyberweaponMatches) msg += \`, \${cyberweaponMatches} combat cyberware matched to compendium\`;
+    ui.notifications.info(msg);
   } else {
     ui.notifications.error('Failed to create actor — check system compatibility.');
   }

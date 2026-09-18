@@ -437,7 +437,17 @@ function defaultState(): WizState {
 function loadWiz(): WizState {
   try {
     const raw = localStorage.getItem(WIZ_STORAGE_KEY)
-    if (raw) return { ...defaultState(), ...JSON.parse(raw) }
+    if (raw) {
+      const merged = { ...defaultState(), ...JSON.parse(raw) }
+      // HP/Humanity are computed from Attributes at the moment they're set —
+      // a character saved before that existed (or whose stats were tweaked
+      // some other way) can carry stale numbers that no longer match its
+      // STATs. Recompute on every load instead of trusting whatever was
+      // last written to storage.
+      merged.hp = computeHP(merged.stats.body, merged.stats.will)
+      merged.humanity = computeHumanity(merged.stats.emp)
+      return merged
+    }
   } catch { /* ignore */ }
   return defaultState()
 }
@@ -447,7 +457,8 @@ function saveWiz(s: WizState) {
 
 // Maps a completed Character Builder dossier onto PC Create's lifepath
 // fields. Not every Character Builder pick has a clean PC-sheet home, so
-// the full generated bio always goes into Notes as a readable fallback.
+// the full generated bio always goes into the sheet's Description as a
+// readable fallback, so nothing the player picked is silently dropped.
 function dossierToLifepath(picks: Record<string, number>): Record<string, string> {
   const opt = (id: string) => {
     const step = CB_STEPS.find(s => s.id === id)
@@ -455,8 +466,12 @@ function dossierToLifepath(picks: Record<string, number>): Record<string, string
     return step && idx !== undefined ? step.options[idx].t : ''
   }
   const out: Record<string, string> = {}
-  if (opt('homeland')) out.childhoodEnvironment = opt('homeland')
-  if (opt('family')) out.familyBackground = opt('family')
+  if (opt('homeland')) out.culturalOrigin = opt('homeland')
+  if (opt('family')) out.childhoodEnvironment = opt('family')
+  if (opt('crisis')) out.familyCrisis = opt('crisis')
+  if (opt('friend')) out.friends = opt('friend')
+  if (opt('enemy')) out.enemies = opt('enemy')
+  if (opt('loveAffair')) out.tragicLoveAffairs = opt('loveAffair')
   if (opt('temperament')) out.personality = opt('temperament')
   if (opt('style')) out.clothingStyle = opt('style')
   if (opt('detail')) out.affectations = opt('detail')
@@ -464,7 +479,6 @@ function dossierToLifepath(picks: Record<string, number>): Record<string, string
   if (opt('person')) out.valuedPerson = opt('person')
   if (opt('possession')) out.valuedPossession = opt('possession')
   if (opt('drive')) out.lifeGoals = opt('drive')
-  if (opt('scar')) out.familyCrisis = opt('scar')
   if (opt('rep')) out.roleLifepath = opt('rep')
   return out
 }
