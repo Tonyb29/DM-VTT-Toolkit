@@ -1004,6 +1004,21 @@ export function buildBio(picks: Record<string, number>) {
   return `${l1} ${l2} ${l3}`
 }
 
+// Every pick the player made, one line each, in step order — the short
+// buildBio paragraph above only touches about ten of them, so this is the
+// full record (allies, grudges, loves, native tongue, role-gated steps).
+export function buildDossierNotes(picks: Record<string, number>, exclude: ReadonlySet<string> = new Set()) {
+  const roleStep = STEPS.find(s => s.id === 'role')
+  const role = picks.role !== undefined && roleStep ? roleStep.options[picks.role].t : null
+  return STEPS
+    .filter(s => picks[s.id] !== undefined && !exclude.has(s.id) && (!s.roleGate || s.roleGate === role))
+    .map(s => {
+      const o = s.options[picks[s.id]]
+      return `${s.eyebrow}: ${o.t} — ${o.d}`
+    })
+    .join('\n')
+}
+
 function DieFace({ value, spinning }: { value: number | string; spinning: boolean }) {
   return (
     <div

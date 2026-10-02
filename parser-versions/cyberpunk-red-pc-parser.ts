@@ -133,6 +133,7 @@ export interface CPRPlayerCharacter {
   gear: string[];
   lifepath: Record<string, string>;
   notes: string;
+  playerNotes?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -400,7 +401,7 @@ export function toCyberpunkRedFoundryCharacter(pc: CPRPlayerCharacter): Record<s
         // reasonable starting snapshot, not load-bearing.
         run: { value: pc.stats.move * 3 }, walk: { value: pc.stats.move * 2 },
       },
-      information: { alias: '', description: pc.notes, history: '', notes: '' },
+      information: { alias: '', description: pc.notes, history: '', notes: pc.playerNotes || '' },
       reputation: { transactions: [], value: 0 },
       roleInfo: { activeRole: pc.role, activeNetRole: '' },
       wealth: { transactions: [], value: 0 },
@@ -477,6 +478,122 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
     console.warn('Cyberpunk RED weapon compendium lookup failed, using simplified weapons.', e);
   }
 
+  // Everything that isn't a weapon is exported as a bare stub (cyberware,
+  // gear, armor). Swap each for the real item(s) from the Cyberpunk RED Item
+  // compendiums by name, so they get the right type, stats and icon. The
+  // pack names don't match ours 1:1, so lookups are by squashed name
+  // (letters/digits only) and a few shapes are handled explicitly:
+  //  - ammo is "Very Heavy Pistol (Basic)", ours is "Basic VH Pistol Ammunition x30"
+  //  - armor is two items, "Light Armorjack (Body)" + "(Head)"
+  //  - programs are plain ("Sword"), ours carry a "Program: " prefix
+  //  - an outfit is separate pieces ("Generic Chic Top", "Leisurewear Footwear")
+  // Packs are discovered, not hard-coded; unmatched names are logged (F12).
+  let packMatches = 0, retyped = 0, expanded = 0;
+  const packNames = [], misses = [];
+  try {
+    const itemPacks = game.packs
+      .filter(pk => pk.documentName === 'Item' &&
+        (pk.collection.startsWith('cyberpunk-red-core.') || pk.metadata?.system === 'cyberpunk-red-core'))
+      .sort((a, b) => (b.collection.includes('.core_') ? 1 : 0) - (a.collection.includes('.core_') ? 1 : 0));
+    const squash = n => n.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const byKey = new Map();
+    const add = (k, doc) => { if (!byKey.has(k)) byKey.set(k, doc); };
+    for (const pk of itemPacks) {
+      packNames.push(pk.collection);
+      for (const doc of await pk.getDocuments()) {
+        add(squash(doc.name), doc);
+        // "Very Heavy Pistol (Basic)" is also reachable as "Basic Very Heavy Pistol"
+        const m = doc.name.match(/^(.*?)\\s*\\((.*)\\)\\s*$/);
+        if (m) add(squash(m[2] + ' ' + m[1]), doc);
+      }
+    }
+    console.info('Cyberpunk RED import: searched Item packs', packNames);
+
+    const find = (name, type) => {
+      const base = name
+        .replace(/\\s+x\\s*\\d+\\s*$/i, '')
+        .replace(/^program:\\s*/i, '')
+        .replace(/\\bvh\\b/gi, 'very heavy');
+      const tries = [base, base.replace(/\\s*\\(.*\\)\\s*$/, ''), base.replace(/\\s+(ammunition|ammo)$/i, '')];
+      for (const t of tries) {
+        const doc = byKey.get(squash(t));
+        if (doc && (!type || doc.type === type)) return doc;
+      }
+      return null;
+    };
+    const fromDoc = (doc, extra = {}) => {
+      const src = doc.toObject();
+      return {
+        _id: foundry.utils.randomID(16), name: src.name, type: src.type, img: src.img,
+        system: { ...src.system, equipped: 'equipped', ...extra },
+        effects: [], folder: null, sort: 0, ownership: { default: 0 }, flags: {},
+      };
+    };
+
+    const cat = /\\s+(bottoms?|tops?|footwear|jacket|jewelry|hat|glasses|mirrorshades|contact lenses)$/i;
+    const outfitPieces = inner => {
+      const docs = [];
+      for (const group of inner.split(',')) {
+        const parts = group.split('/').map(x => x.trim()).filter(Boolean);
+        if (!parts.length) continue;
+        const prefix = parts[0].replace(cat, '');
+        parts.forEach((part, idx) => {
+          const full = idx > 0 && cat.test(' ' + part) ? prefix + ' ' + part : part;
+          const doc = [full, full.replace(/tops$/i, 'Top'), full.replace(/s$/i, '')]
+            .map(c => find(c, 'clothing')).find(Boolean);
+          if (doc) docs.push(doc); else misses.push(full);
+        });
+      }
+      return docs;
+    };
+
+    const out = [];
+    for (const item of actorData.items) {
+      if (!['gear', 'cyberware', 'armor'].includes(item.type)) { out.push(item); continue; }
+      const qty = Number((item.name.match(/\\sx\\s*(\\d+)\\s*$/i) || [])[1]) || 1;
+
+      if (item.type === 'armor') {
+        const halves = ['Body', 'Head'].map(loc => byKey.get(squash(item.name + ' ' + loc))).filter(Boolean);
+        if (halves.length) { halves.forEach(d => out.push(fromDoc(d))); packMatches += halves.length; continue; }
+      }
+      const outfit = item.type === 'gear' && item.name.match(/outfit\\s*\\((.*)\\)\\s*$/i);
+      if (outfit) {
+        const pieces = outfitPieces(outfit[1]);
+        if (pieces.length) { pieces.forEach(d => out.push(fromDoc(d))); expanded += pieces.length; continue; }
+      }
+      const doc = find(item.name);
+      if (doc) {
+        out.push(fromDoc(doc, doc.type === 'ammo' || qty > 1 ? { amount: qty } : {}));
+        packMatches++;
+        continue;
+      }
+      misses.push(item.name);
+      if (item.type === 'gear') {
+        // No pack match — at least file it under the right category.
+        if (/ammunition|ammo\\b/i.test(item.name)) {
+          item.type = 'ammo'; item.system.amount = qty; retyped++;
+        } else if (/\\boutfit\\b|\\bclothing\\b|\\bjacket\\b|\\bfootwear\\b/i.test(item.name)) {
+          item.type = 'clothing'; retyped++;
+        } else if (/\\bshield\\b/i.test(item.name)) {
+          item.type = 'armor';
+          item.system = {
+            isBodyLocation: false, isHeadLocation: false, isShield: true,
+            bodyLocation: { sp: 0, ablation: 0 }, headLocation: { sp: 0, ablation: 0 },
+            shieldHitPoints: { value: 10, max: 10 },
+            equipped: 'equipped', description: { value: '' }, favorite: false, price: { market: 0 },
+            source: { book: 'Core', page: 0 },
+          };
+          retyped++;
+        }
+      }
+      out.push(item);
+    }
+    actorData.items = out;
+    if (misses.length) console.warn('Cyberpunk RED import: no compendium match for', misses);
+  } catch (e) {
+    console.warn('Cyberpunk RED item compendium lookup failed, leaving stub items.', e);
+  }
+
   // Never silently delete an existing actor — someone may have hand-tuned
   // it since the last import. Ask, and default to "no".
   const existing = game.actors.filter(a => a.name === actorData.name);
@@ -496,6 +613,7 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
     const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
     let msg = \`✓ Created: \${created.name} — \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
     if (cyberweaponMatches) msg += \`, \${cyberweaponMatches} combat cyberware matched to compendium\`;
+    msg += \`. Other items: \${packMatches} from compendium\${expanded ? \`, \${expanded} outfit pieces\` : ''}, \${retyped} re-filed by name\${misses.length ? \`; no match: \${misses.join(', ')}\` : ''}\`;
     ui.notifications.info(msg);
   } else {
     ui.notifications.error('Failed to create actor — check system compatibility.');

@@ -7,7 +7,7 @@ import {
   toCyberpunkRedFoundryCharacter, buildCyberpunkRedCharacterMacro,
   SKILL_CATALOG, PC_STAT_KEYS, PCStatKey, LIFEPATH_FIELDS, CPRPlayerCharacter,
 } from '../parser-versions/cyberpunk-red-pc-parser'
-import { STEPS as CB_STEPS, STORAGE_KEY as CB_STORAGE_KEY, SavedState as CBSavedState, buildBio as cbBuildBio } from './cyberpunk-red-character-builder'
+import { STEPS as CB_STEPS, STORAGE_KEY as CB_STORAGE_KEY, SavedState as CBSavedState, buildBio as cbBuildBio, buildDossierNotes as cbBuildNotes } from './cyberpunk-red-character-builder'
 
 const T = {
   bg: '#08050a', surface: '#120c16', surface2: '#1a1220',
@@ -412,6 +412,7 @@ type WizState = {
   humanity: number
   lifepath: Record<string, string>
   notes: string
+  playerNotes: string
   importedFromBuilder: boolean
   packageChoices: Record<string, number>
 }
@@ -429,7 +430,7 @@ function defaultState(): WizState {
     step: 0, name: '', role: '', roleAbility: '', roleRank: 4,
     stats: Object.fromEntries(PC_STAT_KEYS.map(k => [k, 5])) as Record<PCStatKey, number>,
     skillLevels: {}, weapons: [], armor: [], cyberware: [], gear: [],
-    hp: computeHP(5, 5), humanity: computeHumanity(5), lifepath: {}, notes: '', importedFromBuilder: false,
+    hp: computeHP(5, 5), humanity: computeHumanity(5), lifepath: {}, notes: '', playerNotes: '', importedFromBuilder: false,
     packageChoices: {},
   }
 }
@@ -463,11 +464,14 @@ function dossierToLifepath(picks: Record<string, number>): Record<string, string
   const opt = (id: string) => {
     const step = CB_STEPS.find(s => s.id === id)
     const idx = picks[id]
-    return step && idx !== undefined ? step.options[idx].t : ''
+    if (!step || idx === undefined) return ''
+    const o = step.options[idx]
+    return o.d ? `${o.t} — ${o.d}` : o.t
   }
   const out: Record<string, string> = {}
-  if (opt('homeland')) out.culturalOrigin = opt('homeland')
-  if (opt('family')) out.childhoodEnvironment = opt('family')
+  if (opt('tongue')) out.culturalOrigin = opt('tongue')
+  if (opt('homeland')) out.childhoodEnvironment = opt('homeland')
+  if (opt('family')) out.familyBackground = opt('family')
   if (opt('crisis')) out.familyCrisis = opt('crisis')
   if (opt('friend')) out.friends = opt('friend')
   if (opt('enemy')) out.enemies = opt('enemy')
@@ -480,10 +484,26 @@ function dossierToLifepath(picks: Record<string, number>): Record<string, string
   if (opt('possession')) out.valuedPossession = opt('possession')
   if (opt('drive')) out.lifeGoals = opt('drive')
   if (opt('rep')) out.roleLifepath = opt('rep')
+  // No dedicated builder step for these two, so derive them: the Signature
+  // Look pick covers clothes *and* hair, and Feelings About People blends
+  // Temperament with the Role's personal-ethics pick (Solo's Moral Compass
+  // or Media's Ethics) when there is one — the field is free text, so it
+  // stays editable on the sheet.
+  if (opt('style')) out.hairStyle = opt('style')
+  const feelings = ['temperament', 'soloMorality', 'mediaEthics'].map(opt).filter(Boolean)
+  if (feelings.length) out.aboutPeople = feelings.join(' / ')
   return out
 }
 
-function readCharacterBuilderDossier(): { role: string; bio: string; lifepath: Record<string, string> } | null {
+// Builder steps whose picks already land in a lifepath field — Player Notes
+// skips these so the same text isn't on the sheet twice.
+const LIFEPATH_STEP_IDS: ReadonlySet<string> = new Set([
+  'tongue', 'homeland', 'family', 'crisis', 'friend', 'enemy', 'loveAffair',
+  'temperament', 'soloMorality', 'mediaEthics', 'style', 'detail', 'value',
+  'person', 'possession', 'drive', 'rep',
+])
+
+function readCharacterBuilderDossier(): { role: string; bio: string; notes: string; lifepath: Record<string, string> } | null {
   try {
     const raw = localStorage.getItem(CB_STORAGE_KEY)
     if (!raw) return null
@@ -494,7 +514,7 @@ function readCharacterBuilderDossier(): { role: string; bio: string; lifepath: R
     if (saved.picks.role === undefined) return null
     const roleStep = CB_STEPS.find(s => s.id === 'role')
     const role = roleStep ? roleStep.options[saved.picks.role].t : ''
-    return { role, bio: cbBuildBio(saved.picks), lifepath: dossierToLifepath(saved.picks) }
+    return { role, bio: cbBuildBio(saved.picks), notes: cbBuildNotes(saved.picks, LIFEPATH_STEP_IDS), lifepath: dossierToLifepath(saved.picks) }
   } catch {
     return null
   }
@@ -538,7 +558,7 @@ export default function CyberpunkRedPCApp() {
 
   const importDossier = () => {
     if (!dossier) return
-    update({ role: dossier.role, lifepath: dossier.lifepath, notes: dossier.bio, importedFromBuilder: true, step: 1 })
+    update({ role: dossier.role, lifepath: dossier.lifepath, notes: dossier.bio, playerNotes: dossier.notes, importedFromBuilder: true, step: 1 })
     flashToast('Background imported from Character Builder')
   }
 
@@ -618,7 +638,7 @@ export default function CyberpunkRedPCApp() {
 
 function StartStep({ state, update, dossier, onImport, onNext }: {
   state: WizState; update: (p: Partial<WizState>) => void
-  dossier: { role: string; bio: string; lifepath: Record<string, string> } | null
+  dossier: { role: string; bio: string; notes: string; lifepath: Record<string, string> } | null
   onImport: () => void; onNext: () => void
 }) {
   return (
@@ -1143,6 +1163,7 @@ function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => 
     gear: [...pkgGear, ...state.gear],
     lifepath: state.lifepath,
     notes: state.notes,
+    playerNotes: state.playerNotes,
   }
 
   const foundryActor = toCyberpunkRedFoundryCharacter(pc)
@@ -1151,7 +1172,24 @@ function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => 
   const filledLifepath = LIFEPATH_FIELDS.filter(([, key]) => pc.lifepath[key])
 
   const copyText = (text: string, key: string) => {
-    navigator.clipboard.writeText(text).then(() => { setCopied(key); onCopy('Copied to clipboard'); setTimeout(() => setCopied(null), 1500) }).catch(() => onCopy('Copy failed — select manually'))
+    const done = () => { setCopied(key); onCopy('Copied to clipboard'); setTimeout(() => setCopied(null), 1500) }
+    // navigator.clipboard only exists on secure origins (https or exactly
+    // localhost) — over a LAN IP it is undefined and the old call threw
+    // before ever reaching .catch(), so fall back to a hidden textarea.
+    const legacyCopy = () => {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      let ok = false
+      try { ok = document.execCommand('copy') } catch { /* ignore */ }
+      document.body.removeChild(ta)
+      if (ok) done(); else onCopy('Copy failed — use Download JSON instead')
+    }
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(legacyCopy)
+    else legacyCopy()
   }
 
   return (
@@ -1227,7 +1265,10 @@ function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => 
             const a = document.createElement('a')
             a.href = URL.createObjectURL(blob)
             a.download = `${pc.name.replace(/\s+/g, '-').toLowerCase()}.json`
+            document.body.appendChild(a)
             a.click()
+            document.body.removeChild(a)
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000)
           }} style={{ flex: 1, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 7, padding: '8px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer', color: T.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <Download size={12} /> Download JSON
           </button>
