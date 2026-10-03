@@ -8,6 +8,8 @@
 // defaults for any field a document omits, the same way our NPC "mook"
 // exporter's sparse weapon/armor items already work when imported.
 
+import { PACK_LOOKUP_JS, INSTALL_LINK_JS } from './cyberpunk-red-macro-snippets';
+
 const CPR_SYS_ID  = 'cyberpunk-red-core';
 const CPR_SYS_VER = 'v0.92.4';
 const CPR_CORE_VER = '12.343';
@@ -488,47 +490,11 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
   //  - programs are plain ("Sword"), ours carry a "Program: " prefix
   //  - an outfit is separate pieces ("Generic Chic Top", "Leisurewear Footwear")
   // Packs are discovered, not hard-coded; unmatched names are logged (F12).
+  ${PACK_LOOKUP_JS}
   let packMatches = 0, retyped = 0, expanded = 0;
-  const packNames = [], misses = [];
+  const misses = [];
   try {
-    const itemPacks = game.packs
-      .filter(pk => pk.documentName === 'Item' &&
-        (pk.collection.startsWith('cyberpunk-red-core.') || pk.metadata?.system === 'cyberpunk-red-core'))
-      .sort((a, b) => (b.collection.includes('.core_') ? 1 : 0) - (a.collection.includes('.core_') ? 1 : 0));
-    const squash = n => n.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const byKey = new Map();
-    const add = (k, doc) => { if (!byKey.has(k)) byKey.set(k, doc); };
-    for (const pk of itemPacks) {
-      packNames.push(pk.collection);
-      for (const doc of await pk.getDocuments()) {
-        add(squash(doc.name), doc);
-        // "Very Heavy Pistol (Basic)" is also reachable as "Basic Very Heavy Pistol"
-        const m = doc.name.match(/^(.*?)\\s*\\((.*)\\)\\s*$/);
-        if (m) add(squash(m[2] + ' ' + m[1]), doc);
-      }
-    }
-    console.info('Cyberpunk RED import: searched Item packs', packNames);
-
-    const find = (name, type) => {
-      const base = name
-        .replace(/\\s+x\\s*\\d+\\s*$/i, '')
-        .replace(/^program:\\s*/i, '')
-        .replace(/\\bvh\\b/gi, 'very heavy');
-      const tries = [base, base.replace(/\\s*\\(.*\\)\\s*$/, ''), base.replace(/\\s+(ammunition|ammo)$/i, '')];
-      for (const t of tries) {
-        const doc = byKey.get(squash(t));
-        if (doc && (!type || doc.type === type)) return doc;
-      }
-      return null;
-    };
-    const fromDoc = (doc, extra = {}) => {
-      const src = doc.toObject();
-      return {
-        _id: foundry.utils.randomID(16), name: src.name, type: src.type, img: src.img,
-        system: { ...src.system, equipped: 'equipped', ...extra },
-        effects: [], folder: null, sort: 0, ownership: { default: 0 }, flags: {},
-      };
-    };
+    await loadPacks();
 
     const cat = /\\s+(bottoms?|tops?|footwear|jacket|jewelry|hat|glasses|mirrorshades|contact lenses)$/i;
     const outfitPieces = inner => {
@@ -609,11 +575,16 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
   }
 
   const created = await Actor.create(actorData);
+
+  ${INSTALL_LINK_JS}
+  const installedCount = created ? await linkInstalledCyberware(created) : 0;
+
   if (created) {
     const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
     let msg = \`✓ Created: \${created.name} — \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
     if (cyberweaponMatches) msg += \`, \${cyberweaponMatches} combat cyberware matched to compendium\`;
     msg += \`. Other items: \${packMatches} from compendium\${expanded ? \`, \${expanded} outfit pieces\` : ''}, \${retyped} re-filed by name\${misses.length ? \`; no match: \${misses.join(', ')}\` : ''}\`;
+    if (installedCount) msg += \`. \${installedCount} cyberware option(s) installed into foundational pieces\`;
     ui.notifications.info(msg);
   } else {
     ui.notifications.error('Failed to create actor — check system compatibility.');

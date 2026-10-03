@@ -5,7 +5,7 @@ A browser-based toolkit that converts D&D 5e stat blocks into Foundry VTT / Fant
 **Current version:** v4.6-alpha (Phase 18b complete)
 **Primary target:** Foundry VTT + dnd5e system v4.0+ / v5.x
 **Secondary target:** Fantasy Grounds Unity (2024 schema)
-**Scope:** D&D 5e only — intentionally single-system
+**Scope:** The main app is D&D 5e only. Other systems live on separate standalone pages (see [Standalone System Pages](#standalone-system-pages))
 **Status:** Active development — approaching production-ready
 
 ---
@@ -153,6 +153,26 @@ Track moon phases, celestial events, boons & pitfalls, and generate Foundry modu
 
 ---
 
+## Standalone System Pages
+
+Separate pages built by Vite (see `vite.config.ts`). They are intentionally **not** linked from the main app's navigation — reach them by URL.
+
+### Cyberpunk RED — `dmtoolkit.org/cyberpunk-red`
+**Character Builder (Edgerunner Builder)** — walks through a lifepath "Dossier" (homeland, native tongue, household, family crisis, ally, grudge, tragic love, temperament, war, Role, signature look, motivation, and role-gated steps for all 10 Roles). Each step can be chosen or rolled; a "Roll Everything" / "Fill In the Rest" option fills the gaps. Only Role is required.
+
+**PC Creator** — builds a Foundry-ready player character (STATs, skills, gear, cyberware, lifepath) and can import the Dossier.
+
+**Export:** Copy Import Macro / Copy JSON / Download JSON. Requires Foundry VTT with the **Cyberpunk RED - Core** system (`cyberpunk-red-core`, tested on v0.92.4 / Foundry 12).
+
+How the Dossier lands on the actor:
+- **Lifepath fields** are filled as `Title — description`: Native Tongue → Cultural Origins, Homeland → Childhood Environment, Household → Family Background, Family Crisis, Closest Ally → Friends, Old Grudge → Enemies, Tragic Love → Lovers, Temperament → Personality, Signature Look → Clothing Style and Hairstyle, Signature Detail → Affectations, Core Value / Valued Person / Valued Possession, Life Goals, Reputation → Role Lifepath.
+- **Feelings About People** combines Temperament with the Role's personal-ethics pick (Solo Moral Compass or Media Ethics), when present.
+- **Description** holds the short bio paragraph. **Player Notes** holds every remaining pick (age, war, turning point, Role and role-gated steps); picks already shown in a lifepath field are left out.
+
+**Import macro:** replaces the tool's stub items with the real ones from the system's Item compendiums (found by scanning all `cyberpunk-red-core` Item packs, matched by name): weapons, ammo (`Very Heavy Pistol (Basic)` style names, with quantities), armor (Body + Head halves), shields, programs, and outfits expanded into their individual clothing pieces. Foundational cyberware (e.g. Neural Link) gets compatible options installed into its slots after the actor is created. The NPC (mook) import macro uses the same compendium matching for armor and cyberware (its weapons and combat cyberware were already matched). Anything without a match is listed in the import message and the browser console (F12) and kept as a basic item filed under the closest category.
+
+---
+
 ## Development
 
 ```bash
@@ -193,7 +213,9 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=3000 conne
 ```
 /
 ├── src/
-│   └── App.tsx                          # Tab host — all 7 tabs, encounter state, callbacks
+│   ├── App.tsx                          # Tab host — all 7 tabs, encounter state, callbacks
+│   ├── cyberpunk-red-character-builder.tsx  # Cyberpunk RED lifepath Dossier steps + bio/notes
+│   └── cyberpunk-red-pc-app.tsx         # Cyberpunk RED PC Creator + Dossier → lifepath mapping
 ├── parser-versions/
 │   ├── dnd-parser-v20-stable.tsx        # Core parser + StatBlockParser component (Tab 1)
 │   ├── batch-processor.tsx              # Batch Processor + AI Name Mode (Tab 2)
@@ -207,6 +229,9 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=3000 conne
 │   ├── celestial-foundry-export.ts      # Foundry module ZIP generator
 │   ├── claude-api.ts                    # Anthropic SDK — all AI calls isolated here
 │   ├── fantasy-grounds-exporter.ts      # FGU 2024 XML formatter
+│   ├── cyberpunk-red-pc-parser.ts       # Cyberpunk RED PC → Foundry actor + import macro
+│   ├── cyberpunk-red-parser.ts          # Cyberpunk RED NPC (mook) stat block → Foundry actor + import macro
+│   ├── cyberpunk-red-macro-snippets.ts  # Compendium-lookup / cyberware-install JS shared by both macros
 │   └── settings-modal.tsx              # API key management
 ├── campaign/
 │   └── Echoes of the Aether/           # Raw campaign source files

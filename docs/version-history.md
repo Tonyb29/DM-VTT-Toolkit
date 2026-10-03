@@ -2,6 +2,37 @@
 
 ---
 
+## Cyberpunk RED Character Builder — lifepath export & compendium matching (2026-10-01)
+
+Standalone page (`/cyberpunk-red`), separate from the D&D 5e tabs. Fixes and additions to how the builder's Dossier and PC gear reach Foundry:
+
+### Lifepath export
+- Fixed field mapping: Native Tongue → Cultural Origins, Homeland → Childhood Environment, Household → Family Background (previously Homeland went to Cultural Origins, Household to Childhood Environment, and Family Background was never set)
+- Closest Ally / Old Grudge / Tragic Love now reach Friends / Enemies / Lovers
+- Every lifepath field now carries `Title — description` instead of the title alone
+- Hairstyle derived from Signature Look; Feelings About People derived from Temperament + Solo Moral Compass / Media Ethics
+- Player Notes (`information.notes`) now holds the remaining Dossier picks (age, war, turning point, Role and role-gated steps); picks already in a lifepath field are excluded. Description keeps the short bio paragraph
+- `buildDossierNotes()` added to the builder; `LIFEPATH_STEP_IDS` in the PC app lists the steps excluded from notes
+
+### Import macro
+- Non-weapon items are matched by name against all `cyberpunk-red-core` Item compendium packs (packs discovered at runtime, not hard-coded) and replaced with the real items — correct type, stats, icon
+- Handles the system's naming: ammo (`Very Heavy Pistol (Basic)`), armor as Body + Head items, `Bullet Proof Shield`, programs without a `Program:` prefix, outfits expanded into individual clothing pieces; `xN` suffixes become item quantities
+- Unmatched items are re-filed by name (`ammo` / `clothing` / armor shield) and reported in the import message and console
+- Cyberware options are installed into compatible foundational cyberware (e.g. Neural Link) after actor creation: parent `installedItems.list` gets the option's id and `usedSlots` grows by its size
+
+### NPC (mook) import macro
+- Armor and non-combat cyberware are now matched against the compendiums too (weapons and combat cyberware already were). Armor becomes the system's `(Body)` + `(Head)` pair, keeping the SP stated in the stat block; cyberware options are installed into compatible foundational pieces after creation
+- Unmatched armor/cyberware is listed in the import message and console and kept as a basic item
+- Lookup and install code shared with the PC macro via `parser-versions/cyberpunk-red-macro-snippets.ts`
+
+### Export buttons
+- Copy falls back to a hidden-textarea copy when `navigator.clipboard` is unavailable (non-secure origins); Download JSON attaches its link to the page and releases the blob URL
+
+### Files
+`src/cyberpunk-red-character-builder.tsx`, `src/cyberpunk-red-pc-app.tsx`, `parser-versions/cyberpunk-red-pc-parser.ts`, `parser-versions/cyberpunk-red-parser.ts`, `parser-versions/cyberpunk-red-macro-snippets.ts`
+
+---
+
 ## v4.6-alpha — Phase 18 (2026-04-03)
 
 ### Magic Item Creator — Tab 6

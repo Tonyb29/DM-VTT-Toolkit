@@ -4,6 +4,8 @@
 
 import { SKILL_CATALOG, SkillDef } from './cyberpunk-red-pc-parser';
 
+import { PACK_LOOKUP_JS, INSTALL_LINK_JS } from './cyberpunk-red-macro-snippets';
+
 const CPR_SYS_ID  = 'cyberpunk-red-core';
 const CPR_SYS_VER = 'v0.92.4';
 const CPR_CORE_VER = '12.343';
@@ -551,6 +553,7 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
   // live in core_cyberware as isWeapon items with their combat stats
   // already attached, so that's checked second.
   let weaponMatches = 0, weaponCustom = 0, cyberweaponMatches = 0;
+  const matchedCyber = new Set();
   try {
     const normalize = s => s.toLowerCase().replace(/^(poor|excellent)\\s+quality\\s+/, '').trim();
     const findMatch = (list, target) =>
@@ -591,11 +594,51 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
           item.img = src.img;
           item.system = { ...src.system, equipped: 'equipped' };
           cyberweaponMatches++;
+          matchedCyber.add(item);
         }
       }
     }
   } catch (e) {
     console.warn('Cyberpunk RED weapon compendium lookup failed, using simplified weapons.', e);
+  }
+
+  // Armor and the rest of the cyberware: swap the tool's bare stubs for the
+  // real compendium items (right type, stats, icon). The system stores armor
+  // as two items, "Light Armorjack (Body)" and "(Head)", so a matched armor
+  // entry becomes that pair — with the SP this stat block actually states,
+  // in case it differs from the stock value. Combat cyberware was handled
+  // above; anything unmatched stays as the stub.
+  ${PACK_LOOKUP_JS}
+  let armorMatches = 0, cyberMatches = 0;
+  const unmatched = [];
+  try {
+    await loadPacks();
+    const out = [];
+    for (const item of actorData.items) {
+      if (item.type === 'armor') {
+        const halves = ['Body', 'Head'].map(loc => byKey.get(squash(item.name + ' ' + loc))).filter(Boolean);
+        if (halves.length) {
+          for (const doc of halves) {
+            const built = fromDoc(doc);
+            if (/\\(head\\)\\s*$/i.test(doc.name)) built.system.headLocation = { ...built.system.headLocation, sp: item.system.headLocation.sp };
+            else built.system.bodyLocation = { ...built.system.bodyLocation, sp: item.system.bodyLocation.sp };
+            out.push(built);
+          }
+          armorMatches += halves.length;
+          continue;
+        }
+        unmatched.push(item.name);
+      } else if (item.type === 'cyberware' && !matchedCyber.has(item)) {
+        const doc = find(item.name, 'cyberware');
+        if (doc) { out.push(fromDoc(doc)); cyberMatches++; continue; }
+        unmatched.push(item.name);
+      }
+      out.push(item);
+    }
+    actorData.items = out;
+    if (unmatched.length) console.warn('Cyberpunk RED import: no compendium match for', unmatched);
+  } catch (e) {
+    console.warn('Cyberpunk RED armor/cyberware compendium lookup failed, using simplified items.', e);
   }
 
   // Never silently delete an existing actor — someone may have hand-tuned
@@ -613,11 +656,17 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
   }
 
   const created = await Actor.create(actorData);
+  ${INSTALL_LINK_JS}
+  const installedCount = created ? await linkInstalledCyberware(created) : 0;
   if (created) {
     const skillCount = actorData.items.filter(i => i.type === 'skill').length;
     const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
     let msg = \`✓ Created: \${created.name} — \${skillCount} skills, \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
     if (cyberweaponMatches) msg += \`, \${cyberweaponMatches} combat cyberware matched to compendium\`;
+    if (armorMatches) msg += \`, \${armorMatches} armor piece(s) from compendium\`;
+    if (cyberMatches) msg += \`, \${cyberMatches} cyberware from compendium\`;
+    if (installedCount) msg += \`, \${installedCount} cyberware option(s) installed\`;
+    if (unmatched.length) msg += \`; no compendium match: \${unmatched.join(', ')}\`;
     if (unrecognizedSkills.length) msg += \`. \${unrecognizedSkills.length} skill name(s) not recognized — defaulted to REF.\`;
     ui.notifications.info(msg);
     if (unrecognizedSkills.length) console.warn('Cyberpunk RED import — unrecognized skills (defaulted to REF, check governing stat manually):', unrecognizedSkills);
