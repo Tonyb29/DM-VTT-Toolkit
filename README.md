@@ -162,6 +162,8 @@ Separate pages built by Vite (see `vite.config.ts`). They are intentionally **no
 
 **PC Creator** — builds a Foundry-ready player character (STATs, skills, gear, cyberware, lifepath) and can import the Dossier.
 
+**Role-aware advice:** on the Attributes step, the ten pre-rolled stat spreads are color-coded by how well they suit the chosen Role, with a panel (build lean, strengths, weak spots, skill-point placement) for the spread you hover or pick. The Skills step has a "Suggest a spread" button that fills in a starting skill allocation for your stats.
+
 **Export:** Copy Import Macro / Copy JSON / Download JSON. Requires Foundry VTT with the **Cyberpunk RED - Core** system (`cyberpunk-red-core`, tested on v0.92.4 / Foundry 12).
 
 How the Dossier lands on the actor:
@@ -215,7 +217,8 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=3000 conne
 ├── src/
 │   ├── App.tsx                          # Tab host — all 7 tabs, encounter state, callbacks
 │   ├── cyberpunk-red-character-builder.tsx  # Cyberpunk RED lifepath Dossier steps + bio/notes
-│   └── cyberpunk-red-pc-app.tsx         # Cyberpunk RED PC Creator + Dossier → lifepath mapping
+│   ├── cyberpunk-red-pc-app.tsx         # Cyberpunk RED PC Creator + Dossier → lifepath mapping
+│   └── cyberpunk-red-build-advice.ts    # Role stat weights, build styles, array scoring, skill-spread suggestions
 ├── parser-versions/
 │   ├── dnd-parser-v20-stable.tsx        # Core parser + StatBlockParser component (Tab 1)
 │   ├── batch-processor.tsx              # Batch Processor + AI Name Mode (Tab 2)

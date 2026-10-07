@@ -7,6 +7,7 @@ import {
   toCyberpunkRedFoundryCharacter, buildCyberpunkRedCharacterMacro,
   SKILL_CATALOG, PC_STAT_KEYS, PCStatKey, LIFEPATH_FIELDS, CPRPlayerCharacter,
 } from '../parser-versions/cyberpunk-red-pc-parser'
+import { ROLE_ADVICE, rankArrays, statCallouts, suggestSkillSpread, type Stats as AdviceStats } from './cyberpunk-red-build-advice'
 import { STEPS as CB_STEPS, STORAGE_KEY as CB_STORAGE_KEY, SavedState as CBSavedState, buildBio as cbBuildBio, buildDossierNotes as cbBuildNotes } from './cyberpunk-red-character-builder'
 
 const T = {
@@ -757,6 +758,68 @@ function PlaceholderBanner({ children }: { children: React.ReactNode }) {
   )
 }
 
+// What a low score in a Role's key stat means in play — short, our own words.
+const WEAK_STAT_TIPS: Partial<Record<PCStatKey, string>> = {
+  int: 'knowledge and awareness skills will lag — lean on teammates or specialize narrowly.',
+  ref: 'ranged attacks and driving are shaky — favor tools, melee, or letting others shoot.',
+  dex: 'dodging and finesse suffer — armor and cover matter more.',
+  tech: 'repair and tech skills cost more for less — rely on a teammate or buy the work.',
+  cool: 'social skills are harder — let high-EMP or high-COOL allies front for you.',
+  will: 'low stress resistance and fewer HP — protect yourself with armor and distance.',
+  body: 'low HP and carrying power — avoid taking hits.',
+  emp: 'reading people is harder and cyberware costs more humanity to keep.',
+}
+const TIER_COLOR = { strong: T.green, workable: T.gold, weak: T.textDim } as const
+const TIER_LABEL = { strong: 'Strong fit', workable: 'Workable fit', weak: 'Weaker fit' } as const
+
+function ArrayAdvicePanel({ role, array, pool }: {
+  role: string; array: { roll: number; values: Record<PCStatKey, number> }; pool: SkillPool | undefined
+}) {
+  const ranking = rankArrays(role, STAT_ARRAYS as { roll: number; values: AdviceStats }[])
+  const fit = ranking?.[array.roll]
+  if (!fit) return null
+  const stats = array.values as AdviceStats
+  const { strengths, weakSpots } = statCallouts(role, stats)
+  const total = PC_STAT_KEYS.reduce((n, k) => n + array.values[k], 0)
+  const totals = STAT_ARRAYS.map(a => PC_STAT_KEYS.reduce((n, k) => n + a.values[k], 0))
+  const spread = pool ? suggestSkillSpread(role, stats, pool) : null
+  const label = (k: string) => k.toUpperCase()
+  const row = (title: string, body: React.ReactNode) => (
+    <div style={{ fontSize: 12.5, color: T.text, lineHeight: 1.55, marginTop: 6 }}>
+      <span style={{ color: T.textMuted, fontWeight: 700 }}>{title} </span>{body}
+    </div>
+  )
+  return (
+    <div style={{ background: T.surface2, border: `1px solid ${TIER_COLOR[fit.tier]}66`, borderRadius: 8, padding: '12px 14px', marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline' }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: T.text }}>Roll {array.roll} as a {role}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: TIER_COLOR[fit.tier], textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          {TIER_LABEL[fit.tier]} · #{fit.rank} of 10
+        </span>
+      </div>
+      <div style={{ fontSize: 11.5, color: T.textDim, marginTop: 2 }}>
+        {ROLE_ADVICE[role].summary} This spread totals {total} stat points (the ten range {Math.min(...totals)}–{Math.max(...totals)}).
+      </div>
+      {row('Build lean:', <><b style={{ color: T.gold }}>{fit.style.name}</b> — {fit.style.blurb}</>)}
+      {strengths.length > 0 && row('Strong where it counts:', strengths.map(c => `${label(c.stat)} ${c.value}`).join(', '))}
+      {weakSpots.map(c => (
+        <div key={c.stat}>{row(`Watch ${label(c.stat)} ${c.value}:`, WEAK_STAT_TIPS[c.stat] ?? 'plan around it.')}</div>
+      ))}
+      {spread && (
+        <>
+          {row(`Skill points (${pool!.points}):`, 'push these to ' + pool!.max + ' —')}
+          <div style={{ fontSize: 12, color: T.green, marginLeft: 8 }}>{spread.top.join(' · ')}</div>
+          {spread.mid.length > 0 && row(`Mid (${pool!.default}):`, spread.mid.join(' · '))}
+          {spread.low.length > 0 && row(`Keep at ${pool!.min}:`, spread.low.join(' · '))}
+          <div style={{ fontSize: 11, color: T.textDim, marginTop: 8 }}>
+            On the Skills step, “Suggest a spread” fills this in for whatever stats you end up with. It's a starting point — adjust freely.
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function AttributesStep({ state, update, onBack, onNext }: {
   state: WizState; update: (p: Partial<WizState>) => void; onBack: () => void; onNext: () => void
 }) {
@@ -768,6 +831,11 @@ function AttributesStep({ state, update, onBack, onNext }: {
     update({ stats: { ...values }, hp: computeHP(values.body, values.will), humanity: computeHumanity(values.emp) })
   }
   const seriouslyWounded = Math.ceil(state.hp / 2)
+  const [preview, setPreview] = useState<number | null>(null)
+  const ranking = rankArrays(state.role, STAT_ARRAYS as { roll: number; values: AdviceStats }[])
+  const activeRoll = STAT_ARRAYS.find(a => PC_STAT_KEYS.every(k => a.values[k] === state.stats[k]))?.roll ?? null
+  const shownRoll = preview ?? activeRoll
+  const shownArray = STAT_ARRAYS.find(a => a.roll === shownRoll)
   return (
     <div style={{ padding: '24px 26px' }}>
       <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.red, fontWeight: 700 }}>Step 3 of 6</div>
@@ -779,23 +847,52 @@ function AttributesStep({ state, update, onBack, onNext }: {
 
       <div style={{ background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: '14px 16px', marginBottom: 20 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Rolled a d10 in Person?</div>
-        <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 10 }}>Click the number that matches your roll to fill in that spread instantly.</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {STAT_ARRAYS.map(a => (
-            <button
-              key={a.roll}
-              onClick={() => applyArray(a.values)}
-              title={PC_STAT_KEYS.map(k => `${k.toUpperCase()} ${a.values[k]}`).join(' · ')}
-              style={{
-                width: 34, height: 34, borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: 13,
-                background: T.surface, border: `1px solid ${T.border}`, color: T.text,
-              }}
-            >
-              {a.roll}
-            </button>
-          ))}
+        <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 10 }}>
+          Click the number that matches your roll to fill in that spread instantly.
+          {ranking && <> Colors show how well each spread suits a <b style={{ color: T.text }}>{state.role}</b>:
+            <span style={{ color: T.green }}> ● strong</span>
+            <span style={{ color: T.gold }}> ● workable</span>
+            <span style={{ color: T.textDim }}> ● weaker</span>. Hover one for advice.</>}
         </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {STAT_ARRAYS.map(a => {
+            const fit = ranking?.[a.roll]
+            const color = fit ? TIER_COLOR[fit.tier] : T.border
+            return (
+              <button
+                key={a.roll}
+                onClick={() => { applyArray(a.values); setPreview(a.roll) }}
+                onMouseEnter={() => setPreview(a.roll)}
+                onMouseLeave={() => setPreview(null)}
+                onFocus={() => setPreview(a.roll)}
+                onBlur={() => setPreview(null)}
+                title={PC_STAT_KEYS.map(k => `${k.toUpperCase()} ${a.values[k]}`).join(' · ') +
+                  (fit ? `\n${TIER_LABEL[fit.tier]} for ${state.role} (#${fit.rank} of 10, leans ${fit.style.name})` : '')}
+                style={{
+                  width: 34, height: 34, borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                  background: activeRoll === a.roll ? `${color}22` : T.surface,
+                  border: `1px solid ${fit ? color : T.border}`,
+                  borderBottom: `3px solid ${color}`, color: T.text,
+                }}
+              >
+                {a.roll}
+              </button>
+            )
+          })}
+        </div>
+        {!ranking && state.role === '' && (
+          <div style={{ fontSize: 11.5, color: T.textDim, marginTop: 8 }}>Pick a Role first to see which spreads suit it.</div>
+        )}
       </div>
+
+      {ranking && shownArray && (
+        <ArrayAdvicePanel role={state.role} array={shownArray} pool={ROLE_SKILL_SETS[state.role]} />
+      )}
+      {ranking && !shownArray && (
+        <div style={{ fontSize: 12, color: T.textDim, margin: '-8px 0 20px' }}>
+          Hover a number to see how that spread plays as a {state.role} — and where to put your skill points.
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 10, marginBottom: 20 }}>
         {PC_STAT_KEYS.map(k => (
@@ -860,6 +957,7 @@ function CareerSkillsStep({ state, update, onBack, onNext, pool }: {
   const valueOf = (name: string) => state.skillLevels[name] ?? pool.default
   const spent = pool.skills.reduce((sum, name) => sum + valueOf(name), 0)
   const remaining = pool.points - spent
+  const suggestion = suggestSkillSpread(state.role, state.stats as AdviceStats, pool)
 
   const setLevel = (name: string, v: number) => {
     const clamped = Math.max(pool.min, Math.min(pool.max, v))
@@ -881,6 +979,21 @@ function CareerSkillsStep({ state, update, onBack, onNext, pool }: {
       }}>
         {remaining === 0 ? 'All points spent ✓' : `Points Remaining: ${remaining}`}
       </div>
+
+      {suggestion && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>
+          <div style={{ flex: 1, minWidth: 220, fontSize: 12, color: T.textMuted, lineHeight: 1.5 }}>
+            <b style={{ color: T.gold }}>{suggestion.style.name}</b> build for your current stats: {suggestion.top.length} skills at {pool.max},
+            {' '}{suggestion.mid.length} at {pool.default}, {suggestion.low.length} at {pool.min}. {suggestion.style.blurb}
+          </div>
+          <button
+            onClick={() => update({ skillLevels: { ...state.skillLevels, ...suggestion.levels } })}
+            style={{ background: T.surface, border: `1px solid ${T.gold}`, color: T.gold, borderRadius: 6, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Wand2 size={13} /> Suggest a spread
+          </button>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 8, marginBottom: 18 }}>
         {pool.skills.map(name => {

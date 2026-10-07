@@ -2,6 +2,15 @@
 
 ---
 
+## Cyberpunk RED PC Creator — role-aware stat and skill advice (2026-10-07)
+
+- The ten pre-rolled stat spreads on the Attributes step are scored against the Role (from the Character Builder / Role step): each button is colored strong / workable / weaker fit, and hovering or clicking one shows a panel — build lean (two styles per Role), stats that are strong or worth watching, the spread's total stat points, and where to put skill points
+- Skills step: "Suggest a spread" fills the Role's career skills for the current stats — signature skills at the max, the next tier at the default, the rest at the minimum, sized to total the pool exactly (86). Opt-in; levels stay editable
+- Advice data (stat weights, two build styles and signature skills per Role) lives in `src/cyberpunk-red-build-advice.ts`; directional guidance in our own words, not rules text
+- Files: `src/cyberpunk-red-build-advice.ts` (new), `src/cyberpunk-red-pc-app.tsx`
+
+---
+
 ## Cyberpunk RED Character Builder — lifepath export & compendium matching (2026-10-01)
 
 Standalone page (`/cyberpunk-red`), separate from the D&D 5e tabs. Fixes and additions to how the builder's Dossier and PC gear reach Foundry:
