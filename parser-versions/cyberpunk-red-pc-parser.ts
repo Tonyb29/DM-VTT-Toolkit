@@ -128,6 +128,7 @@ export interface CPRPlayerCharacter {
   stats: Record<PCStatKey, number>;
   hp: number;
   humanity: number;
+  humanityExplicit?: boolean;
   skillLevels: Map<string, number>;
   weapons: PCWeapon[];
   armor: PCArmor[];
@@ -243,7 +244,7 @@ export function parseCyberpunkRedPC(text: string): CPRPlayerCharacter | null {
     if (v) lifepath[key] = v;
   }
 
-  return { name, role, roleRank, stats, hp, humanity, skillLevels, weapons, armor, cyberware, gear, lifepath, notes };
+  return { name, role, roleRank, stats, hp, humanity, humanityExplicit: !!humanityRaw, skillLevels, weapons, armor, cyberware, gear, lifepath, notes };
 }
 
 // ─── Foundry Exporter ───────────────────────────────────────────────────────
@@ -384,7 +385,7 @@ export function toCyberpunkRedFoundryCharacter(pc: CPRPlayerCharacter): Record<s
   return {
     _id: makeId(pc.name, 'actor', 0),
     name: pc.name, type: 'character', img: 'icons/svg/mystery-man.svg',
-    effects: [], folder: null, flags: {}, ownership: { default: 0 }, _stats: _stats(),
+    effects: [], folder: null, flags: pc.humanityExplicit ? {} : { dmtoolkit: { chromeHumanity: true } }, ownership: { default: 0 }, _stats: _stats(),
     system: {
       externalData: {
         currentArmorHead: { value: maxHeadSp, max: maxHeadSp },
@@ -579,6 +580,41 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
     console.warn('Cyberpunk RED item compendium lookup failed, leaving stub items.', e);
   }
 
+  // Humanity from installed chrome (Core Book, cyberware chapter). Foundry
+  // never recomputes these stored values, so they have to be right here.
+  //  - base = EMP x 10 (the EMP chosen in the builder is the pre-chrome one)
+  //  - value = base - sum of each piece's STATIC Humanity Loss (creation uses
+  //    the preset number, never the dice)
+  //  - max drops by 2 per piece that costs Humanity (4 for borgware); a piece
+  //    with 0 Humanity Loss doesn't lower it
+  //  - EMP is the tens place of Humanity (and its max follows the max)
+  // Skipped when the text gave an explicit HUMANITY, which we trust as-is.
+  let humanityNote = '';
+  try {
+    if (actorData.flags?.dmtoolkit?.chromeHumanity) {
+      let hlTotal = 0, maxLoss = 0, pieces = 0;
+      for (const it of actorData.items) {
+        if (it.type !== 'cyberware') continue;
+        const hl = Number(it.system?.humanityLoss?.static) || 0;
+        if (hl <= 0) continue;
+        hlTotal += hl; pieces++;
+        maxLoss += /borg/i.test(String(it.system?.type || '')) ? 4 : 2;
+      }
+      if (hlTotal > 0) {
+        const hum = actorData.system.derivedStats.humanity;
+        const base = hum.max;
+        hum.value = Math.max(0, base - hlTotal);
+        hum.max = Math.max(0, base - maxLoss);
+        actorData.system.stats.emp.value = Math.floor(hum.value / 10);
+        actorData.system.stats.emp.max = Math.floor(hum.max / 10);
+        humanityNote = \`. Humanity \${hum.value}/\${hum.max} after \${hlTotal} loss from \${pieces} piece(s), EMP \${actorData.system.stats.emp.value}\`;
+      }
+    }
+  } catch (e) {
+    console.warn('Cyberpunk RED Humanity-from-chrome calculation failed; leaving Humanity at EMP x 10.', e);
+  }
+  if (actorData.flags) delete actorData.flags.dmtoolkit;
+
   // Never silently delete an existing actor — someone may have hand-tuned
   // it since the last import. Ask, and default to "no".
   const existing = game.actors.filter(a => a.name === actorData.name);
@@ -608,6 +644,7 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
     msg += \`. Other items: \${packMatches} from compendium\${expanded ? \`, \${expanded} outfit pieces\` : ''}, \${retyped} re-filed by name\${misses.length ? \`; no match: \${misses.join(', ')}\` : ''}\`;
     msg += roleMatched ? '. Role matched to compendium' : '. Role left as a stub (no compendium match)';
     if (installedCount) msg += \`. \${installedCount} cyberware option(s) installed into foundational pieces\`;
+    msg += humanityNote;
     if (loadedCount) msg += \`. \${loadedCount} weapon(s) loaded with ammo\`;
     ui.notifications.info(msg);
     created.sheet.render(true);
