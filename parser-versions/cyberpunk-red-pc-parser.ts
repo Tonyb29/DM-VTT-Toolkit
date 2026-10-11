@@ -491,7 +491,7 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
   //  - an outfit is separate pieces ("Generic Chic Top", "Leisurewear Footwear")
   // Packs are discovered, not hard-coded; unmatched names are logged (F12).
   ${PACK_LOOKUP_JS}
-  let packMatches = 0, retyped = 0, expanded = 0;
+  let packMatches = 0, retyped = 0, expanded = 0, roleMatched = false;
   const misses = [];
   try {
     await loadPacks();
@@ -515,6 +515,25 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
 
     const out = [];
     for (const item of actorData.items) {
+      if (item.type === 'role') {
+        // Swap our stub for the real Role from the compendium (abilities,
+        // description, icon), keeping the rank chosen in the builder.
+        const rolesPack = game.packs.get('cyberpunk-red-core.core_roles');
+        const roleDoc = rolesPack
+          ? (await rolesPack.getDocuments()).find(d => d.type === 'role' && d.name.toLowerCase() === item.name.toLowerCase())
+          : find(item.name, 'role');
+        if (roleDoc) {
+          const real = fromDoc(roleDoc, { rank: item.system.rank });
+          delete real.system.equipped;
+          if (!real.system.mainRoleAbility) real.system.mainRoleAbility = item.system.mainRoleAbility;
+          out.push(real);
+          roleMatched = true;
+        } else {
+          misses.push('Role: ' + item.name);
+          out.push(item);
+        }
+        continue;
+      }
       if (!['gear', 'cyberware', 'armor'].includes(item.type)) { out.push(item); continue; }
       const qty = Number((item.name.match(/\\sx\\s*(\\d+)\\s*$/i) || [])[1]) || 1;
 
@@ -584,6 +603,7 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
     let msg = \`✓ Created: \${created.name} — \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
     if (cyberweaponMatches) msg += \`, \${cyberweaponMatches} combat cyberware matched to compendium\`;
     msg += \`. Other items: \${packMatches} from compendium\${expanded ? \`, \${expanded} outfit pieces\` : ''}, \${retyped} re-filed by name\${misses.length ? \`; no match: \${misses.join(', ')}\` : ''}\`;
+    msg += roleMatched ? '. Role matched to compendium' : '. Role left as a stub (no compendium match)';
     if (installedCount) msg += \`. \${installedCount} cyberware option(s) installed into foundational pieces\`;
     ui.notifications.info(msg);
   } else {
