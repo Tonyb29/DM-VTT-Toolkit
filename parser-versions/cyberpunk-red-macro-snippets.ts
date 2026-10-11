@@ -93,3 +93,41 @@ export const INSTALL_LINK_JS = String.raw`
     return installedCount;
   };
 `;
+
+// Defines linkAmmo(created) -> number of weapons loaded.
+//
+// A weapon only counts as loaded when its ammo item's id is in
+// installedItems.list (and ammoData/magazine.value are set), so carrying the
+// ammo isn't enough. The compendium weapon names the ammo it takes in
+// ammoVariety, which matches the ammo item's system.variety directly. A
+// hand-built weapon has no ammoVariety, so it is skipped rather than guessed.
+export const AMMO_LINK_JS = String.raw`
+  const linkAmmo = async created => {
+    let loaded = 0;
+    try {
+      const ammo = created.items.filter(i => i.type === 'ammo');
+      if (!ammo.length) return 0;
+      const updates = [];
+      for (const w of created.items.filter(i => i.type === 'weapon')) {
+        const slot = w.system.installedItems;
+        if (!slot?.allowed || !(slot.allowedTypes || []).includes('ammo')) continue;
+        if ((slot.list || []).length) continue;
+        const want = w.system.ammoVariety || [];
+        const match = ammo.find(a => want.includes(a.system.variety));
+        if (!match) continue;
+        updates.push({
+          _id: w.id,
+          'system.installedItems.list': [match.id],
+          'system.installedItems.usedSlots': (slot.usedSlots || 0) + 1,
+          'system.magazine.ammoData': match.toObject(),
+          'system.magazine.value': w.system.magazine?.max ?? 0,
+        });
+        loaded++;
+      }
+      if (updates.length) await created.updateEmbeddedDocuments('Item', updates);
+    } catch (e) {
+      console.warn('Cyberpunk RED ammo loading failed; ammo is on the actor but not loaded into the weapon.', e);
+    }
+    return loaded;
+  };
+`;

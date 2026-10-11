@@ -8,7 +8,7 @@
 // defaults for any field a document omits, the same way our NPC "mook"
 // exporter's sparse weapon/armor items already work when imported.
 
-import { PACK_LOOKUP_JS, INSTALL_LINK_JS } from './cyberpunk-red-macro-snippets';
+import { PACK_LOOKUP_JS, INSTALL_LINK_JS, AMMO_LINK_JS } from './cyberpunk-red-macro-snippets';
 
 const CPR_SYS_ID  = 'cyberpunk-red-core';
 const CPR_SYS_VER = 'v0.92.4';
@@ -291,11 +291,13 @@ function roleItem(pc: CPRPlayerCharacter) {
 function defaultMagazine(w: PCWeapon): number {
   if (!w.isRanged) return 0;
   const n = w.name.toLowerCase();
-  if (/shotgun/.test(n)) return 4;
-  if (/smg/.test(n)) return 30;
+  if (/smg/.test(n)) return /heavy/.test(n) ? 40 : 30;
+  if (/pistol/.test(n)) return /heavy/.test(n) ? 8 : 12;
+  if (/sniper/.test(n)) return 4;
   if (/rifle/.test(n)) return 25;
-  if (/launcher|grenade|heavy/.test(n)) return 1;
-  if (/pistol/.test(n)) return 12;
+  if (/shotgun/.test(n)) return 4;
+  if (/grenade/.test(n)) return 2;
+  if (/launcher|heavy/.test(n)) return 1;
   return 10;
 }
 
@@ -304,8 +306,8 @@ function defaultMagazine(w: PCWeapon): number {
 function defaultWeaponSkill(w: PCWeapon): string {
   const n = w.name.toLowerCase();
   if (!w.isRanged) return 'Melee Weapon';
+  if (/pistol|smg/.test(n)) return 'Handgun';
   if (/shotgun|rifle/.test(n)) return 'Shoulder Arms';
-  if (/smg|autofire/.test(n)) return 'Autofire';
   if (/launcher|grenade|heavy/.test(n)) return 'Heavy Weapons';
   if (/bow/.test(n)) return 'Archery';
   return 'Handgun';
@@ -399,9 +401,7 @@ export function toCyberpunkRedFoundryCharacter(pc: CPRPlayerCharacter): Record<s
         humanity: { value: pc.humanity, max: pc.humanity, transactions: [] },
         seriouslyWounded: Math.ceil(pc.hp / 2),
         deathSave: { basePenalty: 0, penalty: 0, value: pc.stats.body },
-        // Foundry recalculates run/walk from MOVE on load — these are just a
-        // reasonable starting snapshot, not load-bearing.
-        run: { value: pc.stats.move * 3 }, walk: { value: pc.stats.move * 2 },
+        // run/walk are left out on purpose: the system recomputes them from MOVE on load.
       },
       information: { alias: '', description: pc.notes, history: '', notes: pc.playerNotes || '' },
       reputation: { transactions: [], value: 0 },
@@ -598,6 +598,9 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
   ${INSTALL_LINK_JS}
   const installedCount = created ? await linkInstalledCyberware(created) : 0;
 
+  ${AMMO_LINK_JS}
+  const loadedCount = created ? await linkAmmo(created) : 0;
+
   if (created) {
     const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
     let msg = \`✓ Created: \${created.name} — \${weaponCount} weapons (\${weaponMatches} from compendium, \${weaponCustom} custom-built)\`;
@@ -605,7 +608,9 @@ export function buildCyberpunkRedCharacterMacro(actor: Record<string, unknown>):
     msg += \`. Other items: \${packMatches} from compendium\${expanded ? \`, \${expanded} outfit pieces\` : ''}, \${retyped} re-filed by name\${misses.length ? \`; no match: \${misses.join(', ')}\` : ''}\`;
     msg += roleMatched ? '. Role matched to compendium' : '. Role left as a stub (no compendium match)';
     if (installedCount) msg += \`. \${installedCount} cyberware option(s) installed into foundational pieces\`;
+    if (loadedCount) msg += \`. \${loadedCount} weapon(s) loaded with ammo\`;
     ui.notifications.info(msg);
+    created.sheet.render(true);
   } else {
     ui.notifications.error('Failed to create actor — check system compatibility.');
   }

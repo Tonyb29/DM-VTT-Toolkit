@@ -4,7 +4,7 @@
 
 import { SKILL_CATALOG, SkillDef } from './cyberpunk-red-pc-parser';
 
-import { PACK_LOOKUP_JS, INSTALL_LINK_JS } from './cyberpunk-red-macro-snippets';
+import { PACK_LOOKUP_JS, INSTALL_LINK_JS, AMMO_LINK_JS } from './cyberpunk-red-macro-snippets';
 
 const CPR_SYS_ID  = 'cyberpunk-red-core';
 const CPR_SYS_VER = 'v0.92.4';
@@ -156,12 +156,12 @@ function parseStats(raw: string): Record<StatKey, number> {
   return stats;
 }
 
-// Label-format skills use "Name +N" — N is already a raw skill rank (this
+// Label-format skills use "Name +N" (a bare "Name N" also works) — N is already a raw skill rank (this
 // tool's own convention, matching how Foundry stores skill.level), not a
 // book "Skill Base" total, so no stat subtraction happens here.
 function parseSkills(raw: string): CPRSkill[] {
   return parseCsvList(raw).map(entry => {
-    const m = entry.match(/^(.+?)\s*\+(\d+)$/);
+    const m = entry.match(/^(.+?)\s*\+?\s*(\d+)$/);
     const name = (m ? m[1] : entry).trim();
     const level = m ? parseInt(m[2], 10) : 0;
     const { def, recognized } = skillDef(name);
@@ -171,7 +171,7 @@ function parseSkills(raw: string): CPRSkill[] {
 
 function parseWeapons(raw: string): CPRWeapon[] {
   return parseCsvList(raw).map(entry => {
-    const m = entry.match(/^(.+?)\s*\(([^)]*)\)\s*$/);
+    const m = entry.match(/^(.+?)\s*\(([^)]*)\)\s*$/) || entry.match(/^(.+?)\s+(\d+d\d+(?:\s*[+-]\s*\d+)?)\s*$/i);
     const name = (m ? m[1] : entry).trim();
     const damage = m ? m[2].trim() : '1d6';
     const isRanged = /\d\s*m|pistol|rifle|shotgun|smg|heavy|bow|launcher/i.test(name);
@@ -396,11 +396,13 @@ function skillItem(skill: CPRSkill, actorName: string, idx: number) {
 function defaultMagazine(weapon: CPRWeapon): number {
   if (!weapon.isRanged) return 0;
   const n = weapon.name.toLowerCase();
-  if (/shotgun/.test(n)) return 4;
-  if (/smg/.test(n)) return 30;
+  if (/smg/.test(n)) return /heavy/.test(n) ? 40 : 30;
+  if (/pistol/.test(n)) return /heavy/.test(n) ? 8 : 12;
+  if (/sniper/.test(n)) return 4;
   if (/rifle/.test(n)) return 25;
-  if (/launcher|grenade|heavy/.test(n)) return 1;
-  if (/pistol/.test(n)) return 12;
+  if (/shotgun/.test(n)) return 4;
+  if (/grenade/.test(n)) return 2;
+  if (/launcher|heavy/.test(n)) return 1;
   return 10;
 }
 
@@ -411,8 +413,8 @@ function defaultMagazine(weapon: CPRWeapon): number {
 function defaultWeaponSkill(weapon: CPRWeapon): string {
   const n = weapon.name.toLowerCase();
   if (!weapon.isRanged) return 'Melee Weapon';
+  if (/pistol|smg/.test(n)) return 'Handgun';
   if (/shotgun|rifle/.test(n)) return 'Shoulder Arms';
-  if (/smg|autofire/.test(n)) return 'Autofire';
   if (/launcher|grenade|heavy/.test(n)) return 'Heavy Weapons';
   if (/bow/.test(n)) return 'Archery';
   return 'Handgun';
@@ -658,6 +660,9 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
   const created = await Actor.create(actorData);
   ${INSTALL_LINK_JS}
   const installedCount = created ? await linkInstalledCyberware(created) : 0;
+
+  ${AMMO_LINK_JS}
+  const loadedCount = created ? await linkAmmo(created) : 0;
   if (created) {
     const skillCount = actorData.items.filter(i => i.type === 'skill').length;
     const weaponCount = actorData.items.filter(i => i.type === 'weapon').length;
@@ -668,7 +673,9 @@ export function buildCyberpunkRedImportMacro(actor: Record<string, unknown>, npc
     if (installedCount) msg += \`, \${installedCount} cyberware option(s) installed\`;
     if (unmatched.length) msg += \`; no compendium match: \${unmatched.join(', ')}\`;
     if (unrecognizedSkills.length) msg += \`. \${unrecognizedSkills.length} skill name(s) not recognized — defaulted to REF.\`;
+    if (loadedCount) msg += \`. \${loadedCount} weapon(s) loaded with ammo\`;
     ui.notifications.info(msg);
+    created.sheet.render(true);
     if (unrecognizedSkills.length) console.warn('Cyberpunk RED import — unrecognized skills (defaulted to REF, check governing stat manually):', unrecognizedSkills);
   } else {
     ui.notifications.error('Failed to create actor — check system compatibility.');
