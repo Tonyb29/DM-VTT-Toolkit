@@ -559,7 +559,7 @@ export default function CyberpunkRedPCApp() {
 
   const importDossier = () => {
     if (!dossier) return
-    update({ role: dossier.role, lifepath: dossier.lifepath, notes: dossier.bio, playerNotes: dossier.notes, importedFromBuilder: true, step: 1 })
+    update({ role: dossier.role, roleAbility: ROLES.find(r => r.t === dossier.role)?.ability ?? '', lifepath: dossier.lifepath, notes: dossier.bio, playerNotes: dossier.notes, importedFromBuilder: true, step: 1 })
     flashToast('Background imported from Character Builder')
   }
 
@@ -1258,7 +1258,7 @@ function ReviewStep({ state, onBack, onCopy }: { state: WizState; onBack: () => 
   const pc: CPRPlayerCharacter = {
     name: state.name || 'Unknown Edgerunner',
     role: state.role,
-    roleAbility: state.roleAbility,
+    roleAbility: ROLES.find(r => r.t === state.role)?.ability ?? state.roleAbility,
     roleRank: state.roleRank,
     stats: state.stats,
     hp: state.hp,
