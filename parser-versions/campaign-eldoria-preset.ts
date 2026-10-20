@@ -38,7 +38,7 @@ export const BLANK_PRESET: CampaignPreset = {
 export const ELDORIA_PRESET: CampaignPreset = {
   id: 'eldoria',
   name: 'Eldoria: Echoes of the Aether',
-  description: 'D&D 5e homebrew · 7 Continents · 28 NPC Leaders',
+  description: 'D&D 5e homebrew campaign',
   rootJournalFolderName: 'World Lore',
   creatureFolderName: 'Eldoria — Creatures',
   journalFolders: JOURNAL_FOLDERS,

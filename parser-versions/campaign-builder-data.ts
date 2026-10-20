@@ -1154,25 +1154,30 @@ export const ALL_JOURNALS: JournalDef[] = [
 // ─── MACRO GENERATORS ────────────────────────────────────────
 
 export function buildStep1Macro(preset: CampaignPreset): string {
-  const jLines = preset.journalFolders.map(f => {
-    const parent = f.parentName ? `, folder: f[${JSON.stringify(f.parentName)}].id` : ''
-    const color  = f.color ? `, color: ${JSON.stringify(f.color)}` : ''
-    return `  f[${JSON.stringify(f.name)}] = await Folder.create({ name: ${JSON.stringify(f.name)}, type: 'JournalEntry'${color}${parent} });`
-  }).join('\n')
+  const line = (f: FolderSpec, map: 'jf' | 'af') => {
+    const parent = f.parentName ? `, ${map}[${JSON.stringify(f.parentName)}]?.id` : ''
+    const color  = f.color ? `, ${JSON.stringify(f.color)}` : ', undefined'
+    return `  ${map}[${JSON.stringify(f.name)}] = await ensure(${JSON.stringify(f.name)}, '${f.type}'${color}${parent || ', undefined'});`
+  }
+  const jLines = preset.journalFolders.map(f => line(f, 'jf')).join('\n')
+  const aLines = preset.actorFolders.map(f => line(f, 'af')).join('\n')
 
-  const aLines = preset.actorFolders.map(f => {
-    const parent = f.parentName ? `, folder: f[${JSON.stringify(f.parentName)}].id` : ''
-    const color  = f.color ? `, color: ${JSON.stringify(f.color)}` : ''
-    return `  f[${JSON.stringify(f.name)}] = await Folder.create({ name: ${JSON.stringify(f.name)}, type: 'Actor'${color}${parent} });`
-  }).join('\n')
-
-  return `(async () => {
-  const f = {};
+  return `// Step 1 — Folders — safe to re-run: existing folders (same name, type and parent) are reused
+(async () => {
+  // Journal and Actor folders are tracked separately so a shared name can't mix up parents.
+  const jf = {}, af = {};
+  let made = 0, reused = 0;
+  const ensure = async (name, type, color, parentId) => {
+    const found = game.folders.find(f => f.name === name && f.type === type && (f.folder?.id ?? null) === (parentId ?? null));
+    if (found) { reused++; return found; }
+    made++;
+    return Folder.create({ name, type, color, folder: parentId ?? null });
+  };
   // ── Journal Folders ──
 ${jLines}
   // ── Actor Folders ──
 ${aLines}
-  ui.notifications.info(${JSON.stringify(`✅ ${preset.name}: All folders created!`)});
+  ui.notifications.info(\`✅ ${preset.name}: folders ready — \${made} created, \${reused} already existed.\`);
 })();`
 }
 
@@ -1221,14 +1226,14 @@ export function buildStep3Macro(continentName: string, preset: CampaignPreset): 
     const folderId = _subfolder ? (af(_subfolder)?.id ?? folder.id) : folder.id;
     const existing = game.actors.getName(actorData.name);
     if (existing) {
-      await existing.update({ system: actorData.system, img: actorData.img });
+      await existing.update({ system: actorData.system, img: actorData.img, folder: folderId });
       updated++;
     } else {
       await Actor.create({ ...actorData, folder: folderId });
       created++;
     }
   }
-  ui.notifications.info(${JSON.stringify(`✅ ${continentName}: `) + '`${updated} updated, ${created} created.`'});
+  ui.notifications.info(\`✅ ${continentName}: \${updated} updated, \${created} created.\`);
 })();`
 }
 
@@ -1253,7 +1258,7 @@ export function buildStep4Macro(preset: CampaignPreset): string {
   for (const a of allActors) {
     const existing = game.actors.getName(a.name);
     if (existing) {
-      await existing.update({ system: a.system, img: a.img });
+      await existing.update({ system: a.system, img: a.img, folder: folder.id });
       updated++;
     } else {
       await Actor.create({ ...a, folder: folder.id });
