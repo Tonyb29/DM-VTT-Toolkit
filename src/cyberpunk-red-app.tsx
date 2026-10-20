@@ -11,6 +11,7 @@ import {
   hasApiKey, getApiKey, setApiKey, clearApiKey,
   generateCyberpunkRedStatBlock, extractCyberpunkRedStatBlockFromImage,
 } from '../parser-versions/claude-api'
+import { CYBERPETS, petToStatBlockText } from '../parser-versions/cyberpunk-red-cyberpets'
 import CharacterBuilder from './cyberpunk-red-character-builder'
 import CyberpunkRedPCApp from './cyberpunk-red-pc-app'
 
@@ -323,6 +324,14 @@ export default function CyberpunkRedApp() {
                     PASTE NPC STAT BLOCK
                     <span style={{ fontWeight: 400, marginLeft: 6, fontSize: 11 }}>— label:value format (NAME, ROLE, STATS, HP, SP, SKILLS, WEAPONS, ARMOR, CYBERWARE, NOTES), or paste a single stat block copied straight off a character-builder page like Demiplane Nexus</span>
                   </div>
+                  <select
+                    value=""
+                    onChange={e => { const pet = CYBERPETS.find(p => p.name === e.target.value); if (pet) setInput(petToStatBlockText(pet)) }}
+                    style={{ width: '100%', marginBottom: 8, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 6, padding: '7px 10px', color: T.textMuted, fontSize: 12 }}
+                  >
+                    <option value="">Or load a Cyberpet from "Your New Best Friend"…</option>
+                    {CYBERPETS.map(p => <option key={p.name} value={p.name}>{p.name} — {p.level}, {p.cost}</option>)}
+                  </select>
                   <textarea
                     value={input}
                     onChange={e => setInput(e.target.value)}

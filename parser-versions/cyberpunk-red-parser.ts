@@ -174,7 +174,7 @@ function parseWeapons(raw: string): CPRWeapon[] {
     const m = entry.match(/^(.+?)\s*\(([^)]*)\)\s*$/) || entry.match(/^(.+?)\s+(\d+d\d+(?:\s*[+-]\s*\d+)?)\s*$/i);
     const name = (m ? m[1] : entry).trim();
     const damage = m ? m[2].trim() : '1d6';
-    const isRanged = /\d\s*m|pistol|rifle|shotgun|smg|heavy|bow|launcher/i.test(name);
+    const isRanged = /\d\s*m|pistol|rifle|shotgun|smg|heavy|bow|launcher|flame/i.test(name);
     return { name, damage: damage || '1d6', rof: 1, isRanged, handsReq: /heavy|rifle|shotgun/i.test(name) ? 2 : 1 };
   });
 }
@@ -412,7 +412,8 @@ function defaultMagazine(weapon: CPRWeapon): number {
 // already filters most of these out.
 function defaultWeaponSkill(weapon: CPRWeapon): string {
   const n = weapon.name.toLowerCase();
-  if (!weapon.isRanged) return 'Melee Weapon';
+  if (!weapon.isRanged) return /brawling/.test(n) ? 'Brawling' : 'Melee Weapon';
+  if (/flame/.test(n)) return 'Heavy Weapons';
   if (/pistol|smg/.test(n)) return 'Handgun';
   if (/shotgun|rifle/.test(n)) return 'Shoulder Arms';
   if (/launcher|grenade|heavy/.test(n)) return 'Heavy Weapons';
