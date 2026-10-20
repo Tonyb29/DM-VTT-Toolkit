@@ -7,6 +7,7 @@ import {
   toCyberpunkRedFoundryCharacter, buildCyberpunkRedCharacterMacro,
   SKILL_CATALOG, PC_STAT_KEYS, PCStatKey, LIFEPATH_FIELDS, CPRPlayerCharacter,
 } from '../parser-versions/cyberpunk-red-pc-parser'
+import { skillTip } from './cyberpunk-red-skill-tips'
 import { ROLE_ADVICE, rankArrays, statCallouts, suggestSkillSpread, type Stats as AdviceStats } from './cyberpunk-red-build-advice'
 import { STEPS as CB_STEPS, STORAGE_KEY as CB_STORAGE_KEY, SavedState as CBSavedState, buildBio as cbBuildBio, buildDossierNotes as cbBuildNotes } from './cyberpunk-red-character-builder'
 
@@ -1000,8 +1001,11 @@ function CareerSkillsStep({ state, update, onBack, onNext, pool }: {
           const def = SKILL_CATALOG.find(s => s.name.toLowerCase() === name.toLowerCase())
           return (
             <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 6, padding: '7px 10px' }}>
-              <div style={{ fontSize: 12.5, color: T.text }}>
-                {name} {def && <span style={{ color: T.textDim, fontSize: 10 }}>({def.stat.toUpperCase()})</span>}
+              <div>
+                <div style={{ fontSize: 12.5, color: T.text }}>
+                  {name} {def && <span style={{ color: T.textDim, fontSize: 10 }}>({def.stat.toUpperCase()})</span>}
+                </div>
+                {skillTip(name) && <div style={{ fontSize: 10.5, color: T.textMuted, lineHeight: 1.35, marginTop: 2 }}>{skillTip(name)}</div>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button onClick={() => setLevel(name, valueOf(name) - 1)} disabled={valueOf(name) <= pool.min} style={stepBtn}>−</button>
@@ -1058,7 +1062,10 @@ function FreeSkillsStep({ state, update, onBack, onNext }: {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 6 }}>
               {SKILL_CATALOG.filter(s => s.category === cat).map(s => (
                 <div key={s.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 8px' }}>
-                  <div style={{ fontSize: 12, color: T.text }}>{s.name} <span style={{ color: T.textDim, fontSize: 10 }}>({s.stat.toUpperCase()})</span></div>
+                  <div>
+                    <div style={{ fontSize: 12, color: T.text }}>{s.name} <span style={{ color: T.textDim, fontSize: 10 }}>({s.stat.toUpperCase()})</span></div>
+                    {skillTip(s.name) && <div style={{ fontSize: 10.5, color: T.textMuted, lineHeight: 1.35, marginTop: 2 }}>{skillTip(s.name)}</div>}
+                  </div>
                   <input
                     type="number" min={0} value={state.skillLevels[s.name] ?? 0}
                     onChange={e => setLevel(s.name, parseInt(e.target.value, 10) || 0)}
