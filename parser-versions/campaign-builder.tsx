@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Copy, Check, ChevronDown, ChevronRight, BookOpen, Users, Swords, Map as MapIcon, Sparkles, RefreshCw, X, CheckCircle, XCircle, AlertTriangle, Download, Upload, FileJson, Pencil, Trash2, Plus } from 'lucide-react'
 import {
   CampaignPreset, NpcDef, CreatureDef, ContinentDef, JournalDef, JournalPageDef,
-  buildStep1Macro, buildStep2Macro, buildStep3Macro, buildStep4Macro,
+  buildStep1Macro, buildStep2Macro, buildStep3Macro, buildStep4Macro, buildStep6Macro,
 } from './campaign-builder-data'
 import { ELDORIA_PRESET, BLANK_PRESET } from './campaign-eldoria-preset'
 import { generateCustomStatBlock, generateCampaignPreset, hasApiKey } from './claude-api'
@@ -731,6 +731,16 @@ export default function CampaignBuilder() {
           // Older saved copies baked counts into the description ("28 NPC Leaders") that went stale as
           // NPCs were added. Take the current wording for the built-in campaign; keep everything else.
           if (obj.id === 'eldoria' && /\d+\s*NPC/i.test(obj.description ?? '')) obj.description = ELDORIA_PRESET.description
+          // Relationship data was added later: fill it in from the built-in preset by NPC name,
+          // only where the saved copy has none, so any edits made here are kept.
+          if (obj.id === 'eldoria' && Array.isArray(obj.npcs)) {
+            const builtIn = new Map(ELDORIA_PRESET.npcs.map(n => [n.name, n]))
+            obj.npcs = obj.npcs.map((n: NpcDef) => {
+              const b = builtIn.get(n.name)
+              if (!b) return n
+              return { ...n, reportsTo: n.reportsTo ?? b.reportsTo, relations: n.relations ?? b.relations }
+            })
+          }
           return obj as CampaignPreset
         }
       }
@@ -1226,7 +1236,7 @@ export default function CampaignBuilder() {
           </ol>
           <div style={{ color: '#4ade80', fontSize: 12, marginTop: 10 }}>✓ All macros are <strong>update-in-place safe</strong> — re-running any step will update existing actors/folders rather than creating duplicates.</div>
           <div style={{ color: '#fcd34d', fontSize: 12, marginTop: 6 }}>⚠ Do not rename actors or folders in Foundry after importing — macros find them by name. Rename here in the Campaign Builder instead, then re-run the relevant step.</div>
-          <div style={{ ...S.muted, marginTop: 6 }}>Run steps in order — Steps 2–5 look up folders and actors by name created in prior steps.</div>
+          <div style={{ ...S.muted, marginTop: 6 }}>Run steps in order — Steps 2–6 look up folders and actors by name created in prior steps.</div>
         </div>
 
         {/* Step 1 */}
@@ -1589,6 +1599,14 @@ export default function CampaignBuilder() {
             )
           })}
         </div>
+
+        {/* Step 6 — Relationships */}
+        <StepCard
+          step="Step 6" accent="#ec4899"
+          title="Link Relationships"
+          description={`Run after the NPC actors exist (Steps 3–5). Adds a Chain of Command / Allies / Rivals section with clickable links to each NPC's biography (${preset.npcs.filter(n => (n.relations?.length ?? 0) > 0 || (n.reportsTo?.length ?? 0) > 0).length} NPCs have relationship data), builds a chain-of-command journal for each continent that has one, and a Leader Relationships journal. Safe to re-run.`}
+          macro={buildStep6Macro(preset)} id="step6" copied={copied} onCopy={copy}
+        />
 
         {/* Footer note */}
         <div style={{ ...S.card, background: '#0f172a' }}>

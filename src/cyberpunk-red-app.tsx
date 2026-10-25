@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import {
   Copy, Download, FileText, Loader, RotateCcw, Sparkles, Settings,
-  Key, CheckCircle, AlertTriangle, X, Image as ImageIcon, UserSquare2, ScanLine, Contact,
+  Key, CheckCircle, AlertTriangle, X, Image as ImageIcon, UserSquare2, ScanLine, Contact, Car,
 } from 'lucide-react'
 import {
   parseCyberpunkRedStatBlock, toCyberpunkRedFoundryActor, buildCyberpunkRedImportMacro,
@@ -14,6 +14,7 @@ import {
 import { CYBERPETS, petToStatBlockText } from '../parser-versions/cyberpunk-red-cyberpets'
 import CharacterBuilder from './cyberpunk-red-character-builder'
 import CyberpunkRedPCApp from './cyberpunk-red-pc-app'
+import CyberpunkRedVehiclesApp from './cyberpunk-red-vehicles-app'
 
 const T = {
   bg: '#08050a', surface: '#120c16', surface2: '#1a1220',
@@ -159,7 +160,7 @@ function StatPreview({ npc }: { npc: CPRNpc }) {
 
 // ─── Main App ──────────────────────────────────────────────────────────────────
 
-type Tool = 'parser' | 'character' | 'pc'
+type Tool = 'parser' | 'character' | 'pc' | 'vehicles'
 
 export default function CyberpunkRedApp() {
   const [tool, setTool] = useState<Tool>('parser')
@@ -257,7 +258,7 @@ export default function CyberpunkRedApp() {
           ▲ Cyberpunk RED Toolkit
         </span>
         <div style={{ display: 'flex', gap: 4, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 9, padding: 3 }}>
-          {([['parser', 'NPC Parser', ScanLine], ['character', 'Character Builder', UserSquare2], ['pc', 'PC Create', Contact]] as [Tool, string, React.ElementType][]).map(([tId, label, Icon]) => (
+          {([['parser', 'NPC Parser', ScanLine], ['character', 'Character Builder', UserSquare2], ['pc', 'PC Create', Contact], ['vehicles', 'Vehicles', Car]] as [Tool, string, React.ElementType][]).map(([tId, label, Icon]) => (
             <button
               key={tId}
               onClick={() => setTool(tId)}
@@ -291,6 +292,8 @@ export default function CyberpunkRedApp() {
         <CharacterBuilder />
       ) : tool === 'pc' ? (
         <CyberpunkRedPCApp />
+      ) : tool === 'vehicles' ? (
+        <CyberpunkRedVehiclesApp />
       ) : (
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
 

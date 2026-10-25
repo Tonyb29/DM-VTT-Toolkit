@@ -12,6 +12,7 @@ import {
   CONTINENTS,
   ALL_JOURNALS,
 } from './campaign-builder-data'
+import { ELDORIA_RELATIONS, ELDORIA_REPORTS_TO } from './campaign-eldoria-relations'
 
 // Minimal valid preset — used as the starting point for AI-generated or user-imported campaigns
 export const BLANK_PRESET: CampaignPreset = {
@@ -43,7 +44,7 @@ export const ELDORIA_PRESET: CampaignPreset = {
   creatureFolderName: 'Eldoria — Creatures',
   journalFolders: JOURNAL_FOLDERS,
   actorFolders: ACTOR_FOLDERS,
-  npcs: NPCS,
+  npcs: NPCS.map(n => ({ ...n, reportsTo: ELDORIA_REPORTS_TO[n.name], relations: ELDORIA_RELATIONS[n.name] })),
   creatures: CREATURES,
   continents: CONTINENTS,
   journals: ALL_JOURNALS,

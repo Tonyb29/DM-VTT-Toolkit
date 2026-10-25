@@ -12,6 +12,15 @@ export interface FolderSpec {
   color?: string
 }
 
+export type RelationKind = 'ally' | 'rival' | 'complicated'
+
+// One leader's view of another. `with` must be another NPC's name.
+export interface NpcRelation {
+  with: string
+  kind: RelationKind
+  note: string
+}
+
 export interface NpcDef {
   name: string
   title: string
@@ -26,6 +35,8 @@ export interface NpcDef {
   appearance: string
   relationships: string
   img: string
+  reportsTo?: string[]   // chain of command: primary boss first, then any secondary supervisor (NPC names)
+  relations?: NpcRelation[]  // this NPC's allies, rivals and complicated ties to other NPCs
 }
 
 export interface CreatureDef {
@@ -1266,5 +1277,118 @@ export function buildStep4Macro(preset: CampaignPreset): string {
     }
   }
   ui.notifications.info(\`✅ ${preset.name} creatures: \${updated} updated, \${created} created.\`);
+})();`
+}
+
+// Step 6 — relationships. Needs the NPC actors to exist (Steps 3-5). Writes, per NPC, a
+// "Chain of Command / Allies / Rivals / Complicated" section into the biography with
+// @Actor[Name]{Name} links, which Foundry resolves by actor name. Also builds a chain-of-command
+// journal for each continent that has one, and a "Leader Relationships" journal. Safe to re-run:
+// the biography section sits between marker comments and is replaced; journal pages are updated
+// in place.
+export function buildStep6Macro(preset: CampaignPreset): string {
+  const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const link = (n: string) => `@Actor[${n}]{${esc(n)}}`
+  const names = new Set(preset.npcs.map(n => n.name))
+  const kindLabel: Record<string, string> = { ally: 'Allies', rival: 'Rivals', complicated: 'Complicated Relationships' }
+
+  // Who answers to whom, by name.
+  const directReports = new Map<string, string[]>()
+  for (const n of preset.npcs) {
+    for (const boss of n.reportsTo ?? []) {
+      if (!names.has(boss)) continue
+      directReports.set(boss, [...(directReports.get(boss) ?? []), n.name])
+    }
+  }
+
+  const bioSections: Record<string, string> = {}
+  for (const n of preset.npcs) {
+    const parts: string[] = []
+    const bosses = (n.reportsTo ?? []).filter(b => names.has(b))
+    const subs = directReports.get(n.name) ?? []
+    if (bosses.length || subs.length) {
+      parts.push('<h2>Chain of Command</h2>')
+      if (bosses.length) parts.push(`<p><strong>Reports to:</strong> ${bosses.map(link).join(', ')}</p>`)
+      if (subs.length) parts.push(`<p><strong>Direct reports:</strong> ${subs.map(link).join(', ')}</p>`)
+    }
+    for (const kind of ['ally', 'rival', 'complicated'] as const) {
+      const rels = (n.relations ?? []).filter(r => r.kind === kind && names.has(r.with))
+      if (!rels.length) continue
+      parts.push(`<h2>${kindLabel[kind]}</h2><ul>${rels.map(r => `<li>${link(r.with)} — ${esc(r.note)}</li>`).join('')}</ul>`)
+    }
+    if (parts.length) bioSections[n.name] = parts.join('')
+  }
+
+  // Chain-of-command journals: one tree per continent that has any reporting lines.
+  const chainPages: { continent: string; html: string }[] = []
+  for (const c of Array.from(new Set(preset.npcs.map(n => n.continent)))) {
+    const members = preset.npcs.filter(n => n.continent === c)
+    if (!members.some(m => (m.reportsTo ?? []).some(b => names.has(b)))) continue
+    const inContinent = new Set(members.map(m => m.name))
+    const primaryKids = (boss: string) => members.filter(m => (m.reportsTo ?? [])[0] === boss)
+    const node = (n: NpcDef, depth: number): string => {
+      if (depth > 8) return ''
+      const extra = (n.reportsTo ?? []).slice(1).filter(b => names.has(b))
+      const note = extra.length ? ` <em>(also reports to ${extra.map(link).join(', ')})</em>` : ''
+      const kids = primaryKids(n.name)
+      return `<li>${link(n.name)} — ${esc(n.title)}${note}${kids.length ? `<ul>${kids.map(k => node(k, depth + 1)).join('')}</ul>` : ''}</li>`
+    }
+    const roots = members.filter(m => !(m.reportsTo ?? []).some(b => inContinent.has(b)))
+    chainPages.push({ continent: c, html: `<h1>${esc(c)} — Chain of Command</h1><ul>${roots.map(r => node(r, 0)).join('')}</ul>` })
+  }
+
+  // Leader Relationships journal: one page per continent.
+  const relPages: { name: string; html: string }[] = []
+  for (const c of Array.from(new Set(preset.npcs.map(n => n.continent)))) {
+    const withRels = preset.npcs.filter(n => n.continent === c && (n.relations ?? []).some(r => names.has(r.with)))
+    if (!withRels.length) continue
+    const html = withRels.map(n => {
+      const groups = (['ally', 'rival', 'complicated'] as const).map(kind => {
+        const rels = (n.relations ?? []).filter(r => r.kind === kind && names.has(r.with))
+        return rels.length ? `<h3>${kindLabel[kind]}</h3><ul>${rels.map(r => `<li>${link(r.with)} — ${esc(r.note)}</li>`).join('')}</ul>` : ''
+      }).join('')
+      return `<h2>${link(n.name)}</h2><p><em>${esc(n.title)}</em></p>${groups}`
+    }).join('')
+    relPages.push({ name: c, html: `<h1>${esc(c)} — Leader Relationships</h1>${html}` })
+  }
+
+  return `// Step 6 — Relationships: biography sections, chain-of-command journals, leader relationships.
+// Run AFTER the NPC actors exist (Steps 3-5). Safe to re-run.
+(async () => {
+  const sections = ${JSON.stringify(bioSections, null, 2)};
+  const chainPages = ${JSON.stringify(chainPages, null, 2)};
+  const relPages = ${JSON.stringify(relPages, null, 2)};
+  const START = '<!--dmtk-relations-->', END = '<!--/dmtk-relations-->';
+  const jfolder = (...names) => { for (const n of names) { const f = game.folders.find(x => x.name === n && x.type === 'JournalEntry'); if (f) return f.id; } return null; };
+
+  let bios = 0, missing = [];
+  for (const [name, html] of Object.entries(sections)) {
+    const actor = game.actors.getName(name);
+    if (!actor) { missing.push(name); continue; }
+    const current = actor.system.details?.biography?.value ?? '';
+    const block = START + html + END;
+    const start = current.indexOf(START), end = current.indexOf(END);
+    const next = (start !== -1 && end > start) ? current.slice(0, start) + block + current.slice(end + END.length) : current + block;
+    await actor.update({ 'system.details.biography.value': next });
+    bios++;
+  }
+
+  const upsertJournal = async (journalName, folderId, pages) => {
+    let entry = game.journal.getName(journalName);
+    if (!entry) entry = await JournalEntry.create({ name: journalName, folder: folderId, pages: [] });
+    for (const p of pages) {
+      const page = entry.pages.getName(p.name);
+      if (page) await page.update({ 'text.content': p.html });
+      else await entry.createEmbeddedDocuments('JournalEntryPage', [{ name: p.name, type: 'text', text: { content: p.html, format: 1 } }]);
+    }
+  };
+
+  const contFolder = jfolder('Continents', ${JSON.stringify(preset.rootJournalFolderName)});
+  for (const c of chainPages) await upsertJournal(c.continent + ' — Chain of Command', contFolder, [{ name: 'Chain of Command', html: c.html }]);
+  if (relPages.length) await upsertJournal('Leader Relationships', jfolder('Factions & Organizations', ${JSON.stringify(preset.rootJournalFolderName)}), relPages);
+
+  let msg = \`✅ ${preset.name} relationships: \${bios} NPC bios updated, \${chainPages.length} chain-of-command journal(s), \${relPages.length} relationship page(s).\`;
+  if (missing.length) msg += \` No actor found for: \${missing.join(', ')} (run Steps 3-5 first).\`;
+  ui.notifications.info(msg);
 })();`
 }
