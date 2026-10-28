@@ -38,6 +38,7 @@ type EditTarget =
   | null
 
 const LS_KEY = 'dnd_campaign_preset'
+const LS_KEY_CPR = 'cpr_campaign_preset'
 
 // ─── STYLES ──────────────────────────────────────────────────
 
@@ -739,10 +740,13 @@ function validatePreset(obj: any): string | null {
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────
 
-export default function CampaignBuilder() {
+// `cprOnly` is used when the builder is embedded in the Cyberpunk RED page: it starts from the
+// Cyberpunk test campaign and keeps its own saved copy, so it never touches the Eldoria preset.
+export default function CampaignBuilder({ cprOnly = false }: { cprOnly?: boolean }) {
+  const lsKey = cprOnly ? LS_KEY_CPR : LS_KEY
   const [preset, setPreset] = useState<CampaignPreset>(() => {
     try {
-      const saved = localStorage.getItem(LS_KEY)
+      const saved = localStorage.getItem(lsKey)
       if (saved) {
         const obj = JSON.parse(saved)
         if (validatePreset(obj) === null) {
@@ -763,14 +767,14 @@ export default function CampaignBuilder() {
         }
       }
     } catch {}
-    return ELDORIA_PRESET
+    return cprOnly ? CYBERPUNK_TEST_PRESET : ELDORIA_PRESET
   })
   const [copied, setCopied] = useState<string | null>(null)
   const isCpr = preset.system === 'cpr'
 
   // Auto-save to localStorage whenever preset changes
   useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(preset)) } catch {}
+    try { localStorage.setItem(lsKey, JSON.stringify(preset)) } catch {}
   }, [preset])
 
   // Edit modal
@@ -1192,7 +1196,7 @@ export default function CampaignBuilder() {
               <span style={S.tag('#a78bfa')}>{preset.id}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {preset.id !== 'eldoria' && (
+              {preset.id !== 'eldoria' && !cprOnly && (
                 <button
                   onClick={() => loadPreset(ELDORIA_PRESET)}
                   style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#1e3a5f', color: '#7dd3fc', border: '1px solid #1d4ed8', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
