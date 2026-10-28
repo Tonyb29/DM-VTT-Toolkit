@@ -8,6 +8,7 @@ import {
   buildStep1Macro, buildStep2Macro, buildStep3Macro, buildStep4Macro, buildStep6Macro,
 } from './campaign-builder-data'
 import { ELDORIA_PRESET, BLANK_PRESET } from './campaign-eldoria-preset'
+import { CYBERPUNK_TEST_PRESET } from './campaign-cyberpunk-test-preset'
 import { generateCustomStatBlock, generateCampaignPreset, hasApiKey } from './claude-api'
 import { parseStatBlock } from './dnd-parser-v20-stable'
 
@@ -177,7 +178,7 @@ function Sidebar({ preset, onEditNpc, onDeleteNpc, onAddNpc, onEditCreature, onD
               <ActionTreeItem
                 key={n.name}
                 label={n.name.split(' ').slice(-1)[0]}
-                dim={`CR${n.cr}`}
+                dim={preset.system === 'cpr' ? `Rank ${n.cr}` : `CR${n.cr}`}
                 onEdit={onEditNpc ? () => onEditNpc(n) : undefined}
                 onDelete={onDeleteNpc ? () => onDeleteNpc(n.name) : undefined}
               />
@@ -194,7 +195,7 @@ function Sidebar({ preset, onEditNpc, onDeleteNpc, onAddNpc, onEditCreature, onD
         ))}
       </TreeSection>
 
-      <TreeSection label="Creatures" icon={<Swords size={12} />}>
+      {preset.system !== 'cpr' && <TreeSection label="Creatures" icon={<Swords size={12} />}>
         {preset.creatures.map(c => (
           <ActionTreeItem
             key={c.name}
@@ -212,7 +213,7 @@ function Sidebar({ preset, onEditNpc, onDeleteNpc, onAddNpc, onEditCreature, onD
             <Plus size={9} /> Add Creature
           </button>
         )}
-      </TreeSection>
+      </TreeSection>}
 
       <TreeSection label="Journals" icon={<BookOpen size={12} />}>
         {preset.journals.map(j => (
@@ -356,7 +357,11 @@ function buildCreatureContext(creature: CreatureDef): string {
 }
 
 function buildStep4AIMacro(results: CreatureResult[], folderName: string): string {
-  const actors = results.filter(r => r.actor && !r.errors.length).map(r => r.actor)
+  // The AI sometimes writes a slightly different name in the stat block ("Torvald Ironheart" for "High King Torvald Ironheart"),
+  // which no longer matches the actor made in Step 3 or its folder entry. Always use the campaign's own name.
+  const actors = results.filter(r => r.actor && r.status === 'done').map(r => ({
+    ...r.actor, name: r.name, ...(r.actor.prototypeToken ? { prototypeToken: { ...r.actor.prototypeToken, name: r.name } } : {}),
+  }))
   if (!actors.length) return ''
   return [
     `// Step 4 AI — Update Creature Actors with Generated Stat Blocks`,
@@ -414,7 +419,11 @@ function buildNpcContext(npc: NpcDef, preset: CampaignPreset): string {
 }
 
 function buildStep5Macro(results: NpcResult[], preset: CampaignPreset): string {
-  const actors = results.filter(r => r.actor && !r.errors.length).map(r => r.actor)
+  // The AI sometimes writes a slightly different name in the stat block ("Torvald Ironheart" for "High King Torvald Ironheart"),
+  // which no longer matches the actor made in Step 3 or its folder entry. Always use the campaign's own name.
+  const actors = results.filter(r => r.actor && r.status === 'done').map(r => ({
+    ...r.actor, name: r.name, ...(r.actor.prototypeToken ? { prototypeToken: { ...r.actor.prototypeToken, name: r.name } } : {}),
+  }))
   if (!actors.length) return ''
   // Each NPC lives in its subfolder if it has one, otherwise its continent's folder.
   const folderFor: Record<string, string> = {}
@@ -478,6 +487,8 @@ function EditModal({ target, preset, onSave, onClose }: {
   const [cls, setCls]               = useState(existingNpc?.cls ?? '')
   const [alignment, setAlignment]   = useState(existingNpc?.alignment ?? 'neutral good')
   const [cr, setCr]                 = useState(String(existingNpc?.cr ?? 1))
+  const isCpr = preset.system === 'cpr'
+  const [npcStat, setNpcStat]       = useState(existingNpc?.statText ?? '')
   const [continent, setContinent]   = useState(
     existingNpc?.continent ?? (isNpc && (target as any).continent) ?? preset.continents[0]?.name ?? ''
   )
@@ -525,9 +536,12 @@ function EditModal({ target, preset, onSave, onClose }: {
       if (!name.trim()) return
       const npc: NpcDef = {
         name: name.trim(), title: title.trim(), race: race.trim(), cls: cls.trim(),
-        alignment, cr: parseFloat(cr) || 1, creatureType: 'humanoid', continent,
+        alignment: isCpr ? '' : alignment, cr: parseFloat(cr) || 1, creatureType: isCpr ? '' : 'humanoid', continent,
         bio: bio.trim(), appearance: appearance.trim(), relationships: relationships.trim(),
         img: img.trim() || autoImg(name.trim()),
+        ...(existingNpc?.reportsTo ? { reportsTo: existingNpc.reportsTo } : {}),
+        ...(existingNpc?.relations ? { relations: existingNpc.relations } : {}),
+        ...(npcStat.trim() ? { statText: npcStat.trim() } : {}),
       }
       onSave('npc', npc, originalName)
     } else if (isCreature) {
@@ -583,19 +597,19 @@ function EditModal({ target, preset, onSave, onClose }: {
               <div style={F.group}><span style={F.label}>Title</span><input style={F.field} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. High Priest" /></div>
             </div>
             <div style={F.grid3}>
-              <div style={F.group}><span style={F.label}>Race</span><input style={F.field} value={race} onChange={e => setRace(e.target.value)} placeholder="Human" /></div>
-              <div style={F.group}><span style={F.label}>Class</span><input style={F.field} value={cls} onChange={e => setCls(e.target.value)} placeholder="Wizard" /></div>
-              <div style={F.group}><span style={F.label}>CR</span><input style={F.field} type="number" min="0" max="30" step="0.125" value={cr} onChange={e => setCr(e.target.value)} /></div>
+              {!isCpr && <div style={F.group}><span style={F.label}>Race</span><input style={F.field} value={race} onChange={e => setRace(e.target.value)} placeholder="Human" /></div>}
+              <div style={F.group}><span style={F.label}>{isCpr ? 'Role' : 'Class'}</span><input style={F.field} value={cls} onChange={e => setCls(e.target.value)} placeholder={isCpr ? 'Fixer' : 'Wizard'} /></div>
+              <div style={F.group}><span style={F.label}>{isCpr ? 'Rank' : 'CR'}</span><input style={F.field} type="number" min="0" max={isCpr ? 10 : 30} step={isCpr ? 1 : 0.125} value={cr} onChange={e => setCr(e.target.value)} /></div>
             </div>
             <div style={F.grid2}>
-              <div style={F.group}>
+              {!isCpr && <div style={F.group}>
                 <span style={F.label}>Alignment</span>
                 <select style={F.field} value={alignment} onChange={e => setAlignment(e.target.value)}>
                   {ALIGNMENTS.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
-              </div>
+              </div>}
               <div style={F.group}>
-                <span style={F.label}>Continent</span>
+                <span style={F.label}>{isCpr ? 'District' : 'Continent'}</span>
                 <select style={F.field} value={continent} onChange={e => setContinent(e.target.value)}>
                   {preset.continents.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                 </select>
@@ -604,6 +618,10 @@ function EditModal({ target, preset, onSave, onClose }: {
             <div style={F.group}><span style={F.label}>Bio (HTML, e.g. &lt;p&gt;...&lt;/p&gt;)</span><textarea style={{ ...F.field, resize: 'vertical' as const }} rows={3} value={bio} onChange={e => setBio(e.target.value)} /></div>
             <div style={F.group}><span style={F.label}>Appearance (1 sentence)</span><input style={F.field} value={appearance} onChange={e => setAppearance(e.target.value)} /></div>
             <div style={F.group}><span style={F.label}>Relationships (1 sentence)</span><input style={F.field} value={relationships} onChange={e => setRelationships(e.target.value)} /></div>
+            {isCpr && <div style={F.group}>
+              <span style={F.label}>Cyberpunk RED stat block (optional — same NAME/ROLE/STATS/SKILLS format as the NPC tool)</span>
+              <textarea style={{ ...F.field, resize: 'vertical' as const }} rows={6} value={npcStat} onChange={e => setNpcStat(e.target.value)} placeholder={'NAME: ...\nROLE: Fixer\nSTATS: INT 7, REF 6, ...\nHP: 40\nSP: 7\nSKILLS: ...'} />
+            </div>}
             <div style={{ ...F.group, marginBottom: 20 }}><span style={F.label}>Image path (blank = auto)</span><input style={F.field} value={img} onChange={e => setImg(e.target.value)} placeholder={autoImg(name || 'name')} /></div>
           </>
         ) : isCreature ? (
@@ -748,6 +766,7 @@ export default function CampaignBuilder() {
     return ELDORIA_PRESET
   })
   const [copied, setCopied] = useState<string | null>(null)
+  const isCpr = preset.system === 'cpr'
 
   // Auto-save to localStorage whenever preset changes
   useEffect(() => {
@@ -903,11 +922,21 @@ export default function CampaignBuilder() {
   }
 
   // Step 5 — NPC stat block generation
-  const [npcResults, setNpcResults]     = useState<NpcResult[]>([])
+  // Step 5 results are kept in localStorage per campaign so a page reload doesn't throw away 40 generated stat blocks.
+  const NPC_RESULTS_KEY = `dnd_campaign_npc_results_${preset.id}`
+  const [npcResults, setNpcResults]     = useState<NpcResult[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(NPC_RESULTS_KEY) ?? '[]')
+      if (Array.isArray(saved)) return saved.map((r: NpcResult) => ({ ...r, status: r.status === 'generating' ? 'pending' : r.status }))
+    } catch {}
+    return []
+  })
   const [generating, setGenerating]     = useState(false)
   const [genCurrent, setGenCurrent]     = useState(0)
   const [genCurrentName, setGenCurrentName] = useState('')
   const [rerolling, setRerolling]       = useState<string | null>(null)
+  const [collapsedNpcGroups, setCollapsedNpcGroups] = useState<Set<string>>(new Set())
+  const toggleNpcGroup = (name: string) => setCollapsedNpcGroups(prev => { const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n })
   const [copiedStep5, setCopiedStep5]   = useState(false)
   const cancelledRef = useRef(false)
 
@@ -1012,6 +1041,32 @@ export default function CampaignBuilder() {
     }
     setCopiedStep5(true)
     setTimeout(() => setCopiedStep5(false), 2000)
+  }
+
+  // One row per NPC in the preset (new ones start pending, removed ones drop out), so each can be generated on its own.
+  useEffect(() => {
+    setNpcResults(prev => preset.npcs.map(n =>
+      prev.find(r => r.name === n.name) ?? { name: n.name, status: 'pending' as const, accuracy: null, errors: [], actor: null }
+    ))
+  }, [preset.npcs])
+  useEffect(() => {
+    try { localStorage.setItem(NPC_RESULTS_KEY, JSON.stringify(npcResults)) } catch {}
+  }, [npcResults])
+
+  // Generate every NPC that isn't done yet (pending or failed), leaving finished ones alone.
+  const generateRemainingNpcs = async () => {
+    cancelledRef.current = false
+    setGenerating(true)
+    const todo = preset.npcs.filter(n => npcResults.find(r => r.name === n.name)?.status !== 'done')
+    for (let i = 0; i < todo.length; i++) {
+      if (cancelledRef.current) break
+      setGenCurrent(i + 1)
+      setGenCurrentName(todo[i].name)
+      await rerollNpc(todo[i].name)
+    }
+    setGenerating(false)
+    setGenCurrent(0)
+    setGenCurrentName('')
   }
 
   const doneCount  = npcResults.filter(r => r.status === 'done').length
@@ -1145,8 +1200,17 @@ export default function CampaignBuilder() {
                   Load Demo (Eldoria)
                 </button>
               )}
+              {preset.id !== 'cpr-test' && (
+                <button
+                  onClick={() => loadPreset(CYBERPUNK_TEST_PRESET)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#500724', color: '#f9a8d4', border: '1px solid #be185d', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
+                  title="Small Cyberpunk RED campaign (7 NPCs, 2 districts) for testing folders, journals and links. Use Steps 1, 2, 3 and 6 only."
+                >
+                  Load Cyberpunk Test
+                </button>
+              )}
               <button
-                onClick={() => { if (confirm('Reset campaign to defaults? All unsaved edits will be lost.')) loadPreset(preset.id === 'eldoria' ? ELDORIA_PRESET : BLANK_PRESET) }}
+                onClick={() => { if (confirm('Reset campaign to defaults? All unsaved edits will be lost.')) loadPreset(preset.id === 'eldoria' ? ELDORIA_PRESET : preset.id === 'cpr-test' ? CYBERPUNK_TEST_PRESET : BLANK_PRESET) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0f172a', color: '#64748b', border: '1px solid #1e293b', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
                 title="Discard all edits and reload the original preset"
               >
@@ -1227,12 +1291,20 @@ export default function CampaignBuilder() {
         <div style={{ ...S.cardAccent('#065f46'), background: '#052e1620', marginBottom: 24 }}>
           <div style={{ ...S.h2, color: '#86efac', marginBottom: 8 }}>How to Import into Foundry VTT</div>
           <ol style={{ color: '#94a3b8', fontSize: 13, margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
+            {isCpr ? (<>
+              <li>Open a Foundry macro (Ctrl+M, type <strong>Script</strong>), paste <strong>Step 1</strong>, and run it to create all folders</li>
+              <li>Paste and run <strong>Step 2</strong> to create the journals</li>
+              <li>Paste and run each <strong>Step 3</strong> district macro to create the NPC mooks</li>
+              <li>Paste and run <strong>Step 6</strong> to add Allies / Rivals / Chain of Command sections to each NPC's Notes and build the chain-of-command and relationship journals</li>
+              <li>Steps 4 and 5 are D&amp;D stat-block steps and are hidden for Cyberpunk campaigns</li>
+            </>) : (<>
             <li>Upload creature/NPC portrait images to Foundry's file manager under <code style={{ color: '#a78bfa' }}>worlds/{preset.id}/assets/</code></li>
             <li>Open a Foundry macro (Ctrl+M), paste <strong>Step 1</strong>, and run it to create all folders</li>
             <li>Paste and run <strong>Step 2</strong> to create all journal entries with world lore</li>
             <li>Paste and run each <strong>Step 3</strong> continent macro to create NPC leader actors</li>
             <li>Paste and run <strong>Step 4</strong> to create all creature actors — uses "Copy Macro" button for full stat blocks, "Stubs only" for bio-only actors</li>
             <li>Use <strong>Step 5</strong> below to generate full NPC stat blocks via AI, then run the macro to update each leader actor</li>
+            </>)}
           </ol>
           <div style={{ color: '#4ade80', fontSize: 12, marginTop: 10 }}>✓ All macros are <strong>update-in-place safe</strong> — re-running any step will update existing actors/folders rather than creating duplicates.</div>
           <div style={{ color: '#fcd34d', fontSize: 12, marginTop: 6 }}>⚠ Do not rename actors or folders in Foundry after importing — macros find them by name. Rename here in the Campaign Builder instead, then re-run the relevant step.</div>
@@ -1251,16 +1323,17 @@ export default function CampaignBuilder() {
         <StepCard
           step="Step 2" accent="#38bdf8"
           title="Create Journal Entries"
-          description="Creates World Overview (5 pages), 7 continent journals (3 pages each), faction journals (Ragorans, Shadow Cult, LUKAS), and plot journals."
+          description={isCpr ? `Creates the ${preset.journals.length} lore, faction and plot journals, with @Actor links to the NPCs.` : 'Creates World Overview (5 pages), 7 continent journals (3 pages each), faction journals (Ragorans, Shadow Cult, LUKAS), and plot journals.'}
           macro={buildStep2Macro(preset)} id="step2" copied={copied} onCopy={copy}
         />
 
         {/* Step 3 — per continent */}
         <div style={S.cardAccent('#f59e0b')}>
-          <div style={{ ...S.h2, color: '#fcd34d', marginBottom: 4 }}>Step 3 — Create NPC Leaders</div>
+          <div style={{ ...S.h2, color: '#fcd34d', marginBottom: 4 }}>{isCpr ? 'Step 3 — Create NPCs' : 'Step 3 — Create NPC Leaders'}</div>
           <div style={{ ...S.muted, marginBottom: 16 }}>
-            One macro per continent — each creates that continent's leader actors with full bios, race, class, CR, and image paths.
-            Run the macro for each continent separately.
+            {isCpr
+              ? 'One macro per district. Each creates Cyberpunk RED mooks from the NPC stat blocks (same parser and compendium matching as the NPC tool), with the bio in Notes and Role + Rank as the alias. NPCs without a stat block become bare mooks. Run the macro for each district separately; re-running only refreshes alias, bio and folder.'
+              : "One macro per continent — each creates that continent's leader actors with full bios, race, class, CR, and image paths. Run the macro for each continent separately."}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10 }}>
             {preset.continents.map(c => {
@@ -1279,6 +1352,7 @@ export default function CampaignBuilder() {
           </div>
         </div>
 
+        {!isCpr && (<>
         {/* Step 4 */}
         {(() => {
           const statCount = preset.creatures.filter(c => c.statText).length
@@ -1420,8 +1494,8 @@ export default function CampaignBuilder() {
                       color: r.accuracy >= 80 ? '#4ade80' : r.accuracy >= 60 ? '#fcd34d' : '#f87171',
                     }}>{r.accuracy}%</span>
                   )}
-                  {r.errors.length > 0 && r.status === 'error' && (
-                    <span style={{ color: '#f87171', fontSize: 10 }} title={r.errors.join('; ')}>
+                  {r.errors.length > 0 && (
+                    <span style={{ color: r.status === 'error' ? '#f87171' : '#fcd34d', fontSize: 10 }} title={r.errors.join('; ')}>
                       <AlertTriangle size={11} />
                     </span>
                   )}
@@ -1502,6 +1576,23 @@ export default function CampaignBuilder() {
               {generating ? `Generating ${genCurrent}/${preset.npcs.length}…` : `Generate All ${preset.npcs.length} NPCs`}
             </button>
 
+            {doneCount > 0 && doneCount < preset.npcs.length && (
+              <button
+                onClick={generateRemainingNpcs}
+                disabled={generating || !!rerolling || !hasApiKey()}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: '#1e1b4b', color: '#c4b5fd', border: '1px solid #6d28d9',
+                  borderRadius: 6, padding: '7px 16px', cursor: generating ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600,
+                  opacity: !hasApiKey() ? 0.4 : 1,
+                }}
+                title="Generate only the NPCs that aren't done yet"
+              >
+                <Sparkles size={14} />
+                {`Generate ${preset.npcs.length - doneCount} Remaining`}
+              </button>
+            )}
+
             {step5Ready && (
               <button
                 onClick={copyStep5Macro}
@@ -1530,6 +1621,13 @@ export default function CampaignBuilder() {
             </div>
           )}
 
+          {npcResults.length > 0 && (
+            <div style={{ display: 'flex', gap: 12, marginBottom: 8, fontSize: 11 }}>
+              <button onClick={() => setCollapsedNpcGroups(new Set(preset.continents.map(c => c.name)))} style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 0 }}>Collapse all</button>
+              <button onClick={() => setCollapsedNpcGroups(new Set())} style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 0 }}>Expand all</button>
+            </div>
+          )}
+
           {/* NPC result grid — grouped by continent */}
           {npcResults.length > 0 && preset.continents.map(c => {
             const continentNpcs = npcResults.filter(r => {
@@ -1539,8 +1637,18 @@ export default function CampaignBuilder() {
             if (!continentNpcs.length) return null
             return (
               <div key={c.name} style={{ marginBottom: 12 }}>
-                <div style={{ ...S.muted, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>{c.name}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <button
+                  onClick={() => toggleNpcGroup(c.name)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 6, color: '#64748b', fontWeight: 600, fontSize: 12 }}
+                >
+                  {collapsedNpcGroups.has(c.name) ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                  {c.name}
+                  <span style={{ fontWeight: 400 }}>
+                    — {continentNpcs.filter(r => r.status === 'done').length}/{continentNpcs.length} ready
+                    {continentNpcs.some(r => r.status === 'error') ? ', some failed' : ''}
+                  </span>
+                </button>
+                {!collapsedNpcGroups.has(c.name) && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {continentNpcs.map(r => (
                     <div
                       key={r.name}
@@ -1569,14 +1677,14 @@ export default function CampaignBuilder() {
                       )}
 
                       {/* Errors */}
-                      {r.errors.length > 0 && r.status === 'error' && (
-                        <span style={{ color: '#f87171', fontSize: 10 }} title={r.errors.join('; ')}>
+                      {r.errors.length > 0 && (
+                        <span style={{ color: r.status === 'error' ? '#f87171' : '#fcd34d', fontSize: 10 }} title={r.errors.join('; ')}>
                           <AlertTriangle size={11} />
                         </span>
                       )}
 
                       {/* Reroll button */}
-                      {(r.status === 'done' || r.status === 'error') && (
+                      {(r.status === 'done' || r.status === 'error' || r.status === 'pending') && (
                         <button
                           onClick={() => rerollNpc(r.name)}
                           disabled={!!rerolling || generating}
@@ -1589,16 +1697,18 @@ export default function CampaignBuilder() {
                           title="Regenerate this stat block"
                         >
                           <RefreshCw size={10} className={rerolling === r.name ? 'animate-spin' : ''} />
-                          {rerolling === r.name ? '…' : 'Reroll'}
+                          {rerolling === r.name ? '…' : r.status === 'pending' ? 'Generate' : 'Reroll'}
                         </button>
                       )}
                     </div>
                   ))}
-                </div>
+                </div>}
               </div>
             )
           })}
         </div>
+
+        </>)}
 
         {/* Step 6 — Relationships */}
         <StepCard

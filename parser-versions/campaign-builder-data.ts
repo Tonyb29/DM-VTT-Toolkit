@@ -3,6 +3,8 @@
 // Phase 15: macro builders now accept a CampaignPreset — no hardcoded campaign names.
 // Eldoria data remains here for now; Phase 15b will move it to campaign-eldoria-preset.ts.
 
+import { buildCprStep3Macro } from './campaign-cpr-step3'
+
 // ─── TYPES ──────────────────────────────────────────────────
 
 export interface FolderSpec {
@@ -37,6 +39,7 @@ export interface NpcDef {
   img: string
   reportsTo?: string[]   // chain of command: primary boss first, then any secondary supervisor (NPC names)
   relations?: NpcRelation[]  // this NPC's allies, rivals and complicated ties to other NPCs
+  statText?: string      // Cyberpunk RED only: NAME/ROLE/STATS/... stat block; `cr` holds the Role Rank
 }
 
 export interface CreatureDef {
@@ -72,6 +75,7 @@ export interface JournalDef {
 // Pass an instance to each macro builder; they no longer read global constants.
 export interface CampaignPreset {
   id: string                     // unique key, e.g. 'eldoria'
+  system?: 'dnd5e' | 'cpr'       // which Foundry system the actors are written for (default 'dnd5e')
   name: string                   // display name, e.g. "Eldoria: Echoes of the Aether"
   description: string            // one-liner shown in UI, e.g. "D&D 5e · 7 Continents · 28 NPCs"
   rootJournalFolderName: string  // Step 2 checks this folder exists (confirms Step 1 ran)
@@ -1193,22 +1197,34 @@ ${aLines}
 }
 
 export function buildStep2Macro(preset: CampaignPreset): string {
-  const entries = preset.journals.map(j => {
-    const pages = j.pages.map(p =>
-      `    { name: ${JSON.stringify(p.name)}, type: 'text', text: { content: ${JSON.stringify(p.html)}, format: 1 } }`
-    ).join(',\n')
-    return `  await JournalEntry.create({ name: ${JSON.stringify(j.name)}, folder: jf(${JSON.stringify(j.folder)}), pages: [\n${pages}\n  ] });`
-  }).join('\n')
+  const journals = preset.journals.map(j => ({
+    name: j.name, folder: j.folder,
+    pages: j.pages.map(p => ({ name: p.name, type: 'text', text: { content: p.html, format: 1 } })),
+  }))
 
-  return `(async () => {
+  return `// Step 2 — Journals — safe to re-run: a journal with the same name in the same folder is updated in place, not duplicated
+(async () => {
   const jf = name => game.folders.find(f => f.name === name && f.type === 'JournalEntry')?.id;
   if (!jf(${JSON.stringify(preset.rootJournalFolderName)})) { ui.notifications.error('Run Step 1 first — folders not found.'); return; }
-${entries}
-  ui.notifications.info(${JSON.stringify(`✅ ${preset.name}: All journal entries created!`)});
+  const journals = ${JSON.stringify(journals, null, 2)};
+  let created = 0, updated = 0;
+  for (const j of journals) {
+    const folderId = jf(j.folder) ?? null;
+    const entry = game.journal.find(e => e.name === j.name && (e.folder?.id ?? null) === folderId);
+    if (!entry) { await JournalEntry.create({ name: j.name, folder: folderId, pages: j.pages }); created++; continue; }
+    for (const p of j.pages) {
+      const page = entry.pages.getName(p.name);
+      if (page) await page.update({ 'text.content': p.text.content });
+      else await entry.createEmbeddedDocuments('JournalEntryPage', [p]);
+    }
+    updated++;
+  }
+  ui.notifications.info(${JSON.stringify(`✅ ${preset.name}: journals — `)} + created + ' created, ' + updated + ' updated.');
 })();`
 }
 
 export function buildStep3Macro(continentName: string, preset: CampaignPreset): string {
+  if (preset.system === 'cpr') return buildCprStep3Macro(continentName, preset)
   const npcs = preset.npcs.filter(n => n.continent === continentName)
   const actors = npcs.map(n => {
     const bio = `${n.bio}<p><em>Appearance:</em> ${n.appearance}</p><p><em>Relationships:</em> ${n.relationships}</p>`
@@ -1284,7 +1300,7 @@ export function buildStep4Macro(preset: CampaignPreset): string {
 // "Chain of Command / Allies / Rivals / Complicated" section into the biography with
 // @Actor[Name]{Name} links, which Foundry resolves by actor name. Also builds a chain-of-command
 // journal for each continent that has one, and a "Leader Relationships" journal. Safe to re-run:
-// the biography section sits between marker comments and is replaced; journal pages are updated
+// the biography section is found by its own headings and replaced; journal pages are updated
 // in place.
 export function buildStep6Macro(preset: CampaignPreset): string {
   const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -1358,18 +1374,25 @@ export function buildStep6Macro(preset: CampaignPreset): string {
   const sections = ${JSON.stringify(bioSections, null, 2)};
   const chainPages = ${JSON.stringify(chainPages, null, 2)};
   const relPages = ${JSON.stringify(relPages, null, 2)};
-  const START = '<!--dmtk-relations-->', END = '<!--/dmtk-relations-->';
+  // Foundry strips HTML comments from the biography/notes field on save, so a hidden marker can't be relied on to find a
+  // previous run. Instead cut at the first of this step's own headings: the block is always appended at the end, so
+  // everything from there on (including duplicates left by earlier runs) is ours, and what comes before is kept.
+  const HEADS = ['<h2>Chain of Command</h2>', '<h2>Allies</h2>', '<h2>Rivals</h2>', '<h2>Complicated Relationships</h2>'];
+  const BIO_PATH = ${JSON.stringify(preset.system === 'cpr' ? 'system.information.notes' : 'system.details.biography.value')};
+  const stripOld = text => {
+    let t = text.replace(/<!--dmtk-relations-->[\\s\\S]*?<!--\\/dmtk-relations-->/g, '');
+    let cut = -1;
+    for (const h of HEADS) { const i = t.indexOf(h); if (i !== -1 && (cut === -1 || i < cut)) cut = i; }
+    return cut === -1 ? t : t.slice(0, cut);
+  };
   const jfolder = (...names) => { for (const n of names) { const f = game.folders.find(x => x.name === n && x.type === 'JournalEntry'); if (f) return f.id; } return null; };
 
   let bios = 0, missing = [];
   for (const [name, html] of Object.entries(sections)) {
     const actor = game.actors.getName(name);
     if (!actor) { missing.push(name); continue; }
-    const current = actor.system.details?.biography?.value ?? '';
-    const block = START + html + END;
-    const start = current.indexOf(START), end = current.indexOf(END);
-    const next = (start !== -1 && end > start) ? current.slice(0, start) + block + current.slice(end + END.length) : current + block;
-    await actor.update({ 'system.details.biography.value': next });
+    const current = foundry.utils.getProperty(actor, BIO_PATH) ?? '';
+    await actor.update({ [BIO_PATH]: stripOld(current) + html });
     bios++;
   }
 
