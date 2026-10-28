@@ -749,7 +749,8 @@ export default function CampaignBuilder({ cprOnly = false }: { cprOnly?: boolean
       const saved = localStorage.getItem(lsKey)
       if (saved) {
         const obj = JSON.parse(saved)
-        if (validatePreset(obj) === null) {
+        // The standalone campaign page is D&D only; ignore a Cyberpunk copy saved there earlier.
+        if (validatePreset(obj) === null && (cprOnly || obj.system !== 'cpr')) {
           // Older saved copies baked counts into the description ("28 NPC Leaders") that went stale as
           // NPCs were added. Take the current wording for the built-in campaign; keep everything else.
           if (obj.id === 'eldoria' && /\d+\s*NPC/i.test(obj.description ?? '')) obj.description = ELDORIA_PRESET.description
@@ -1204,7 +1205,7 @@ export default function CampaignBuilder({ cprOnly = false }: { cprOnly?: boolean
                   Load Demo (Eldoria)
                 </button>
               )}
-              {preset.id !== 'cpr-test' && (
+              {preset.id !== 'cpr-test' && cprOnly && (
                 <button
                   onClick={() => loadPreset(CYBERPUNK_TEST_PRESET)}
                   style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#500724', color: '#f9a8d4', border: '1px solid #be185d', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
