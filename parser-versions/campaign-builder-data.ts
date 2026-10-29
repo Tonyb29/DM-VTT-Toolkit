@@ -1080,6 +1080,32 @@ export const WORLD_JOURNALS: JournalDef[] = [
         html: '<h1>Political Structure of Eldoria</h1><h2>The Council of Elders</h2><p>Meets in the Hall of Unity in Astaria. Each continent sends 2–3 representatives. Manages Ragolyte regulation, infrastructure, and world-level threats.</p><h2>Continental Governance</h2><ul><li><strong>Lumaria</strong> — Four provinces; consensus-driven pacifist leadership</li><li><strong>Drak\'Thar</strong> — Dual monarchy (dwarves + dragonkin); strength and martial honor</li><li><strong>Aetheria</strong> — Coalition of island rulers under Archmage figurehead; arcane meritocracy</li><li><strong>Solara</strong> — Theocratic monarchy; faith-driven governance</li><li><strong>Frostholm</strong> — Tribal confederation; seasonal Winter Moot</li><li><strong>Zephyria</strong> — Druidic republic; Council of the Winds</li><li><strong>Cogoria</strong> — Technocratic meritocracy; Artificer\'s Assembly under High Magister</li></ul><h2>Transportation</h2><ul><li><strong>Airships</strong> — 200 GP/person | 10,000–20,000 GP to purchase</li><li><strong>Elemental Chariots</strong> — 50 GP/person within continent | 2,000–5,000 GP</li><li><strong>MagiTrains</strong> — 100 GP/person within continent | Ragolyte-powered</li><li><strong>Teleportation Circles</strong> — 500 GP/person intercontinental | 50,000–100,000 GP to commission</li><li><strong>Gondolas</strong> — Connect Lumaria to Aetheria through Astaria\'s void</li></ul>'
       },
     ]
+  },
+  {
+    name: 'Moons of Eldoria',
+    folder: 'World Lore',
+    pages: [
+      {
+        name: 'The Moons and Lunara',
+        html: '<h1>The Moons and Lunara</h1><p>Eldoria has two moons, <strong>Luna</strong> and <strong>Selene</strong>, siblings born from the primordial aether. Ancient myths say <strong>Lunara</strong>, the Moonkeeper, made them as reflections of balance: light and shadow, wisdom and instinct, creation and destruction. Luna was given tranquility, healing and the natural cycles of life. Selene was given instinct, mysticism and the mysteries of the arcane. Together they kept the heavens in harmony.</p><p>When the Great Breaking shattered the world, some believed the moons had fallen out of sync, a sign that their divine wills were no longer in balance. Their conjunctions and oppositions are still seen as turning points in the world\'s energies.</p>'
+      },
+      {
+        name: 'Luna',
+        html: '<h1>Luna</h1><p>The great silver moon. Luna is the larger of the two, and it governs tides, seasons and divine magic. Its phases bring a sense of healing and renewal.</p><p><strong>Orbit:</strong> 30 days. See <em>Lunar Events: Boons &amp; Pitfalls</em> for what the moons grant when they align.</p>'
+      },
+      {
+        name: 'Selene',
+        html: '<h1>Selene</h1><p>The smaller blue moon. Selene governs arcane currents and prophecy. It is tied to instinct, mystery and the arcane.</p><p><strong>Orbit:</strong> 20 days. See <em>Lunar Events: Boons &amp; Pitfalls</em>.</p><p>Together the two cycles give a conjunction every 60 days, with an opposition 30 days after.</p>'
+      },
+      {
+        name: 'Lunar Events: Boons & Pitfalls',
+        html: '<h1>Lunar Events: Boons &amp; Pitfalls</h1><p><em>Reference copy of the Celestial Calendar entry. Dates and phases live in the tool.</em></p><table><thead><tr><th>Event</th><th>Boons</th><th>Pitfalls</th></tr></thead><tbody><tr><td><strong>Conjunction</strong></td><td>Healing spells restore an extra 1d8 HP; once before the next conjunction a creature may reroll one failed d20</td><td>Wild magic surges trigger on a 1–3; werewolves, fiends and undead are more aggressive</td></tr><tr><td><strong>Opposition</strong></td><td><em>Luna\'s Favor:</em> temporary HP of 1d10 + level at dusk. <em>Selene\'s Insight:</em> advantage on Insight and Arcana until dawn. Advantage on sight-based Perception</td><td>Concentration checks need a DC 10 save every turn; social interactions are unpredictable (advantage AND disadvantage)</td></tr><tr><td><strong>Full Moon</strong></td><td>Bright moonlight extends to 80 ft, even near open windows indoors</td><td>Lycanthropes must make a DC 15 Wisdom save or be forced to transform</td></tr><tr><td><strong>New Moon</strong></td><td>Rogues and rangers have advantage on Stealth outdoors</td><td>Creatures that navigate by moonlight move at half speed outdoors</td></tr><tr><td><strong>Eclipse</strong></td><td>Divination spells reveal one extra true detail; lycanthropes may transform voluntarily with no save</td><td>Undead regain 1d6 HP each turn; Wisdom saves have disadvantage until dawn</td></tr></tbody></table><h2>Eclipses</h2><p>An eclipse happens when a moon crosses the Sun, enters the planet\'s shadow, or crosses the other moon. It is rare because the moons\' orbits are tilted, so a new or full moon usually passes above or below the Sun\'s path. The exact rule is still to be decided.</p>'
+      },
+      {
+        name: 'How Eldoria Sees the Moons',
+        html: '<h1>How Eldoria Sees the Moons</h1><ul><li><strong>Lumaria and Aetheria:</strong> conjunctions are <em>The Celestial Embrace</em>, a festival of healing and unity where glowing lanterns are floated into the sky. Oppositions are <em>The Lunar Rift</em>, somber days of reflection and caution about hubris.</li><li><strong>Drak\'Thar:</strong> conjunctions are blessings of unity and camaraderie. Oppositions are <em>The Trial of Two Faces</em>, with sacred duels fought under the dual moonlight.</li><li><strong>Solara:</strong> the moons pay homage to the sun in conjunction, amplifying its light, and in opposition they threaten its reign. Sunlit festivals mark conjunctions, and prayer vigils mark oppositions.</li><li><strong>Frostholm:</strong> conjunctions bring bounty even in the winter and thaw the coldest hearts. Oppositions test the people with stronger blizzards and weaker light magic.</li><li><strong>Zephyria:</strong> the moons govern the winds and tides. Conjunctions mean safe passage. Oppositions are <em>The Sky\'s Discord</em>, when skywatchers dance to appease the moons.</li><li><strong>Cogoria:</strong> the moons are machines tied to the flow of Ragolyte energy. Conjunctions amplify it, with light shows and experiments. Oppositions disrupt it, so many machines are powered down.</li><li><strong>Caelumir:</strong> astronomers and mystics studied the moons\' cycles before the Great Breaking. Some blame the moons\' discord for the fall, and ruined temples still carry lunar symbols.</li></ul>'
+      },
+    ]
   }
 ]
 

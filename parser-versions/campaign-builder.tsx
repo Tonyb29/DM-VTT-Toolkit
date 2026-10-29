@@ -764,6 +764,11 @@ export default function CampaignBuilder({ cprOnly = false }: { cprOnly?: boolean
               return { ...n, reportsTo: n.reportsTo ?? b.reportsTo, relations: n.relations ?? b.relations }
             })
           }
+          // Journals added to the built-in campaign after this copy was saved: add them by name.
+          if (obj.id === 'eldoria' && Array.isArray(obj.journals)) {
+            const have = new Set(obj.journals.map((j: { name: string }) => j.name))
+            for (const j of ELDORIA_PRESET.journals) if (!have.has(j.name)) obj.journals.push(j)
+          }
           return obj as CampaignPreset
         }
       }
