@@ -11,6 +11,7 @@ import { ELDORIA_PRESET, BLANK_PRESET } from './campaign-eldoria-preset'
 import { CYBERPUNK_TEST_PRESET } from './campaign-cyberpunk-test-preset'
 import { generateCustomStatBlock, generateCampaignPreset, hasApiKey } from './claude-api'
 import { parseStatBlock } from './dnd-parser-v20-stable'
+import { SessionNotesPanel } from './session-notes'
 
 // ─── TYPES ───────────────────────────────────────────────────
 
@@ -1727,6 +1728,9 @@ export default function CampaignBuilder({ cprOnly = false }: { cprOnly?: boolean
           description={`Run after the NPC actors exist (Steps 3–5). Adds a Chain of Command / Allies / Rivals section with clickable links to each NPC's biography (${preset.npcs.filter(n => (n.relations?.length ?? 0) > 0 || (n.reportsTo?.length ?? 0) > 0).length} NPCs have relationship data), builds a chain-of-command journal for each continent that has one, and a Leader Relationships journal. Safe to re-run.`}
           macro={buildStep6Macro(preset)} id="step6" copied={copied} onCopy={copy}
         />
+
+        {/* Session Notes & next-session plan */}
+        <SessionNotesPanel campaignId={preset.id} campaignName={preset.name} journalFolderName={preset.rootJournalFolderName} />
 
         {/* Footer note */}
         <div style={{ ...S.card, background: '#0f172a' }}>

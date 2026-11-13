@@ -794,3 +794,71 @@ Output ONLY the formatted stat block, no commentary.`,
 
   return (msg.content[0] as any).text?.trim() ?? '';
 }
+
+// ── Session notes (Campaign Builder → Session Notes panel) ───────────────────
+// Both functions return Markdown. They never invent lore: anything that would change
+// established lore goes under "Proposed lore changes (needs DM approval)".
+
+export async function generateSessionNotesFromTranscript(
+  transcript: string, campaignName: string, context?: string,
+): Promise<string> {
+  const client = getClient();
+  const ctx = context?.trim() ? `\n\nCAMPAIGN CONTEXT (characters, speaker hints, prior notes):\n${context.trim()}` : '';
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 8192,
+    messages: [{
+      role: 'user',
+      content: `You are a note-taker for a tabletop RPG DM. Turn this raw, auto-transcribed session recording into concise session notes for the campaign "${campaignName}".
+
+The transcript is machine-generated: names are often misspelled and speaker labels can be wrong. Prefer names from the campaign context over the transcript's spelling, and flag anything uncertain with "(?)" instead of guessing.${ctx}
+
+OUTPUT: Markdown only, with exactly these sections:
+# Session notes
+## Summary (one short paragraph)
+## Key events (numbered, in order)
+## NPCs and places mentioned
+## Decisions and open threads (what the party chose, what is unresolved)
+## Rules questions raised at the table
+## Proposed lore changes (needs DM approval) — only things the session implies should change established lore; write "None" if there are none
+## Uncertain / needs DM check
+
+Do not invent events. Do not add lore that was not said.
+
+TRANSCRIPT:
+${transcript}`,
+    }],
+  });
+  const block = msg.content[0];
+  return block.type === 'text' ? block.text : '';
+}
+
+export async function generateNextSessionTodo(
+  notes: string, campaignName: string, priorTodo?: string,
+): Promise<string> {
+  const client = getClient();
+  const prior = priorTodo?.trim() ? `\n\nPREVIOUS TO-DO LIST (carry over anything not obviously done):\n${priorTodo.trim()}` : '';
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 4096,
+    messages: [{
+      role: 'user',
+      content: `You are a prep assistant for a tabletop RPG DM running "${campaignName}". From the session notes below, write the DM's to-do list for the NEXT session.
+
+OUTPUT: Markdown only, using task checkboxes ("- [ ] ..."), in these sections:
+## Decide first (open questions only the DM can answer)
+## Recap points for the opening
+## Scenes to prep (2-4 options, each with a one-line hook)
+## Stat blocks / items / maps to prepare
+## Rules reminders for players
+## Foundry / admin chores
+
+Keep it short and concrete. Do not invent lore; if a decision is needed, put it under "Decide first".${prior}
+
+SESSION NOTES:
+${notes}`,
+    }],
+  });
+  const block = msg.content[0];
+  return block.type === 'text' ? block.text : '';
+}
